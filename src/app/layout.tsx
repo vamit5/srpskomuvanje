@@ -8,16 +8,16 @@ const geistSans = Geist({
   subsets: ["latin", "latin-ext"],
 });
 
-const APP_NAME = "Iskra";
+const APP_NAME = "Srpskomuvanje";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://iskra.rs"),
+  metadataBase: new URL("https://srpskomuvanje.rs"),
   title: {
     default: `${APP_NAME} — Uđi. Vidi ko je tu.`,
     template: `%s · ${APP_NAME}`,
   },
   description:
-    "Iskra je srpska dating aplikacija u kojoj se stvarno nešto dešava upravo sada: ko je blizu, ko je online, ko te je lajkovao.",
+    "Srpskomuvanje je srpska dating aplikacija u kojoj se stvarno nešto dešava upravo sada: ko je blizu, ko je online, ko te je lajkovao.",
   applicationName: APP_NAME,
   appleWebApp: {
     capable: true,

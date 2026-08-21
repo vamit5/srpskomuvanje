@@ -38,7 +38,7 @@ export default function LandingPage() {
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="safe-top flex items-center justify-between px-5 py-4">
-        <span className="text-lg font-bold text-gradient">Iskra</span>
+        <span className="text-lg font-bold text-gradient">Srpskomuvanje</span>
         <Link href="/prijava" className="text-sm text-[var(--color-text-muted)]">
           Prijava
         </Link>
@@ -90,9 +90,9 @@ export default function LandingPage() {
       </main>
 
       <footer className="safe-bottom border-t border-[var(--color-border)] px-6 py-6 text-center text-xs text-[var(--color-text-faint)]">
-        <p>Iskra je namenjena isključivo punoletnim osobama (18+).</p>
+        <p>Srpskomuvanje je namenjeno isključivo punoletnim osobama (18+).</p>
         <p className="mt-1">
-          Prijava zloupotrebe: <span className="underline">podrska@iskra.rs</span>
+          Prijava zloupotrebe: <span className="underline">podrska@srpskomuvanje.rs</span>
         </p>
       </footer>
     </div>

@@ -1,4 +1,4 @@
-// Iskra — service worker (ručno pisan, bez build-tool zavisnosti).
+// Srpskomuvanje — service worker (ručno pisan, bez build-tool zavisnosti).
 // Next.js 16 build po difoltu koristi Turbopack, a Serwist/Workbox integracije
 // za Turbopack su još eksperimentalne — zato je ovo namerno prost i čitljiv SW
 // koji radi identično u dev i prod okruženju.
@@ -90,9 +90,9 @@ self.addEventListener("push", (event) => {
   try {
     payload = event.data.json();
   } catch {
-    payload = { title: "Iskra", body: event.data.text() };
+    payload = { title: "Srpskomuvanje", body: event.data.text() };
   }
-  const title = payload.title || "Iskra";
+  const title = payload.title || "Srpskomuvanje";
   const options = {
     body: payload.body,
     icon: "/icons/icon-192.png",

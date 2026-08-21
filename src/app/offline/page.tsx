@@ -4,7 +4,7 @@ export default function OfflinePage() {
       <p className="text-4xl">📡</p>
       <h1 className="text-xl font-semibold">Nema interneta</h1>
       <p className="max-w-xs text-sm text-[var(--color-text-muted)]">
-        Iskra treba internet konekciju da bi ti pokazala šta se dešava upravo sada. Proveri
+        Srpskomuvanje treba internet konekciju da bi ti pokazalo šta se dešava upravo sada. Proveri
         konekciju i pokušaj ponovo.
       </p>
     </main>

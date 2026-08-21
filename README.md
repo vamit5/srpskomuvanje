@@ -1,8 +1,9 @@
-# Iskra 🔥
+# Srpskomuvanje 🔥
 
-Srpska dating PWA aplikacija — radni naziv **Iskra**. Ako želiš drugačiji naziv, promena je
-mehanička (find & replace "Iskra" kroz kod, novi domen, novo ime u `manifest.ts`/`layout.tsx`) —
-javi kad odlučiš i uradim to za par minuta.
+Srpska dating PWA aplikacija — naziv **Srpskomuvanje**. Projekat i dalje živi u folderu
+`iskra/` (samo naziv foldera na disku — ne utiče ni na šta što korisnik vidi; javi ako želiš da
+i folder preimenujem). Promena naziva u budućnosti je mehanička (find & replace kroz kod, novi
+domen, novo ime u `manifest.ts`/`layout.tsx`).
 
 ## Status: FAZA 1 gotova
 
@@ -87,7 +88,7 @@ iskra/
 
 ## Napomena o brendu
 
-`brand/icon-source.svg` je privremen logo-mark (spark/iskra oblik, pink→violet gradijent na
+`brand/icon-source.svg` je privremen logo-mark (spark oblik, pink→violet gradijent na
 tamnoj pozadini) — placeholder dok ne napravimo pravi vizuelni identitet. Kad imamo pravi
 logo, zameni taj SVG i pokreni:
 
@@ -110,8 +111,6 @@ node scripts/generate-icons.mjs
 
 ## Odluke koje sam doneo bez pitanja (i zašto)
 
-- **Naziv "Iskra"** kao radni naziv — kratko, na srpskom, direktno povezano sa "Tajna iskra"
-  funkcijom. Lako se menja kasnije.
 - **Email + lozinka** umesto telefon/SMS verifikacije za MVP auth — SMS provajderi (Twilio i sl.)
   koštaju po poruci, email je besplatan i Supabase ga podržava iz kutije. Telefonski broj/SMS OTP
   možemo dodati kasnije ako se pokaže da korisnici to očekuju.

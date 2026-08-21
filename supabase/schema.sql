@@ -1,5 +1,5 @@
 -- =====================================================================
--- ISKRA — Supabase (Postgres) šema, FAZA 1
+-- SRPSKOMUVANJE — Supabase (Postgres) šema, FAZA 1
 -- =====================================================================
 -- Kako da primeniš ovo:
 --   1) Napravi projekat na https://supabase.com (besplatan tier je dovoljan za start).
