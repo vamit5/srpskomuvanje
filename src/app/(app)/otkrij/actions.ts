@@ -73,6 +73,25 @@ export async function passProfile(targetId: string) {
   return reactToProfile(targetId, "pass");
 }
 
+export async function sendSecretSpark(
+  targetId: string
+): Promise<{ error: string | null; mutual: boolean; matchId: string | null }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Nisi prijavljen/a.", mutual: false, matchId: null };
+
+  const { data, error } = await supabase
+    .rpc("send_secret_spark", { sender_id: user.id, target_id: targetId })
+    .single();
+
+  if (error) return { error: "Nešto nije u redu. Pokušaj ponovo.", mutual: false, matchId: null };
+
+  const result = data as { mutual: boolean; match_id: string | null };
+  return { error: null, mutual: result.mutual, matchId: result.match_id };
+}
+
 export async function touchActivity(): Promise<void> {
   const supabase = await createClient();
   const {

@@ -12,7 +12,7 @@ export default async function MatchPage() {
 
   const { data: matches } = await supabase
     .from("matches")
-    .select("id, profile_a_id, profile_b_id, matched_at")
+    .select("id, profile_a_id, profile_b_id, matched_at, source")
     .or(`profile_a_id.eq.${user!.id},profile_b_id.eq.${user!.id}`)
     .is("unmatched_at", null)
     .order("matched_at", { ascending: false });
@@ -30,7 +30,7 @@ export default async function MatchPage() {
     const otherId = m.profile_a_id === user!.id ? m.profile_b_id : m.profile_a_id;
     const other = others?.find((o) => o.id === otherId);
     const photo = photos?.find((p) => p.profile_id === otherId);
-    return { matchId: m.id, matchedAt: m.matched_at, other, photo };
+    return { matchId: m.id, matchedAt: m.matched_at, source: m.source, other, photo };
   });
 
   return (
@@ -52,7 +52,7 @@ export default async function MatchPage() {
         />
       ) : (
         <ul className="flex flex-col gap-2">
-          {rows.map(({ matchId, other, photo }) => (
+          {rows.map(({ matchId, other, photo, source }) => (
             <li
               key={matchId}
               className="glass flex items-center gap-3 rounded-2xl px-3 py-3"
@@ -70,9 +70,14 @@ export default async function MatchPage() {
                 </div>
               )}
               <div className="flex-1">
-                <p className="font-semibold">
+                <p className="flex items-center gap-1.5 font-semibold">
                   {other?.name ?? "Korisnik"}
                   {other?.birth_date ? `, ${calculateAge(other.birth_date)}` : ""}
+                  {source === "secret_spark" && (
+                    <span className="rounded-full bg-[var(--color-bg-elevated)] px-2 py-0.5 text-[10px] font-normal text-[var(--color-text-muted)]">
+                      🤫 tajni signal
+                    </span>
+                  )}
                 </p>
                 <p className="text-xs text-[var(--color-text-muted)]">Chat dolazi u FAZI 4 — uskoro 💬</p>
               </div>

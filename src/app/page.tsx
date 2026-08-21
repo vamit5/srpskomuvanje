@@ -18,9 +18,14 @@ const FEATURES = [
     text: "Kad se međusobno lajkujete, otvara se razgovor u trenutku. Bez čekanja, bez nagađanja.",
   },
   {
-    emoji: "🤫",
-    title: "Tajna iskra",
-    text: "Pošalji nekome tajnu iskru bez da zna ko si. Ako i ona/on pošalje tebi — otključava se obostrana privlačnost.",
+    emoji: "🎭",
+    title: "Tajni Srbin/Srpkinja",
+    text: "Pošalji nekome anoniman signal da ti se sviđa, bez da zna ko si. Ako i ona/on pošalje tebi — otključava se obostrana privlačnost.",
+  },
+  {
+    emoji: "⚔️",
+    title: "Duel",
+    text: "Dva profila, jedno pitanje — 'Ko ti je više tvoj tip?' Zabavno, anonimno za obe strane, i uči algoritam tvoj ukus.",
   },
   {
     emoji: "😏",

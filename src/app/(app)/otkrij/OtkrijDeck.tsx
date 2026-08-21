@@ -3,18 +3,24 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion, useMotionValue, useTransform, type PanInfo } from "framer-motion";
-import { Heart, X, Flame, ShieldCheck } from "lucide-react";
-import { calculateAge } from "@/lib/utils";
+import { Heart, X, Flame, ShieldCheck, Drama, Check } from "lucide-react";
+import { calculateAge, cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import {
   getMoreCandidates,
   likeProfile,
   passProfile,
   superLikeProfile,
+  sendSecretSpark,
   type DiscoveryCandidate,
 } from "./actions";
 
 const SWIPE_THRESHOLD = 120;
+
+interface MatchState {
+  candidate: DiscoveryCandidate;
+  viaSpark: boolean;
+}
 
 function ScoreBadge({ score }: { score: number }) {
   return (
@@ -116,8 +122,12 @@ export function OtkrijDeck({ initialCandidates }: { initialCandidates: Discovery
   const [stack, setStack] = useState(initialCandidates);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [matched, setMatched] = useState<DiscoveryCandidate | null>(null);
+  const [matched, setMatched] = useState<MatchState | null>(null);
+  const [sparkedIds, setSparkedIds] = useState<Set<string>>(new Set());
+  const [sparkSending, setSparkSending] = useState(false);
+  const [sparkToast, setSparkToast] = useState(false);
   const fetchingMore = useRef(false);
+  const sparkToastTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const current = stack[0];
 
@@ -151,8 +161,38 @@ export function OtkrijDeck({ initialCandidates }: { initialCandidates: Discovery
       setError(result.error);
       return;
     }
-    if (result.matched) setMatched(target);
+    if (result.matched) setMatched({ candidate: target, viaSpark: false });
   }
+
+  async function handleSecretSpark() {
+    if (!current || sparkSending || sparkedIds.has(current.id)) return;
+    setSparkSending(true);
+    setError(null);
+    const target = current;
+    const result = await sendSecretSpark(target.id);
+    setSparkSending(false);
+
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+
+    setSparkedIds((prev) => new Set(prev).add(target.id));
+
+    if (result.mutual) {
+      setMatched({ candidate: target, viaSpark: true });
+    } else {
+      setSparkToast(true);
+      if (sparkToastTimeout.current) clearTimeout(sparkToastTimeout.current);
+      sparkToastTimeout.current = setTimeout(() => setSparkToast(false), 2500);
+    }
+  }
+
+  useEffect(() => {
+    return () => {
+      if (sparkToastTimeout.current) clearTimeout(sparkToastTimeout.current);
+    };
+  }, []);
 
   // Desktop fallback (sekcija 35): tastatura umesto swipe-a.
   useEffect(() => {
@@ -166,6 +206,8 @@ export function OtkrijDeck({ initialCandidates }: { initialCandidates: Discovery
     return () => window.removeEventListener("keydown", onKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current, pending, matched]);
+
+  const currentSparked = current ? sparkedIds.has(current.id) : false;
 
   return (
     <div className="relative flex flex-1 flex-col gap-4">
@@ -187,11 +229,17 @@ export function OtkrijDeck({ initialCandidates }: { initialCandidates: Discovery
             </p>
           </div>
         )}
+
+        {sparkToast && (
+          <div className="absolute inset-x-0 top-4 z-50 mx-auto w-fit rounded-full bg-black/80 px-4 py-2 text-sm text-white shadow-lg">
+            🤫 Tajni signal poslat — ako ti i on/ona uzvratite, otključava se match
+          </div>
+        )}
       </div>
 
       {error && <p className="text-center text-sm text-[var(--color-danger)]">{error}</p>}
 
-      <div className="flex items-center justify-center gap-4 pb-2">
+      <div className="flex items-center justify-center gap-3 pb-2">
         <button
           type="button"
           onClick={() => handleAction("pass")}
@@ -200,6 +248,21 @@ export function OtkrijDeck({ initialCandidates }: { initialCandidates: Discovery
           aria-label="Preskoči"
         >
           <X size={26} />
+        </button>
+        <button
+          type="button"
+          onClick={handleSecretSpark}
+          disabled={!current || sparkSending || currentSparked}
+          className={cn(
+            "tap-scale flex h-12 w-12 items-center justify-center rounded-full border text-white disabled:opacity-40",
+            currentSparked
+              ? "border-transparent bg-[var(--color-success)]"
+              : "border-[var(--color-border-strong)] bg-[var(--color-bg-card)] text-[var(--color-accent)]"
+          )}
+          aria-label="Pošalji tajni signal (Tajni Srbin/Srpkinja)"
+          title="Tajni Srbin/Srpkinja — pošalji anoniman signal"
+        >
+          {currentSparked ? <Check size={18} /> : <Drama size={18} />}
         </button>
         <button
           type="button"
@@ -223,18 +286,29 @@ export function OtkrijDeck({ initialCandidates }: { initialCandidates: Discovery
 
       {matched && (
         <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center gap-6 bg-black/92 px-6 text-center text-white">
-          <p className="text-5xl">🔥</p>
-          <h2 className="text-3xl font-extrabold text-gradient">MATCH!</h2>
-          {matched.primary_photo_url && (
+          <p className="text-5xl">{matched.viaSpark ? "🤫🔥" : "🔥"}</p>
+          <h2 className="text-3xl font-extrabold text-gradient">
+            {matched.viaSpark ? "OBOSTRANA PRIVLAČNOST!" : "MATCH!"}
+          </h2>
+          {matched.candidate.primary_photo_url && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={matched.primary_photo_url}
-              alt={matched.name}
+              src={matched.candidate.primary_photo_url}
+              alt={matched.candidate.name}
               className="h-28 w-28 rounded-full border-4 border-black object-cover"
             />
           )}
           <p className="max-w-xs text-white/90">
-            Ti i <strong>{matched.name}</strong> ste se svideli jedno drugom.
+            {matched.viaSpark ? (
+              <>
+                Vas dvoje ste jedno drugom poslali tajni signal — <strong>{matched.candidate.name}</strong> se
+                svideo/la i tebi i ti njemu/njoj.
+              </>
+            ) : (
+              <>
+                Ti i <strong>{matched.candidate.name}</strong> ste se svideli jedno drugom.
+              </>
+            )}
           </p>
           <div className="flex w-full max-w-xs flex-col gap-2">
             <Link href="/match">

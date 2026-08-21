@@ -5,7 +5,7 @@ Srpska dating PWA aplikacija — naziv **Srpskomuvanje**. Projekat i dalje živi
 i folder preimenujem). Promena naziva u budućnosti je mehanička (find & replace kroz kod, novi
 domen, novo ime u `manifest.ts`/`layout.tsx`).
 
-## Status: FAZA 1, 2 i 3 gotove
+## Status: FAZA 1, 2, 3 gotove + deo FAZE 6 (Tajni Srbin/Srpkinja, Duel)
 
 **FAZA 1:**
 - ✅ Next.js 16 (App Router, TypeScript, Tailwind v4, Turbopack)
@@ -45,6 +45,24 @@ proveren i "MATCH!" ekran i Match lista). Usput otkrivena i ispravljena prava tr
 
 Ekran Poruke i dalje prikazuje iskren "uskoro" placeholder (chat je FAZA 4) — nema
 izmišljenih poruka.
+
+**FAZA 6 (samo deo — Tajni Srbin/Srpkinja i Duel; Hot Mode/Noćni mod nisu još rađeni):**
+- ✅ **Tajni Srbin/Srpkinja** (Secret Spark, sekcija 12 iz spec-a) — pošalji nekome anoniman
+  signal na Otkrij kartici (🎭 dugme). Primalac dobija diskretno obaveštenje ("Tajni Srbin/
+  Tajna Srpkinja misli da si zanimljiv/a") bez otkrivanja identiteta. Ako i on/ona pošalje
+  tebi — otključava se poseban "OBOSTRANA PRIVLAČNOST!" ekran i match. Ne šalje se ništa
+  pošiljaocu ako veza nije obostrana — to je poenta tajnosti.
+- ✅ **Duel** ("A ili B?") — nova `/duel` stranica, dostupna sa linka na Sada. Pokazuje dva
+  nasumična kompatibilna profila, glasanje ne šalje lajk niti bilo koga obaveštava, samo je
+  igra/signal za algoritam.
+
+Testirano uživo: poslat jednostran tajni signal (primalac dobio diskretno obaveštenje, bez
+otkrivanja ko je poslao), pa obostran (odmah se pojavio "OBOSTRANA PRIVLAČNOST!" ekran, i
+Match stranica ispravno označava taj match sa "🤫 tajni signal" bedžom, za razliku od
+običnih matcheva). Duel testiran sa dva kandidata — glasanje ispravno učitava sledeći duel.
+Usput otkrivena i ispravljena greška: `.single()` na Supabase RPC pozivu baca grešku kad
+funkcija vrati nula redova (npr. nema dovoljno kandidata za Duel) — trebalo je čitati kao
+niz i proveriti da li je prazan, ne oslanjati se na `.single()` da to sam otkrije.
 
 ## Tech stack i zašto
 
@@ -143,7 +161,7 @@ node scripts/generate-icons.mjs
 - [x] **FAZA 3** — Otkrij (swipe), lajkovi, matchevi, Discovery algoritam
 - [ ] **FAZA 4** — real-time chat
 - [ ] **FAZA 5** — "Sada" feed sa pravim aktivnostima
-- [ ] **FAZA 6** — Tajna iskra, Duel, Hot Mode, Noćni mod
+- [~] **FAZA 6** — Tajni Srbin/Srpkinja ✅, Duel ✅, Hot Mode ⬜, Noćni mod ⬜
 - [ ] **FAZA 7** — push notifikacije (VAPID + service worker push handler je već spreman)
 - [ ] **FAZA 8** — pretplate (Premium), Boost
 - [ ] **FAZA 9** — moderacija sadržaja, admin panel

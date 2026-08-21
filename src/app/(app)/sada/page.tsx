@@ -65,6 +65,14 @@ export default async function SadaPage() {
         </div>
       )}
 
+      <Link
+        href="/duel"
+        className="tap-scale flex items-center justify-between rounded-2xl bg-gradient-accent px-4 py-3.5 text-white"
+      >
+        <span className="text-sm font-medium">⚔️ Duel — Ko ti je više tvoj tip?</span>
+        <span className="text-xs">Igraj →</span>
+      </Link>
+
       {!hasSignals && (
         <EmptyState
           emoji="👀"
