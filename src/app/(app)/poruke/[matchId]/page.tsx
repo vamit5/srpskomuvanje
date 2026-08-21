@@ -42,6 +42,7 @@ export default async function ChatPage({ params }: { params: Promise<{ matchId: 
     <ChatThread
       matchId={matchId}
       currentUserId={user!.id}
+      otherId={otherId}
       otherName={other?.name ?? "Korisnik"}
       otherPhotoUrl={photo?.thumbnail_url ?? null}
       otherOnline={isOnline}

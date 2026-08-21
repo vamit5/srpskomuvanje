@@ -67,6 +67,15 @@ returns boolean as $$
   select exists (select 1 from admin_users where profile_id = auth.uid());
 $$ language sql stable security definer set search_path = public;
 
+alter table admin_users enable row level security;
+
+create policy "admin vidi listu admina"
+  on admin_users for select
+  using (is_admin());
+
+-- Namerno NEMA insert/update/delete politike: dodavanje admina ide
+-- isključivo ručno kroz SQL Editor (vlasnik projekta), nikad kroz API.
+
 -- ---------------------------------------------------------------------
 -- PROFILES
 -- ---------------------------------------------------------------------
@@ -133,6 +142,10 @@ create policy "korisnik pravi samo svoj profil"
 
 create policy "admin vidi sve profile"
   on profiles for select
+  using (is_admin());
+
+create policy "admin moze da menja bilo koji profil"
+  on profiles for update
   using (is_admin());
 
 -- ---------------------------------------------------------------------
@@ -348,6 +361,10 @@ create policy "korisnik moze da unmatch-uje samo svoj match"
   on matches for update
   using (auth.uid() = profile_a_id or auth.uid() = profile_b_id);
 
+create policy "admin vidi sve matcheve"
+  on matches for select
+  using (is_admin());
+
 create table messages (
   id uuid primary key default gen_random_uuid(),
   match_id uuid not null references matches(id) on delete cascade,
@@ -373,6 +390,10 @@ create policy "korisnik vidi poruke samo iz svojih matcheva"
         and (m.profile_a_id = auth.uid() or m.profile_b_id = auth.uid())
     )
   );
+
+create policy "admin vidi sve poruke"
+  on messages for select
+  using (is_admin());
 
 create policy "korisnik salje poruku samo u svoj match, u svoje ime"
   on messages for insert

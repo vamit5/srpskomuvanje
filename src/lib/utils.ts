@@ -10,6 +10,10 @@ export function isRecentlyActive(lastActiveAt: string | null | undefined, window
   return Date.now() - new Date(lastActiveAt).getTime() < windowMs;
 }
 
+export function isoHoursAgo(hours: number): string {
+  return new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
+}
+
 export function calculateAge(birthDate: string) {
   const today = new Date();
   const birth = new Date(birthDate);

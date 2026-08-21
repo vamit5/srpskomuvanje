@@ -5,7 +5,7 @@ Srpska dating PWA aplikacija — naziv **Srpskomuvanje**. Projekat i dalje živi
 i folder preimenujem). Promena naziva u budućnosti je mehanička (find & replace kroz kod, novi
 domen, novo ime u `manifest.ts`/`layout.tsx`).
 
-## Status: FAZA 1, 2, 3, 4 gotove + deo FAZE 6 (Tajni Srbin/Srpkinja, Duel)
+## Status: FAZA 1, 2, 3, 4 gotove + deo FAZE 6 (Tajni Srbin/Srpkinja, Duel) + deo FAZE 9 (Prijavi/Blokiraj, Admin panel)
 
 **FAZA 1:**
 - ✅ Next.js 16 (App Router, TypeScript, Tailwind v4, Turbopack)
@@ -84,6 +84,29 @@ običnih matcheva). Duel testiran sa dva kandidata — glasanje ispravno učitav
 Usput otkrivena i ispravljena greška: `.single()` na Supabase RPC pozivu baca grešku kad
 funkcija vrati nula redova (npr. nema dovoljno kandidata za Duel) — trebalo je čitati kao
 niz i proveriti da li je prazan, ne oslanjati se na `.single()` da to sam otkrije.
+
+**FAZA 9 (samo deo — Prijavi/Blokiraj + Admin panel; automatska NSFW/sadržajna moderacija
+i dalje ne postoji):**
+- ✅ **Prijavi** i **Blokiraj** dugmad u chatu (meni "⋮" pored imena) — prijava ide pravo
+  admin redu za pregled; blokiranje odmah prekida match/razgovor i sklanja tu osobu iz
+  budućeg Otkrij feed-a (obostrano).
+- ✅ **Admin panel** (`/admin`, samo za naloge upisane u `admin_users`) — pregled (broj
+  korisnika, novih danas, aktivnih 24h, matchevi, poruke, otvorene prijave), red za prijave
+  sa dugmadima Reši / Odbaci / Sakrij profil, i lista korisnika sa prekidačem
+  vidljivosti (Otkrij feed).
+
+Testirano uživo: poslata prijava iz chata → pojavila se u `/admin/reports` sa tačnim
+podacima → "Reši" je uklanja iz reda. "Sakrij profil" i "Blokiraj" testirani i potvrđeni
+(blokiranje je odmah uklonilo osobu iz liste razgovora). Ne-admin nalog je ispravno
+preusmeren sa `/admin` na `/sada`.
+
+Usput otkrivene i ispravljene **dve prave bezbednosne/tačnosti greške**:
+1. `admin_users` tabela nikad nije imala uključen RLS (od FAZE 1!) — svako je teoretski
+   mogao direktno da čita ili čak upiše tu tabelu preko API-ja. Ispravljeno.
+2. Admin statistika (matchevi, poruke) je prvo brojala samo ono što je ULOGOVANI admin
+   lično učestvovao (jer RLS ograničava na "moje", a admin nije imao izuzetak) — brojevi su
+   izgledali verovatno, ali su bili pogrešni. Dodate su prave admin-only politike da se broji
+   stvarno sve u aplikaciji.
 
 ## Tech stack i zašto
 
@@ -185,7 +208,7 @@ node scripts/generate-icons.mjs
 - [~] **FAZA 6** — Tajni Srbin/Srpkinja ✅, Duel ✅, Hot Mode ⬜, Noćni mod ⬜
 - [ ] **FAZA 7** — push notifikacije (VAPID + service worker push handler je već spreman)
 - [ ] **FAZA 8** — pretplate (Premium), Boost
-- [ ] **FAZA 9** — moderacija sadržaja, admin panel
+- [~] **FAZA 9** — Prijavi/Blokiraj ✅, Admin panel (osnova) ✅, automatska NSFW moderacija ⬜
 - [ ] **FAZA 10** — analytics, performance, security hardening, deploy na Vercel
 
 ## Odluke koje sam doneo bez pitanja (i zašto)
@@ -235,10 +258,13 @@ node scripts/generate-icons.mjs
   poveže, ali server tiho ne šalje NIŠTA (sigurnosna pravila ne znaju ko si). Ovo je
   dokumentovano u kodu (`ChatThread.tsx`) da se ne zaboravi kod sledećeg real-time ekrana
   (npr. "ko je online" u kasnijoj fazi).
-- **Block/Report dugmad nisu još u chatu** iako ih spec pominje uz chat (sekcija 18) —
-  namerno odloženo za FAZU 9 kad pravimo i moderation queue/admin pregled prijava, da ne
-  gradimo dugme koje vodi u prazno. Unmatch (koji ne zahteva admin infrastrukturu) je gotov
-  sada.
+- **"Sakrij profil" u admin panelu je meka mera** (postavlja `is_discoverable = false` —
+  profil nestaje iz Otkrij feed-a) — nema pravog "banovanja" naloga (koje bi sprečilo i
+  prijavu) jer to zahteva auth-nivo infrastrukturu. Dovoljno za sada; pravo suspendovanje
+  naloga je nadogradnja za kasnije ako zatreba.
+- **Admin panel nema svoj tab u donjoj navigaciji** — namerno, to nije deo iskustva
+  običnog korisnika. Dostupan je samo direktno na `/admin`, i samo nalozima upisanim u
+  `admin_users` (dodaju se ručno kroz SQL Editor, nikad kroz aplikaciju).
 
 ## Pre nego što pravi (nepoznati) korisnici počnu da uploaduju slike
 
