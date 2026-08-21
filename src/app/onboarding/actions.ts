@@ -46,7 +46,7 @@ export async function completeOnboarding(input: OnboardingInput) {
 
   const age = calculateAge(input.birthDate);
   if (age < 18) {
-    return { error: "Moraš imati bar 18 godina da koristiš Iskru." };
+    return { error: "Moraš imati bar 18 godina da koristiš Srpskomuvanje." };
   }
   if (!input.name.trim()) {
     return { error: "Unesi ime." };

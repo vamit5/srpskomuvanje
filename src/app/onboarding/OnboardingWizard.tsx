@@ -225,7 +225,7 @@ export function OnboardingWizard() {
           </Button>
         )}
         <Button className="flex-1" onClick={handleNext} disabled={!canContinue() || loading}>
-          {loading ? "Sačuvavam..." : step === STEPS.length - 1 ? "Uđi u Iskru" : "Dalje"}
+          {loading ? "Sačuvavam..." : step === STEPS.length - 1 ? "Uđi" : "Dalje"}
         </Button>
       </div>
     </div>

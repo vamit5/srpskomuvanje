@@ -53,10 +53,15 @@ Otvara se na `http://localhost:3000`.
    `verification-selfies` — ovo aktiviramo u FAZI 2.
 4. U **Project Settings → API** kopiraj `Project URL` i `anon public` ključ.
 5. Kopiraj `.env.local.example` u `.env.local` i popuni te dve vrednosti.
-6. (Preporuka za brz onboarding) U **Authentication → Providers → Email** možeš isključiti
-   "Confirm email" da korisnici odmah uđu posle registracije bez čekanja na email — spec traži
-   brz onboarding bez trenja. Ako ostaje uključeno, korisnik dobija email sa linkom (već
-   obrađeno u kodu).
+6. Email potvrda naloga — dve opcije:
+   - **Brže za sada (preporuka za lokalno testiranje):** Authentication → Sign In / Providers →
+     Email → isključi "Confirm email". Korisnik tada odmah upada u onboarding posle registracije,
+     bez čekanja na mejl.
+   - **Ako ostaje uključeno** (preporučeno pred pravi lansiranje): Authentication → Email
+     Templates → "Confirm signup" → zameni link u templateu na:
+     `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&next=/onboarding`
+     (podrazumevano tamo stoji `{{ .ConfirmationURL }}` — to zameni). Kod za tu rutu
+     (`src/app/auth/confirm/route.ts`) je već gotov.
 
 Bez ovog koraka: landing stranica i navigacija rade, ali registracija/prijava neće moći da
 stvarno sačuvaju korisnika (Supabase URL je trenutno placeholder u `.env.local`).
