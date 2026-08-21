@@ -2,18 +2,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/Button";
+import { calculateAge } from "@/lib/utils";
 import { signOutAction } from "./actions";
 
 export const metadata = { title: "Profil" };
-
-function calculateAge(birthDate: string) {
-  const today = new Date();
-  const birth = new Date(birthDate);
-  let age = today.getFullYear() - birth.getFullYear();
-  const monthDiff = today.getMonth() - birth.getMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) age--;
-  return age;
-}
 
 export default async function ProfilPage() {
   const supabase = await createClient();

@@ -1,22 +1,33 @@
 import { EmptyState } from "@/components/ui/EmptyState";
+import { getMoreCandidates, touchActivity } from "./actions";
+import { OtkrijDeck } from "./OtkrijDeck";
 
 export const metadata = { title: "Otkrij" };
 
-export default function OtkrijPage() {
+export default async function OtkrijPage() {
+  await touchActivity(); // "aktivan upravo sada" signal za Discovery algoritam (sekcija 26)
+  const { candidates, error } = await getMoreCandidates();
+
   return (
-    <div className="flex flex-col gap-4 px-4 pt-4">
+    <div className="flex h-[75vh] flex-col gap-3 px-4 pt-4">
       <header>
         <h1 className="text-2xl font-bold">
           💘 <span className="text-gradient">Otkrij</span>
         </h1>
-        <p className="text-sm text-[var(--color-text-muted)]">Ljudi iz tvog grada</p>
+        <p className="text-sm text-[var(--color-text-muted)]">Ljudi koji ti najviše odgovaraju</p>
       </header>
 
-      <EmptyState
-        emoji="🚧"
-        title="Otkrij dolazi uskoro"
-        description="Ovde će biti glavni feed sa profilima za lajkovanje — swipe kartice, Personal Match Score i Hot Mode filteri. Gradimo ovo u sledećoj fazi (FAZA 3)."
-      />
+      {error ? (
+        <EmptyState emoji="⚠️" title="Nešto nije u redu" description={error} />
+      ) : candidates.length === 0 ? (
+        <EmptyState
+          emoji="🔍"
+          title="Nema novih profila trenutno"
+          description="Ili si prošao/la sve dostupne profile za sada, ili još nema dovoljno korisnika u tvom gradu i uzrastu koji traže tebe. Svrati kasnije — Sada obaveštava kad se pojavi neko nov."
+        />
+      ) : (
+        <OtkrijDeck initialCandidates={candidates} />
+      )}
     </div>
   );
 }

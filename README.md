@@ -5,7 +5,7 @@ Srpska dating PWA aplikacija — naziv **Srpskomuvanje**. Projekat i dalje živi
 i folder preimenujem). Promena naziva u budućnosti je mehanička (find & replace kroz kod, novi
 domen, novo ime u `manifest.ts`/`layout.tsx`).
 
-## Status: FAZA 1 i FAZA 2 gotove
+## Status: FAZA 1, 2 i 3 gotove
 
 **FAZA 1:**
 - ✅ Next.js 16 (App Router, TypeScript, Tailwind v4, Turbopack)
@@ -27,9 +27,24 @@ Testirano uživo na povezanom Supabase projektu: upload fotografije i videa, ta�
 preračun procenta popunjenosti (50% → 75% → 90%), brisanje sa čišćenjem Storage-a — sve
 radi end-to-end.
 
-Ekrani Otkrij / Match / Poruke i dalje prikazuju iskren "uskoro" placeholder — nema
-izmišljenih lajkova, matcheva ili poruka. Prava logika (swipe, matching, chat) dolazi u
-narednim fazama (vidi mapu puta ispod).
+**FAZA 3:**
+- ✅ Otkrij — swipe kartice (drag ili dugmad ❌ 🔥 ❤️, i strelice na tastaturi za desktop),
+  sa pravim Discovery algoritmom (`discover_profiles` SQL funkcija) koji kombinuje
+  poklapanje interesovanja, popunjenost profila, koliko je nedavno pravljen nalog i koliko
+  je korisnik skoro aktivan — sve sa admin-podesivim težinama (`discovery_scoring_config`)
+- ✅ Lajk / super lajk / preskoči, sa mutual-match logikom u bazi (`like_profile` SQL
+  funkcija, atomski — nema race condition kad oboje lajkuju u istom trenu)
+- ✅ Pravi "MATCH!" ekran sa animacijom kad se dvoje svide
+- ✅ Match stranica prikazuje stvarne matcheve (foto, ime, godine)
+- ✅ Sada prikazuje pravi broj "X te je lajkovalo" (bez otkrivanja identiteta — to je
+  Premium fora za FAZU 8)
+
+Testirano uživo sa 5 test naloga (naizmenično lajkovanje, kreiran pravi obostrani match,
+proveren i "MATCH!" ekran i Match lista). Usput otkrivena i ispravljena prava trka u kodu
+(fetch za nove profile je mogao da krene pre nego što se lajk upiše u bazu).
+
+Ekran Poruke i dalje prikazuje iskren "uskoro" placeholder (chat je FAZA 4) — nema
+izmišljenih poruka.
 
 ## Tech stack i zašto
 
@@ -125,7 +140,7 @@ node scripts/generate-icons.mjs
 
 - [x] **FAZA 1** — arhitektura, baza, auth, osnovni UI, PWA
 - [x] **FAZA 2** — profil, upload fotografija/videa, profile completion (stvarna logika)
-- [ ] **FAZA 3** — Otkrij (swipe), lajkovi, matchevi, Discovery algoritam
+- [x] **FAZA 3** — Otkrij (swipe), lajkovi, matchevi, Discovery algoritam
 - [ ] **FAZA 4** — real-time chat
 - [ ] **FAZA 5** — "Sada" feed sa pravim aktivnostima
 - [ ] **FAZA 6** — Tajna iskra, Duel, Hot Mode, Noćni mod
@@ -164,6 +179,18 @@ node scripts/generate-icons.mjs
   browseru) — nema jeftinog, pouzdanog načina da se to radi bez servera sa ffmpeg-om, što je
   van MVP budžeta. Ako fajl klijent snimi prevelik, dobija jasnu poruku da snimi kraći/manje
   kvalitetan klip.
+- **Discovery algoritam i matching žive u bazi kao SQL funkcije** (`discover_profiles`,
+  `like_profile`), ne u JavaScript kodu. Dva razloga: (1) `like_profile` mora biti atomska
+  operacija (upiši lajk + proveri obostranost + napravi match + pošalji notifikacije) da ne
+  bi dva istovremena lajka napravila duplirane/nepotpune matcheve; (2) obe funkcije su
+  `SECURITY DEFINER` jer moraju da pročitaju tuđe podatke (preference, lajkove) koje RLS
+  inače sakriva — sa internom proverom `auth.uid() = viewer_id` da niko ne može da pozove
+  tuđi feed ili lajkuje u tuđe ime.
+- **Dodata je "passes" tabela** (nije bila u originalnom spisku) — bez pamćenja koga si
+  već preskočio/la, isti profil bi se vrteo ukrug u Otkrij feed-u.
+- **"Ko te je lajkovao" na Sada pokazuje samo broj, ne identitet** — namerno, to je prirodno
+  mesto za Premium foru (sekcija 20 "Ko te želi") kad dođemo do FAZE 8. Broj je uvek stvaran,
+  nikad izmišljen.
 
 ## Pre nego što pravi (nepoznati) korisnici počnu da uploaduju slike
 
