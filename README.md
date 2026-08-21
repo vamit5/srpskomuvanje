@@ -5,7 +5,7 @@ Srpska dating PWA aplikacija — naziv **Srpskomuvanje**. Projekat i dalje živi
 i folder preimenujem). Promena naziva u budućnosti je mehanička (find & replace kroz kod, novi
 domen, novo ime u `manifest.ts`/`layout.tsx`).
 
-## Status: FAZA 1, 2, 3 gotove + deo FAZE 6 (Tajni Srbin/Srpkinja, Duel)
+## Status: FAZA 1, 2, 3, 4 gotove + deo FAZE 6 (Tajni Srbin/Srpkinja, Duel)
 
 **FAZA 1:**
 - ✅ Next.js 16 (App Router, TypeScript, Tailwind v4, Turbopack)
@@ -43,8 +43,29 @@ Testirano uživo sa 5 test naloga (naizmenično lajkovanje, kreiran pravi obostr
 proveren i "MATCH!" ekran i Match lista). Usput otkrivena i ispravljena prava trka u kodu
 (fetch za nove profile je mogao da krene pre nego što se lajk upiše u bazu).
 
-Ekran Poruke i dalje prikazuje iskren "uskoro" placeholder (chat je FAZA 4) — nema
-izmišljenih poruka.
+**FAZA 4:**
+- ✅ Real-time chat po match-u (`/poruke/[matchId]`) — poruke stižu uživo obema stranama
+  bez ručnog osvežavanja stranice (Supabase Realtime, `postgres_changes` na `messages` tabeli)
+- ✅ Indikator "kuca..." (Realtime Broadcast, ne upisuje se u bazu)
+- ✅ Status "pročitano" (✓ poslato → ✓✓ pročitano), uz privatnost — vidi se samo unutar
+  match-a, ne javno
+- ✅ Online status u chat headeru (poštuje `show_online_status` privacy podešavanje)
+- ✅ Lista razgovora (`/poruke`) sa poslednjom porukom, nepročitanim brojem, sortirano po
+  aktivnosti
+- ✅ Prekini match (unmatch) — iz chata, sa potvrdom
+
+Testirano uživo sa dva tab-a otvorena na isti razgovor istovremeno: poruka poslata iz jednog
+taba se pojavila u drugom **bez osvežavanja stranice** — pravi real-time. Testiran i unmatch
+(razgovor je nestao sa liste). "Pročitano"/"kuca..." indikatori su kodom ispravno dizajnirani
+da se ne aktiviraju za sopstvene poruke, pa se ne mogu do kraja potvrditi sa jednim istim
+nalogom u oba taba (mogu se testirati samo sa dva različita naloga) — ali koriste identičan,
+već dokazan real-time kanal.
+
+Usput otkrivena i ispravljena suptilna, ali ozbiljna greška: Realtime konekcija je krenula
+PRE nego što se učita korisnička sesija, pa je server (zbog sigurnosnih pravila koja
+proveravaju ko si) tiho odbacivao sve promene — konekcija je izgledala uspešno uspostavljena,
+ali ništa nije stizalo. Ispravka: sačekati da se sesija učita pre nego što se pretplatimo na
+promene.
 
 **FAZA 6 (samo deo — Tajni Srbin/Srpkinja i Duel; Hot Mode/Noćni mod nisu još rađeni):**
 - ✅ **Tajni Srbin/Srpkinja** (Secret Spark, sekcija 12 iz spec-a) — pošalji nekome anoniman
@@ -159,7 +180,7 @@ node scripts/generate-icons.mjs
 - [x] **FAZA 1** — arhitektura, baza, auth, osnovni UI, PWA
 - [x] **FAZA 2** — profil, upload fotografija/videa, profile completion (stvarna logika)
 - [x] **FAZA 3** — Otkrij (swipe), lajkovi, matchevi, Discovery algoritam
-- [ ] **FAZA 4** — real-time chat
+- [x] **FAZA 4** — real-time chat
 - [ ] **FAZA 5** — "Sada" feed sa pravim aktivnostima
 - [~] **FAZA 6** — Tajni Srbin/Srpkinja ✅, Duel ✅, Hot Mode ⬜, Noćni mod ⬜
 - [ ] **FAZA 7** — push notifikacije (VAPID + service worker push handler je već spreman)
@@ -209,6 +230,15 @@ node scripts/generate-icons.mjs
 - **"Ko te je lajkovao" na Sada pokazuje samo broj, ne identitet** — namerno, to je prirodno
   mesto za Premium foru (sekcija 20 "Ko te želi") kad dođemo do FAZE 8. Broj je uvek stvaran,
   nikad izmišljen.
+- **Realtime kanal mora sačekati `supabase.auth.getSession()` pre `subscribe()`.** Suptilan
+  Supabase gotcha: ako se pretplatiš pre nego što se sesija učita, konekcija se "uspešno"
+  poveže, ali server tiho ne šalje NIŠTA (sigurnosna pravila ne znaju ko si). Ovo je
+  dokumentovano u kodu (`ChatThread.tsx`) da se ne zaboravi kod sledećeg real-time ekrana
+  (npr. "ko je online" u kasnijoj fazi).
+- **Block/Report dugmad nisu još u chatu** iako ih spec pominje uz chat (sekcija 18) —
+  namerno odloženo za FAZU 9 kad pravimo i moderation queue/admin pregled prijava, da ne
+  gradimo dugme koje vodi u prazno. Unmatch (koji ne zahteva admin infrastrukturu) je gotov
+  sada.
 
 ## Pre nego što pravi (nepoznati) korisnici počnu da uploaduju slike
 

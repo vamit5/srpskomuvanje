@@ -396,6 +396,10 @@ create policy "korisnik oznacava kao procitano / soft-delete svoju poruku"
     )
   );
 
+-- Real-time: poruke stižu uživo objema stranama (FAZA 4).
+alter publication supabase_realtime add table messages;
+alter table messages replica identity full;
+
 create table message_reactions (
   id uuid primary key default gen_random_uuid(),
   message_id uuid not null references messages(id) on delete cascade,

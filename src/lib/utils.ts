@@ -5,6 +5,11 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export function isRecentlyActive(lastActiveAt: string | null | undefined, windowMs: number): boolean {
+  if (!lastActiveAt) return false;
+  return Date.now() - new Date(lastActiveAt).getTime() < windowMs;
+}
+
 export function calculateAge(birthDate: string) {
   const today = new Date();
   const birth = new Date(birthDate);

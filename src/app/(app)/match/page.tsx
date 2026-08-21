@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { calculateAge } from "@/lib/utils";
@@ -53,34 +54,36 @@ export default async function MatchPage() {
       ) : (
         <ul className="flex flex-col gap-2">
           {rows.map(({ matchId, other, photo, source }) => (
-            <li
-              key={matchId}
-              className="glass flex items-center gap-3 rounded-2xl px-3 py-3"
-            >
-              {photo?.thumbnail_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={photo.thumbnail_url}
-                  alt={other?.name ?? ""}
-                  className="h-14 w-14 rounded-full object-cover"
-                />
-              ) : (
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-accent text-lg font-bold text-white">
-                  {other?.name?.[0]?.toUpperCase() ?? "?"}
+            <li key={matchId}>
+              <Link
+                href={`/poruke/${matchId}`}
+                className="glass tap-scale flex items-center gap-3 rounded-2xl px-3 py-3"
+              >
+                {photo?.thumbnail_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={photo.thumbnail_url}
+                    alt={other?.name ?? ""}
+                    className="h-14 w-14 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-accent text-lg font-bold text-white">
+                    {other?.name?.[0]?.toUpperCase() ?? "?"}
+                  </div>
+                )}
+                <div className="flex-1">
+                  <p className="flex items-center gap-1.5 font-semibold">
+                    {other?.name ?? "Korisnik"}
+                    {other?.birth_date ? `, ${calculateAge(other.birth_date)}` : ""}
+                    {source === "secret_spark" && (
+                      <span className="rounded-full bg-[var(--color-bg-elevated)] px-2 py-0.5 text-[10px] font-normal text-[var(--color-text-muted)]">
+                        🤫 tajni signal
+                      </span>
+                    )}
+                  </p>
+                  <p className="text-xs text-[var(--color-text-muted)]">Pošalji poruku →</p>
                 </div>
-              )}
-              <div className="flex-1">
-                <p className="flex items-center gap-1.5 font-semibold">
-                  {other?.name ?? "Korisnik"}
-                  {other?.birth_date ? `, ${calculateAge(other.birth_date)}` : ""}
-                  {source === "secret_spark" && (
-                    <span className="rounded-full bg-[var(--color-bg-elevated)] px-2 py-0.5 text-[10px] font-normal text-[var(--color-text-muted)]">
-                      🤫 tajni signal
-                    </span>
-                  )}
-                </p>
-                <p className="text-xs text-[var(--color-text-muted)]">Chat dolazi u FAZI 4 — uskoro 💬</p>
-              </div>
+              </Link>
             </li>
           ))}
         </ul>
