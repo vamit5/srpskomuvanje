@@ -5,8 +5,9 @@ Srpska dating PWA aplikacija — naziv **Srpskomuvanje**. Projekat i dalje živi
 i folder preimenujem). Promena naziva u budućnosti je mehanička (find & replace kroz kod, novi
 domen, novo ime u `manifest.ts`/`layout.tsx`).
 
-## Status: FAZA 1 gotova
+## Status: FAZA 1 i FAZA 2 gotove
 
+**FAZA 1:**
 - ✅ Next.js 16 (App Router, TypeScript, Tailwind v4, Turbopack)
 - ✅ Supabase auth (email + lozinka), zaštićene rute (`src/proxy.ts`)
 - ✅ Kompletna baza podataka (`supabase/schema.sql`) sa Row Level Security
@@ -15,7 +16,18 @@ domen, novo ime u `manifest.ts`/`layout.tsx`).
 - ✅ PWA: manifest, service worker, offline fallback, instalacija na Home Screen
 - ✅ Tamna, premium tema sa pink→violet akcentom
 
-Ekrani Otkrij / Match / Poruke trenutno prikazuju iskren "uskoro" placeholder — nema
+**FAZA 2:**
+- ✅ Upload fotografija (do 6) — kompresija i pravljenje thumbnail-a direktno u browseru,
+  upload direktno u Supabase Storage, redosled/glavna slika, brisanje (i sa Storage-a)
+- ✅ Upload videa (1, do 15s) — provera trajanja i thumbnail iz frejma u browseru
+- ✅ Profile Completion Score se sada stvarno preračunava posle svake izmene (`src/lib/scoring.ts`)
+- ✅ Profil stranica prikazuje pravu glavnu fotografiju
+
+Testirano uživo na povezanom Supabase projektu: upload fotografije i videa, tačan
+preračun procenta popunjenosti (50% → 75% → 90%), brisanje sa čišćenjem Storage-a — sve
+radi end-to-end.
+
+Ekrani Otkrij / Match / Poruke i dalje prikazuju iskren "uskoro" placeholder — nema
 izmišljenih lajkova, matcheva ili poruka. Prava logika (swipe, matching, chat) dolazi u
 narednim fazama (vidi mapu puta ispod).
 
@@ -50,10 +62,12 @@ Otvara se na `http://localhost:3000`.
 2. U **SQL Editor** nalepi ceo sadržaj [`supabase/schema.sql`](supabase/schema.sql) i pokreni.
    Ovo pravi sve tabele, sigurnosna pravila i podrazumevane vrednosti.
 3. U **Storage** napravi tri bucket-a (imena tačno ovako): `photos`, `videos`,
-   `verification-selfies` — ovo aktiviramo u FAZI 2.
-4. U **Project Settings → API** kopiraj `Project URL` i `anon public` ključ.
-5. Kopiraj `.env.local.example` u `.env.local` i popuni te dve vrednosti.
-6. Email potvrda naloga — dve opcije:
+   `verification-selfies`.
+4. U SQL Editoru pokreni i [`supabase/storage-policies.sql`](supabase/storage-policies.sql) —
+   podešava ko sme da čita/piše u ta tri bucket-a.
+5. U **Project Settings → API** kopiraj `Project URL` i `anon public` ključ.
+6. Kopiraj `.env.local.example` u `.env.local` i popuni te dve vrednosti.
+7. Email potvrda naloga — dve opcije:
    - **Brže za sada (preporuka za lokalno testiranje):** Authentication → Sign In / Providers →
      Email → isključi "Confirm email". Korisnik tada odmah upada u onboarding posle registracije,
      bez čekanja na mejl.
@@ -82,12 +96,18 @@ iskra/
       nav/BottomNav.tsx
       ui/                        -- Button, Input, EmptyState
       pwa/ServiceWorkerRegister.tsx
-    lib/supabase/                -- browser + server Supabase klijenti
+    lib/
+      supabase/                  -- browser + server Supabase klijenti
+      media/                     -- kompresija slika/videa u browseru (Canvas API)
+      scoring.ts                 -- Profile Completion Score (jedina definicija, deljena svuda)
     proxy.ts                     -- auth middleware (Next.js 16: middleware.ts -> proxy.ts)
   public/
     sw.js                        -- service worker (ručno pisan, bez build-tool magije)
     icons/                       -- PWA ikonice (generisane iz brand/icon-source.svg)
-  supabase/schema.sql            -- kompletna šema baze + RLS politike
+  supabase/
+    schema.sql                   -- kompletna šema baze + RLS politike
+    storage-policies.sql         -- ko sme da čita/piše u photos/videos/verification-selfies
+    migrations/                  -- inkrementalne izmene za projekte koji već imaju schema.sql
   scripts/generate-icons.mjs     -- pokreni ponovo kad dobijemo pravi logo
 ```
 
@@ -104,7 +124,7 @@ node scripts/generate-icons.mjs
 ## Mapa puta (iz specifikacije, sekcija 48)
 
 - [x] **FAZA 1** — arhitektura, baza, auth, osnovni UI, PWA
-- [ ] **FAZA 2** — profil, upload fotografija/videa, profile completion (stvarna logika)
+- [x] **FAZA 2** — profil, upload fotografija/videa, profile completion (stvarna logika)
 - [ ] **FAZA 3** — Otkrij (swipe), lajkovi, matchevi, Discovery algoritam
 - [ ] **FAZA 4** — real-time chat
 - [ ] **FAZA 5** — "Sada" feed sa pravim aktivnostima
@@ -120,15 +140,39 @@ node scripts/generate-icons.mjs
   koštaju po poruci, email je besplatan i Supabase ga podržava iz kutije. Telefonski broj/SMS OTP
   možemo dodati kasnije ako se pokaže da korisnici to očekuju.
 - **Onboarding je skraćen na 5 koraka** (ime+datum+pol, koga tražiš, grad, opis, interesovanja)
-  umesto punih 11 iz specifikacije — upload fotografija namerno nije uključen jer photo
-  pipeline (kompresija, WebP, thumbnail) dolazi tek u FAZI 2. Kad to bude gotovo, dodajemo
-  korak za fotografije i onboarding postaje kompletan.
+  umesto punih 11 iz specifikacije — upload fotografija namerno nije u samom wizard-u, korisnik
+  ga radi odmah posle na `/profil/foto` (koji sada postoji, FAZA 2). Kad hoćemo, lako je dodati
+  fotografiju kao poslednji korak wizard-a — kod za upload je već gotov i deljiv.
 - **Service worker je ručno pisan** (`public/sw.js`) umesto preko Serwist/Workbox biblioteke —
   Next.js 16 po difoltu koristi Turbopack za build, a ta biblioteka za sada zvanično ne
   podržava Turbopack (samo webpack). Ručni SW je jednostavniji, lakši za održavanje i radi
   identično u razvoju i produkciji.
-- **Profile Completion Score** je namerno konzervativan (max ~60% bez foto/videa) da ne lažemo
-  korisnika da mu je profil "kompletan" pre nego što stvarno ima sliku.
+- **Profile Completion Score** je namerno konzervativan (max 50% bez foto/videa, profilna slika
+  nosi najviše bodova) da ne lažemo korisnika da mu je profil "kompletan" pre nego što stvarno
+  ima sliku.
+- **Upload ide direktno iz browsera u Supabase Storage, ne preko našeg servera.** Razlog:
+  serverless platforme (Vercel) imaju tvrd limit veličine requesta (par MB) koji bi razbio
+  upload videa. Slika/video se prvo kompresuje u browseru (Canvas API — ista tehnika uzgred
+  briše EXIF/GPS metapodatke iz slike, dobro za privatnost), pa ide pravo u Storage, a naš
+  server samo upiše red u bazu. Sigurnost je u Storage RLS pravilima
+  (`supabase/storage-policies.sql`): svako sme da upload-uje/briše SAMO u svom folderu.
+- **Nema automatske moderacije sadržaja fotografija/videa još** (NSFW/maloletnost detekcija —
+  to je FAZA 9). Upload se odmah odobrava ("moderation_status: approved"). Ovo je prihvatljivo
+  za razvoj/testiranje, ali **mora biti rešeno pre nego što aplikacija ide živim korisnicima** —
+  vidi listu ispod.
+- **Video se ne re-enkoduje/kompresuje** (samo se validira trajanje ≤15s i veličina ≤25MB u
+  browseru) — nema jeftinog, pouzdanog načina da se to radi bez servera sa ffmpeg-om, što je
+  van MVP budžeta. Ako fajl klijent snimi prevelik, dobija jasnu poruku da snimi kraći/manje
+  kvalitetan klip.
+
+## Pre nego što pravi (nepoznati) korisnici počnu da uploaduju slike
+
+Ovo NIJE hitno dok samo ti i ja testiramo, ali ne sme se preskočiti pre javnog lansiranja:
+
+- [ ] Automatska NSFW/sadržajna moderacija fotografija i videa (FAZA 9) — trenutno ništa ne
+      sprečava neprikladan upload da odmah bude vidljiv.
+- [ ] Provera maloletnosti / signali za moderatora (FAZA 9).
+- [ ] Admin panel sa redom za pregled prijavljenog sadržaja (FAZA 9).
 
 ## Šta može biti skupo kasnije (na radaru, ne hitno)
 

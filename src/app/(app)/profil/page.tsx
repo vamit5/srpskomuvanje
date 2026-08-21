@@ -1,3 +1,5 @@
+import Image from "next/image";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/Button";
 import { signOutAction } from "./actions";
@@ -19,11 +21,19 @@ export default async function ProfilPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("name, birth_date, city, is_verified, profile_completion_score, bio, interests")
-    .eq("id", user!.id)
-    .single();
+  const [{ data: profile }, { data: primaryPhoto }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("name, birth_date, city, is_verified, profile_completion_score, bio, interests")
+      .eq("id", user!.id)
+      .single(),
+    supabase
+      .from("profile_photos")
+      .select("thumbnail_url")
+      .eq("profile_id", user!.id)
+      .eq("is_primary", true)
+      .maybeSingle(),
+  ]);
 
   if (!profile) return null;
 
@@ -33,9 +43,19 @@ export default async function ProfilPage() {
   return (
     <div className="flex flex-col gap-6 px-4 pt-4">
       <header className="flex items-center gap-4">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-accent text-xl font-bold text-white">
-          {profile.name?.[0]?.toUpperCase() ?? "?"}
-        </div>
+        {primaryPhoto?.thumbnail_url ? (
+          <Image
+            src={primaryPhoto.thumbnail_url}
+            alt={profile.name}
+            width={64}
+            height={64}
+            className="h-16 w-16 rounded-full object-cover"
+          />
+        ) : (
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-accent text-xl font-bold text-white">
+            {profile.name?.[0]?.toUpperCase() ?? "?"}
+          </div>
+        )}
         <div>
           <h1 className="flex items-center gap-1 text-xl font-bold">
             {profile.name}, {age}
@@ -58,7 +78,9 @@ export default async function ProfilPage() {
         </div>
         {score < 100 && (
           <p className="mt-2 text-xs text-[var(--color-text-muted)]">
-            Dodaj još fotografija i video da povećaš vidljivost profila (uskoro — FAZA 2).
+            {primaryPhoto
+              ? "Dodaj još fotografija ili video da profil bude još jači."
+              : "Dodaj profilnu fotografiju — najviše utiče na to koliko će te ljudi videti."}
           </p>
         )}
       </section>
@@ -87,9 +109,11 @@ export default async function ProfilPage() {
       ) : null}
 
       <div className="flex flex-col gap-2">
-        <Button variant="secondary" disabled>
-          Uredi profil (uskoro)
-        </Button>
+        <Link href="/profil/foto">
+          <Button variant="secondary" className="w-full">
+            Fotografije i video
+          </Button>
+        </Link>
         <form action={signOutAction}>
           <Button variant="ghost" type="submit" className="w-full">
             Odjavi se

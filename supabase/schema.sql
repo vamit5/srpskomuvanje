@@ -144,6 +144,8 @@ create table profile_photos (
   profile_id uuid not null references profiles(id) on delete cascade,
   url text not null,
   thumbnail_url text,
+  storage_path text, -- putanja u Storage bucket-u "photos" (za brisanje fajla)
+  thumbnail_path text,
   position smallint not null default 0,
   is_primary boolean not null default false,
   width smallint,
@@ -169,6 +171,8 @@ create table profile_videos (
   profile_id uuid not null references profiles(id) on delete cascade,
   url text not null,
   thumbnail_url text,
+  storage_path text, -- putanja u Storage bucket-u "videos" (za brisanje fajla)
+  thumbnail_path text,
   duration_seconds smallint not null check (duration_seconds <= 15),
   position smallint not null default 0,
   moderation_status text not null default 'pending' check (moderation_status in ('pending', 'approved', 'rejected')),

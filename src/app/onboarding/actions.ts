@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { computeProfileCompletionScore } from "@/lib/scoring";
 
 export interface OnboardingInput {
   name: string;
@@ -20,18 +21,6 @@ function calculateAge(birthDateStr: string) {
   const monthDiff = today.getMonth() - birth.getMonth();
   if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) age--;
   return age;
-}
-
-// Profile Completion Score (sekcija 9) -- konzervativna verzija dok fotografije
-// i video nisu implementirani (FAZA 2). Nikad ne prikazujemo 100% pre nego što
-// korisnik stvarno doda foto/video, da ne lažemo o kompletnosti profila.
-function computeCompletionScore(input: OnboardingInput) {
-  let score = 30; // ime + datum rodjenja + pol (obavezno polje, uvek popunjeno)
-  if (input.city.trim()) score += 15;
-  if (input.bio.trim().length >= 10) score += 15;
-  if (input.interests.length >= 3) score += 15;
-  // Preostalih 25% čekaju profilnu fotografiju + video (FAZA 2).
-  return score;
 }
 
 export async function completeOnboarding(input: OnboardingInput) {
@@ -55,7 +44,15 @@ export async function completeOnboarding(input: OnboardingInput) {
     return { error: "Izaberi koga želiš da upoznaš." };
   }
 
-  const score = computeCompletionScore(input);
+  // Nema fotografija/videa u ovom trenutku — dodaju se odmah posle onboardinga
+  // na /profil/foto, i score se tada automatski preračunava (vidi src/lib/scoring.ts).
+  const score = computeProfileCompletionScore({
+    hasCity: !!input.city.trim(),
+    hasBio: input.bio.trim().length >= 10,
+    interestsCount: input.interests.length,
+    photoCount: 0,
+    hasVideo: false,
+  });
 
   const { error: profileError } = await supabase.from("profiles").upsert({
     id: user.id,
