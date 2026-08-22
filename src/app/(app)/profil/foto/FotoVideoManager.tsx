@@ -326,7 +326,6 @@ export function FotoVideoManager({
           ref={photoInputRef}
           type="file"
           accept="image/*"
-          capture="environment"
           className="hidden"
           onChange={handlePhotoPick}
         />
@@ -383,7 +382,6 @@ export function FotoVideoManager({
           ref={videoInputRef}
           type="file"
           accept="video/mp4,video/webm,video/quicktime"
-          capture="environment"
           className="hidden"
           onChange={handleVideoPick}
         />
