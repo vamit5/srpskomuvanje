@@ -58,6 +58,10 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon|icons|apple-touch-icon|sw.js|manifest.webmanifest|.*\\.(?:png|jpg|jpeg|webp|avif|svg|ico)$).*)",
+    // "api" je namerno izuzeto -- API rute (npr. Stripe webhook) nemaju
+    // ulogovanog korisnika/kolačić po prirodi posla i imaju SOPSTVENU
+    // proveru (Stripe potpis), pa ih ovaj auth-gate middleware ne sme
+    // preusmeravati na /prijava (307 je razbijao Stripe webhook isporuku).
+    "/((?!api|_next/static|_next/image|favicon|icons|apple-touch-icon|sw.js|manifest.webmanifest|.*\\.(?:png|jpg|jpeg|webp|avif|svg|ico)$).*)",
   ],
 };
