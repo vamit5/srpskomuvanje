@@ -358,9 +358,10 @@ export function ChatThread({
             type="button"
             onClick={openNightPanel}
             aria-label="Noćno muvanje"
-            className="tap-scale flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--color-bg-elevated)] text-lg"
+            className="tap-scale relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-accent text-lg shadow-[0_4px_16px_-4px_rgba(255,45,107,0.55)]"
           >
             🌙😈
+            <span className="absolute -inset-0.5 -z-10 animate-pulse rounded-full bg-gradient-accent opacity-40 blur-md" />
           </button>
           <input
             type="text"

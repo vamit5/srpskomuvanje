@@ -193,6 +193,11 @@ export interface NightContentView {
   walletBalance: number;
   premium: boolean;
   isSender: boolean;
+  // Za pošiljaočevu sopstvenu poruku (uvek "locked: false") -- ovo govori
+  // da li je sadržaj STVARNO zaključan za PRIMAOCA, da pošiljalac zna da
+  // se nešto desilo umesto da izgleda kao da je poslato "normalno".
+  isFreeForReceiver: boolean;
+  pendingReview: boolean;
 }
 
 export async function getNightContentView(contentId: string): Promise<NightContentView> {
@@ -207,6 +212,8 @@ export async function getNightContentView(contentId: string): Promise<NightConte
     walletBalance: 0,
     premium: false,
     isSender: false,
+    isFreeForReceiver: false,
+    pendingReview: false,
   };
   if (!user) return { ...empty, error: "Nisi prijavljen/a." };
 
@@ -256,6 +263,8 @@ export async function getNightContentView(contentId: string): Promise<NightConte
     walletBalance: wallet?.balance_credits ?? 0,
     premium,
     isSender,
+    isFreeForReceiver: content.is_free,
+    pendingReview,
   };
 }
 

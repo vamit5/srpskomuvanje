@@ -1,9 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2, Flame, Flag } from "lucide-react";
+import { Loader2, Flame, Flag, Lock, Eye, Clock } from "lucide-react";
 import { getNightContentView, unlockNightContent, reportNightContent } from "../../_night/actions";
 import { CreditsModal } from "./CreditsModal";
+
+function ReportButton({ reported, onClick }: { reported: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label="Prijavi"
+      className="tap-scale absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-sm"
+    >
+      <Flag size={13} className={reported ? "fill-current text-[var(--color-danger)]" : undefined} />
+    </button>
+  );
+}
 
 export function NightFlirtingBubble({ contentId, isMine }: { contentId: string; isMine: boolean }) {
   const [view, setView] = useState<Awaited<ReturnType<typeof getNightContentView>> | null>(null);
@@ -45,7 +58,7 @@ export function NightFlirtingBubble({ contentId, isMine }: { contentId: string; 
 
   if (!view) {
     return (
-      <div className="flex h-40 w-40 items-center justify-center rounded-2xl bg-[var(--color-bg-elevated)]">
+      <div className="flex h-44 w-44 items-center justify-center rounded-3xl bg-[var(--color-bg-elevated)]">
         <Loader2 size={20} className="animate-spin text-[var(--color-text-muted)]" />
       </div>
     );
@@ -53,30 +66,46 @@ export function NightFlirtingBubble({ contentId, isMine }: { contentId: string; 
 
   if (view.error) {
     return (
-      <div className="w-56 rounded-2xl bg-[var(--color-bg-elevated)] px-4 py-3 text-sm text-[var(--color-text-muted)]">
+      <div className="w-60 rounded-3xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-4 py-3 text-sm text-[var(--color-text-muted)]">
         🌙 {view.error}
+      </div>
+    );
+  }
+
+  // Poslato, ali još čeka ručni pregled (crveni/granični slučaj) -- ni
+  // pošiljalac ne vidi da je "normalno" poslato, da ne pomisli da ništa
+  // nije urađeno.
+  if (view.pendingReview) {
+    return (
+      <div className="flex w-60 items-center gap-2 rounded-3xl border border-[var(--color-warning)]/40 bg-[var(--color-warning)]/10 px-4 py-3 text-sm">
+        <Clock size={16} className="shrink-0 text-[var(--color-warning)]" />
+        <span>{isMine ? "Šalje se na pregled pre isporuke..." : "Stiže uskoro."}</span>
       </div>
     );
   }
 
   if (!view.locked) {
     return (
-      <div className="relative w-56 overflow-hidden rounded-2xl bg-black">
+      <div className="relative w-60 overflow-hidden rounded-3xl bg-black shadow-lg">
         {view.kind === "video" ? (
           <video src={view.url ?? undefined} controls className="max-h-80 w-full" />
         ) : (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={view.url ?? undefined} alt="Noćno muvanje" className="max-h-80 w-full object-contain" />
         )}
-        {!isMine && (
-          <button
-            type="button"
-            onClick={handleReport}
-            aria-label="Prijavi"
-            className="tap-scale absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white"
-          >
-            <Flag size={12} className={reported ? "fill-current" : undefined} />
-          </button>
+        {!isMine && <ReportButton reported={reported} onClick={handleReport} />}
+        {isMine && (
+          <div className="absolute inset-x-0 bottom-0 flex items-center gap-1.5 bg-gradient-to-t from-black/85 to-transparent px-3 pb-2 pt-6 text-[11px] font-medium text-white">
+            {view.isFreeForReceiver ? (
+              <>
+                <Eye size={12} /> Odmah vidljivo
+              </>
+            ) : (
+              <>
+                <Lock size={12} /> Zaključano dok ne otključa
+              </>
+            )}
+          </div>
         )}
       </div>
     );
@@ -84,45 +113,39 @@ export function NightFlirtingBubble({ contentId, isMine }: { contentId: string; 
 
   return (
     <>
-      <div className="w-56 overflow-hidden rounded-2xl bg-black">
+      <div className="w-60 overflow-hidden rounded-3xl bg-black shadow-lg">
         <div className="relative">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={view.url ?? undefined} alt="" className="h-56 w-full object-cover" />
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/40 px-4 text-center text-white">
-            <Flame size={22} />
+          <img src={view.url ?? undefined} alt="" className="h-64 w-full object-cover" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-gradient-to-b from-black/50 via-black/55 to-black/70 px-5 text-center text-white">
+            <Flame size={26} className="text-[var(--color-accent)] drop-shadow" />
             {isMine ? (
-              <p className="text-xs font-medium">😈 Poslato — čeka da se otključa</p>
+              <>
+                <p className="text-sm font-semibold">😈 Poslato</p>
+                <p className="text-xs text-white/75">Čeka da otključa</p>
+              </>
             ) : (
               <>
-                <p className="text-sm font-semibold">😈 Nešto ti je poslato.</p>
+                <p className="text-base font-bold">😈 Nešto ti je poslato</p>
                 <p className="text-xs text-white/80">Hoćeš da vidiš?</p>
                 <button
                   type="button"
                   onClick={handleUnlock}
                   disabled={unlocking}
-                  className="tap-scale mt-1 rounded-full bg-gradient-accent px-4 py-2 text-xs font-bold disabled:opacity-50"
+                  className="tap-scale mt-2 rounded-full bg-gradient-accent px-6 py-3 text-sm font-bold shadow-[0_8px_24px_-8px_rgba(255,45,107,0.6)] disabled:opacity-50"
                 >
                   {unlocking
                     ? "..."
                     : view.premium
-                      ? "OTKLJUČAJ (Premium)"
+                      ? "OTKLJUČAJ (Premium) 👑"
                       : `OTKLJUČAJ · ${view.unlockCostCredits} 🔥`}
                 </button>
               </>
             )}
           </div>
-          {!isMine && (
-            <button
-              type="button"
-              onClick={handleReport}
-              aria-label="Prijavi"
-              className="tap-scale absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white"
-            >
-              <Flag size={12} className={reported ? "fill-current" : undefined} />
-            </button>
-          )}
+          {!isMine && <ReportButton reported={reported} onClick={handleReport} />}
         </div>
-        {error && <p className="bg-[var(--color-danger)]/20 px-2 py-1 text-center text-[10px] text-white">{error}</p>}
+        {error && <p className="bg-[var(--color-danger)]/20 px-3 py-2 text-center text-xs text-white">{error}</p>}
       </div>
       {showCredits && <CreditsModal onClose={() => setShowCredits(false)} />}
     </>

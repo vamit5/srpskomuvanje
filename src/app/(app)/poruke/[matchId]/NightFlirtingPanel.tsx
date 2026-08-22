@@ -198,48 +198,58 @@ export function NightFlirtingPanel({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 sm:items-center">
-      <div className="w-full max-w-sm rounded-t-3xl bg-[var(--color-bg-card)] p-5 sm:rounded-3xl">
-        <div className="mb-1 flex items-center justify-between">
-          <h2 className="text-lg font-bold">
-            🌙 <span className="text-gradient">Noćno muvanje</span>
-          </h2>
-          <button type="button" onClick={onClose} className="tap-scale text-[var(--color-text-muted)]" aria-label="Zatvori">
-            <X size={20} />
-          </button>
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-sm sm:items-center">
+      <div className="w-full max-w-sm overflow-hidden rounded-t-3xl bg-[var(--color-bg-card)] sm:rounded-3xl">
+        <div className="relative overflow-hidden bg-gradient-accent px-5 pb-6 pt-5 text-white">
+          <div className="mb-3 flex items-center justify-between">
+            <span className="text-3xl">🌙</span>
+            <button
+              type="button"
+              onClick={onClose}
+              className="tap-scale flex h-8 w-8 items-center justify-center rounded-full bg-black/20 text-white"
+              aria-label="Zatvori"
+            >
+              <X size={18} />
+            </button>
+          </div>
+          {!limitReached && !busy && (
+            <>
+              <h2 className="text-xl font-extrabold leading-tight">😈 Pokaži svoj najjači adut</h2>
+              <p className="mt-1 text-sm text-white/85">Što manje odeće, to bolje (najveće šanse bez odeće)</p>
+            </>
+          )}
+          {(limitReached || busy) && <h2 className="text-xl font-extrabold">Noćno muvanje</h2>}
         </div>
 
-        {limitReached ? (
-          <div className="py-6 text-center">
-            <p className="text-3xl">🌙</p>
-            <p className="mt-2 font-semibold">Iskoristio/la si dnevni limit</p>
-            <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-              Vrati se sutra, ili postani Premium za veći dnevni limit.
-            </p>
-          </div>
-        ) : busy ? (
-          <div className="flex flex-col items-center gap-3 py-8">
-            <Loader2 size={28} className="animate-spin text-[var(--color-accent)]" />
-            <p className="text-sm text-[var(--color-text-muted)]">{busy}</p>
-          </div>
-        ) : (
-          <>
-            <p className="mb-1 text-sm font-semibold">😈 Pokaži svoj najjači adut</p>
-            <p className="mb-4 text-xs text-[var(--color-text-muted)]">
-              Što manje odeće, to bolje (najveće šanse bez odeće)
-            </p>
-
-            <div className="grid grid-cols-2 gap-2">
+        <div className="p-5">
+          {limitReached ? (
+            <div className="py-4 text-center">
+              <p className="text-3xl">🌙</p>
+              <p className="mt-2 font-semibold">Iskoristio/la si dnevni limit</p>
+              <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+                Vrati se sutra, ili postani Premium za veći dnevni limit.
+              </p>
+            </div>
+          ) : busy ? (
+            <div className="flex flex-col items-center gap-3 py-8">
+              <Loader2 size={28} className="animate-spin text-[var(--color-accent)]" />
+              <p className="text-sm text-[var(--color-text-muted)]">{busy}</p>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => {
                   logNightEvent("night_flirting_gallery_opened", { kind: "photo" });
                   galleryPhotoRef.current?.click();
                 }}
-                className="tap-scale flex flex-col items-center gap-1 rounded-2xl border border-[var(--color-border-strong)] px-3 py-4"
+                className="tap-scale flex flex-col items-center gap-2 rounded-2xl bg-[var(--color-bg-elevated)] px-3 py-5 active:brightness-110"
               >
-                <ImageIcon size={22} />
-                <span className="text-xs">Izaberi iz galerije</span>
+                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-accent text-white">
+                  <ImageIcon size={20} />
+                </span>
+                <span className="text-xs font-medium">Izaberi iz galerije</span>
               </button>
               <button
                 type="button"
@@ -247,10 +257,12 @@ export function NightFlirtingPanel({
                   logNightEvent("night_flirting_camera_opened", { kind: "photo" });
                   cameraPhotoRef.current?.click();
                 }}
-                className="tap-scale flex flex-col items-center gap-1 rounded-2xl border border-[var(--color-border-strong)] px-3 py-4"
+                className="tap-scale flex flex-col items-center gap-2 rounded-2xl bg-[var(--color-bg-elevated)] px-3 py-5 active:brightness-110"
               >
-                <Camera size={22} />
-                <span className="text-xs">Snimi sada</span>
+                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-accent text-white">
+                  <Camera size={20} />
+                </span>
+                <span className="text-xs font-medium">Snimi sada</span>
               </button>
               <button
                 type="button"
@@ -258,10 +270,12 @@ export function NightFlirtingPanel({
                   logNightEvent("night_flirting_gallery_opened", { kind: "video" });
                   galleryVideoRef.current?.click();
                 }}
-                className="tap-scale flex flex-col items-center gap-1 rounded-2xl border border-[var(--color-border-strong)] px-3 py-4"
+                className="tap-scale flex flex-col items-center gap-2 rounded-2xl bg-[var(--color-bg-elevated)] px-3 py-5 active:brightness-110"
               >
-                <FolderOpen size={22} />
-                <span className="text-xs">Izaberi video</span>
+                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-accent text-white">
+                  <FolderOpen size={20} />
+                </span>
+                <span className="text-xs font-medium">Izaberi video</span>
               </button>
               <button
                 type="button"
@@ -269,20 +283,23 @@ export function NightFlirtingPanel({
                   logNightEvent("night_flirting_camera_opened", { kind: "video" });
                   cameraVideoRef.current?.click();
                 }}
-                className="tap-scale flex flex-col items-center gap-1 rounded-2xl border border-[var(--color-border-strong)] px-3 py-4"
+                className="tap-scale flex flex-col items-center gap-2 rounded-2xl bg-[var(--color-bg-elevated)] px-3 py-5 active:brightness-110"
               >
-                <VideoIcon size={22} />
-                <span className="text-xs">Snimi video</span>
+                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-accent text-white">
+                  <VideoIcon size={20} />
+                </span>
+                <span className="text-xs font-medium">Snimi video</span>
               </button>
-            </div>
+              </div>
 
-            <p className="mt-3 text-center text-xs text-[var(--color-text-faint)]">
-              Preostalo danas: {Math.max(dailyLimit - sentToday, 0)}
-            </p>
-          </>
-        )}
+              <p className="mt-4 text-center text-xs text-[var(--color-text-faint)]">
+                Preostalo danas: {Math.max(dailyLimit - sentToday, 0)}
+              </p>
+            </>
+          )}
 
-        {error && <p className="mt-3 text-sm text-[var(--color-danger)]">{error}</p>}
+          {error && <p className="mt-3 text-sm text-[var(--color-danger)]">{error}</p>}
+        </div>
 
         <input ref={galleryPhotoRef} type="file" accept="image/*" className="hidden" onChange={(e) => handlePick(e, "photo")} />
         <input
