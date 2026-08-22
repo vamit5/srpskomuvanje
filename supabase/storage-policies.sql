@@ -90,3 +90,37 @@ drop policy if exists "korisnik upload-uje samo svoj verifikacioni selfi" on sto
 create policy "korisnik upload-uje samo svoj verifikacioni selfi"
   on storage.objects for insert
   with check (bucket_id = 'verification-selfies' and (storage.foldername(name))[1] = auth.uid()::text);
+
+-- NIGHT-FLIRTING ("Noćno muvanje", FAZA 11) -- privatno, isti obrazac kao
+-- verification-selfies. NAMERNO: primalac nikad ne čita ovaj bucket
+-- direktno svojim klijentom (čak ni posle otključavanja) -- original mu
+-- se servira ISKLJUČIVO preko potpisanog (signed) URL-a koji generiše
+-- server (admin klijent) posle eksplicitne provere pristupa u kodu. Ova
+-- politika postoji samo da vlasnik (pošiljalac) i admin mogu direktno da
+-- upravljaju svojim fajlovima; sve ostalo ide preko servera.
+update storage.buckets set
+  public = false,
+  file_size_limit = 26214400,
+  allowed_mime_types = array['image/jpeg', 'image/png', 'image/webp', 'video/mp4', 'video/webm', 'video/quicktime']
+where id = 'night-flirting';
+
+drop policy if exists "vlasnik i admin citaju night-flirting" on storage.objects;
+create policy "vlasnik i admin citaju night-flirting"
+  on storage.objects for select
+  using (
+    bucket_id = 'night-flirting'
+    and ((storage.foldername(name))[1] = auth.uid()::text or is_admin())
+  );
+
+drop policy if exists "korisnik upload-uje samo u svoj folder (night-flirting)" on storage.objects;
+create policy "korisnik upload-uje samo u svoj folder (night-flirting)"
+  on storage.objects for insert
+  with check (bucket_id = 'night-flirting' and (storage.foldername(name))[1] = auth.uid()::text);
+
+drop policy if exists "korisnik i admin brisu night-flirting" on storage.objects;
+create policy "korisnik i admin brisu night-flirting"
+  on storage.objects for delete
+  using (
+    bucket_id = 'night-flirting'
+    and ((storage.foldername(name))[1] = auth.uid()::text or is_admin())
+  );

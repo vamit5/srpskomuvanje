@@ -43,7 +43,7 @@ export async function getConversations(): Promise<{ conversations: Conversation[
       .eq("moderation_status", "approved"),
     supabase
       .from("messages")
-      .select("match_id, content, created_at, sender_id")
+      .select("match_id, content, night_content_id, created_at, sender_id")
       .in("match_id", matchIds)
       .order("created_at", { ascending: false }),
     supabase
@@ -54,7 +54,10 @@ export async function getConversations(): Promise<{ conversations: Conversation[
       .is("read_at", null),
   ]);
 
-  const lastByMatch = new Map<string, { content: string | null; created_at: string; sender_id: string }>();
+  const lastByMatch = new Map<
+    string,
+    { content: string | null; night_content_id: string | null; created_at: string; sender_id: string }
+  >();
   for (const m of recentMessages ?? []) {
     if (!lastByMatch.has(m.match_id)) lastByMatch.set(m.match_id, m);
   }
@@ -73,7 +76,13 @@ export async function getConversations(): Promise<{ conversations: Conversation[
       otherId,
       otherName: other?.name ?? "Korisnik",
       otherPhotoUrl: photo?.thumbnail_url ?? null,
-      lastMessage: last ? { content: last.content, createdAt: last.created_at, isMine: last.sender_id === user.id } : null,
+      lastMessage: last
+        ? {
+            content: last.night_content_id ? "🌙 Noćno muvanje" : last.content,
+            createdAt: last.created_at,
+            isMine: last.sender_id === user.id,
+          }
+        : null,
       unreadCount: unreadByMatch.get(m.id) ?? 0,
       matchedAt: m.matched_at,
     };
@@ -116,7 +125,7 @@ export async function sendMessage(
   const { data, error } = await supabase
     .from("messages")
     .insert({ match_id: matchId, sender_id: user.id, content: trimmed })
-    .select("id, match_id, sender_id, content, image_url, created_at, read_at")
+    .select("id, match_id, sender_id, content, image_url, night_content_id, created_at, read_at")
     .single();
 
   if (error || !data) return { error: "Ne mogu da pošaljem poruku. Pokušaj ponovo.", message: null };
@@ -173,6 +182,7 @@ export interface MessageRow {
   sender_id: string;
   content: string | null;
   image_url: string | null;
+  night_content_id: string | null;
   created_at: string;
   read_at: string | null;
 }

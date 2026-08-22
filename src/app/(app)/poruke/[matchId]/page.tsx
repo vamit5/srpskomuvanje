@@ -37,7 +37,7 @@ export default async function ChatPage({ params }: { params: Promise<{ matchId: 
       .maybeSingle(),
     supabase
       .from("messages")
-      .select("id, match_id, sender_id, content, image_url, created_at, read_at")
+      .select("id, match_id, sender_id, content, image_url, night_content_id, created_at, read_at")
       .eq("match_id", matchId)
       .order("created_at"),
   ]);

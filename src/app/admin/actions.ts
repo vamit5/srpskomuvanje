@@ -104,6 +104,56 @@ export async function deactivateEvent(eventId: string): Promise<{ error: string 
 }
 
 /**
+ * Noćno muvanje: LOCK/UNLOCK/MARK SAFE. Admin odluka ima prioritet nad
+ * automatskom klasifikacijom (traženo u specifikaciji).
+ */
+export async function reviewNightContent(
+  contentId: string,
+  decision: "admin_locked" | "admin_unlocked" | "admin_marked_safe",
+  note: string
+): Promise<{ error: string | null }> {
+  const { supabase, isAdmin } = await requireAdmin();
+  if (!isAdmin) return { error: "Nemaš admin pristup." };
+
+  const { data, error } = await supabase
+    .rpc("admin_review_night_content", { p_content_id: contentId, p_decision: decision, p_note: note || null })
+    .single();
+  if (error || !data) return { error: "Ne mogu da sačuvam odluku." };
+
+  const row = data as { ok: boolean; error: string | null };
+  if (!row.ok) return { error: row.error ?? "Ne mogu da sačuvam odluku." };
+
+  revalidatePath("/admin/nocno-muvanje");
+  return { error: null };
+}
+
+/** DELETE -- posebna operacija (ne samo status) jer mora da obriše i Storage fajlove. */
+export async function deleteNightContent(contentId: string): Promise<{ error: string | null }> {
+  const { isAdmin } = await requireAdmin();
+  if (!isAdmin) return { error: "Nemaš admin pristup." };
+
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const admin = createAdminClient();
+
+  const { data: content } = await admin
+    .from("night_flirting_content")
+    .select("original_path, preview_path")
+    .eq("id", contentId)
+    .maybeSingle();
+
+  if (content) {
+    const paths = [content.original_path, content.preview_path].filter(Boolean) as string[];
+    if (paths.length) await admin.storage.from("night-flirting").remove(paths);
+  }
+
+  const { error } = await admin.from("night_flirting_content").delete().eq("id", contentId);
+  if (error) return { error: "Ne mogu da obrišem sadržaj." };
+
+  revalidatePath("/admin/nocno-muvanje");
+  return { error: null };
+}
+
+/**
  * Ručna odluka o graničnom slučaju (moderation_status='pending') iz
  * automatske NSFW provere (sekcija 9/FAZA 9) -- ili o već odbijenoj
  * fotografiji/videu ako admin proceni da je automatska provera pogrešila.

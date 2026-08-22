@@ -25,7 +25,8 @@ export function readVideoMeta(file: File): Promise<{ duration: number; width: nu
   });
 }
 
-export function captureVideoThumbnail(file: File, seekTo = 0.3): Promise<Blob> {
+/** Uzima frejmove na nekoliko procenata trajanja videa (0-1), kao blob-ove. */
+export function captureVideoFrames(file: File, positions: number[]): Promise<Blob[]> {
   return new Promise((resolve, reject) => {
     const video = document.createElement("video");
     video.preload = "metadata";
@@ -34,27 +35,44 @@ export function captureVideoThumbnail(file: File, seekTo = 0.3): Promise<Blob> {
     video.src = URL.createObjectURL(file);
 
     const cleanup = () => URL.revokeObjectURL(video.src);
+    const frames: Blob[] = [];
+    let i = 0;
+
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    function captureNext() {
+      if (i >= positions.length) {
+        cleanup();
+        resolve(frames);
+        return;
+      }
+      const target = Math.min(
+        Math.max(positions[i] * video.duration, 0),
+        Math.max(video.duration - 0.1, 0)
+      );
+      video.currentTime = target;
+    }
 
     video.onloadedmetadata = () => {
-      video.currentTime = Math.min(seekTo, Math.max(video.duration - 0.1, 0));
-    };
-
-    video.onseeked = () => {
-      const canvas = document.createElement("canvas");
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
-      const ctx = canvas.getContext("2d");
       if (!ctx) {
         cleanup();
         reject(new Error("Ovaj pregledač ne podržava obradu videa."));
         return;
       }
+      captureNext();
+    };
+
+    video.onseeked = () => {
+      if (!ctx) return;
       ctx.drawImage(video, 0, 0);
       canvas.toBlob(
         (blob) => {
-          cleanup();
-          if (blob) resolve(blob);
-          else reject(new Error("Ne mogu da napravim thumbnail za video."));
+          if (blob) frames.push(blob);
+          i += 1;
+          captureNext();
         },
         "image/webp",
         0.8
@@ -66,4 +84,10 @@ export function captureVideoThumbnail(file: File, seekTo = 0.3): Promise<Blob> {
       reject(new Error("Ne mogu da učitam ovaj video fajl."));
     };
   });
+}
+
+export async function captureVideoThumbnail(file: File, seekTo = 0.3): Promise<Blob> {
+  const [frame] = await captureVideoFrames(file, [seekTo]);
+  if (!frame) throw new Error("Ne mogu da napravim thumbnail za video.");
+  return frame;
 }

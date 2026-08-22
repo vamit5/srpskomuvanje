@@ -9,6 +9,9 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { sendMessage, markAsRead, unmatchAction, type MessageRow } from "../actions";
 import { reportUser, blockUser, type ReportReason } from "../../_safety/actions";
+import { getNightFlirtingContext, logNightEvent } from "../../_night/actions";
+import { NightFlirtingBubble } from "./NightFlirtingBubble";
+import { NightFlirtingPanel } from "./NightFlirtingPanel";
 
 const TYPING_CLEAR_MS = 3000;
 const TYPING_THROTTLE_MS = 2000;
@@ -63,6 +66,8 @@ export function ChatThread({
   const [reportSending, setReportSending] = useState(false);
   const [reportSent, setReportSent] = useState(false);
   const [blocked, setBlocked] = useState(false);
+  const [nightPanelOpen, setNightPanelOpen] = useState(false);
+  const [nightContext, setNightContext] = useState<{ sentToday: number; dailyLimit: number } | null>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -139,6 +144,13 @@ export function ChatThread({
       lastTypingSentRef.current = now;
       channelRef.current?.send({ type: "broadcast", event: "typing", payload: { userId: currentUserId } });
     }
+  }
+
+  async function openNightPanel() {
+    logNightEvent("night_flirting_opened");
+    const ctx = await getNightFlirtingContext();
+    setNightContext({ sentToday: ctx.sentToday, dailyLimit: ctx.dailyLimit });
+    setNightPanelOpen(true);
   }
 
   async function handleSend() {
@@ -304,6 +316,16 @@ export function ChatThread({
         )}
         {messages.map((m) => {
           const isMine = m.sender_id === currentUserId;
+
+          if (m.night_content_id) {
+            return (
+              <div key={m.id} className={cn("flex flex-col gap-1", isMine ? "items-end" : "items-start")}>
+                <NightFlirtingBubble contentId={m.night_content_id} isMine={isMine} />
+                <span className="px-1 text-[10px] text-[var(--color-text-faint)]">{formatTime(m.created_at)}</span>
+              </div>
+            );
+          }
+
           return (
             <div key={m.id} className={cn("flex", isMine ? "justify-end" : "justify-start")}>
               <div
@@ -332,6 +354,14 @@ export function ChatThread({
         </div>
       ) : (
         <div className="safe-bottom flex items-center gap-2 border-t border-[var(--color-border)] px-3 py-3">
+          <button
+            type="button"
+            onClick={openNightPanel}
+            aria-label="Noćno muvanje"
+            className="tap-scale flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--color-bg-elevated)] text-lg"
+          >
+            🌙😈
+          </button>
           <input
             type="text"
             value={draft}
@@ -409,6 +439,16 @@ export function ChatThread({
             )}
           </div>
         </div>
+      )}
+
+      {nightPanelOpen && nightContext && (
+        <NightFlirtingPanel
+          matchId={matchId}
+          sentToday={nightContext.sentToday}
+          dailyLimit={nightContext.dailyLimit}
+          onClose={() => setNightPanelOpen(false)}
+          onSent={() => setNightContext((c) => (c ? { ...c, sentToday: c.sentToday + 1 } : c))}
+        />
       )}
     </div>
   );

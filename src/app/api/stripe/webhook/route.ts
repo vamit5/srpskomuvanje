@@ -55,6 +55,37 @@ export async function POST(request: Request) {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
+
+        // Jednokratna kupovina Iskrica (Noćno muvanje) -- odvojeno od
+        // pretplate ispod, prepoznaje se po mode: "payment" + metadata.type.
+        if (session.mode === "payment" && session.metadata?.type === "credits") {
+          const profileId = session.metadata.profileId;
+          const credits = Number(session.metadata.credits);
+          if (!profileId || !Number.isFinite(credits) || credits <= 0) break;
+
+          // Idempotencija -- Stripe ume da isporuči isti event više puta
+          // (retry), ne smemo dodati kredite dvaput za istu sesiju.
+          const { data: existing } = await admin
+            .from("credit_transactions")
+            .select("id")
+            .eq("stripe_checkout_session_id", session.id)
+            .maybeSingle();
+          if (existing) break;
+
+          const paymentIntentId =
+            typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id ?? null;
+
+          const { error } = await admin.rpc("credit_wallet", {
+            p_profile_id: profileId,
+            p_amount: credits,
+            p_reason: "purchase",
+            p_stripe_payment_intent_id: paymentIntentId,
+            p_stripe_checkout_session_id: session.id,
+          });
+          if (error) console.error("Stripe webhook: dodela Iskrica nije uspela.", error);
+          break;
+        }
+
         const profileId = session.client_reference_id;
         if (!profileId || session.mode !== "subscription" || !session.subscription) break;
 
