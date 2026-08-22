@@ -97,7 +97,15 @@ export function RegistracijaForm() {
           onChange={(e) => setIs18(e.target.checked)}
           className="mt-0.5 h-4 w-4 accent-[var(--color-accent)]"
         />
-        Imam 18 ili više godina i prihvatam Uslove korišćenja.
+        Imam 18 ili više godina i prihvatam{" "}
+        <Link href="/uslovi-koriscenja" target="_blank" className="text-[var(--color-text)] underline">
+          Uslove korišćenja
+        </Link>{" "}
+        i{" "}
+        <Link href="/politika-privatnosti" target="_blank" className="text-[var(--color-text)] underline">
+          Politiku privatnosti
+        </Link>
+        .
       </label>
 
       {error && <p className="text-sm text-[var(--color-danger)]">{error}</p>}

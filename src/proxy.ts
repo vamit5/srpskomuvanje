@@ -4,7 +4,15 @@ import { NextResponse, type NextRequest } from "next/server";
 // Next.js 16: `middleware.ts` je preimenovan u `proxy.ts`, export `proxy` umesto `middleware`.
 // Radi samo u nodejs runtime-u (edge runtime ovde više nije opcija).
 
-const PUBLIC_ROUTES = ["/", "/prijava", "/registracija", "/offline", "/auth/confirm"];
+const PUBLIC_ROUTES = [
+  "/",
+  "/prijava",
+  "/registracija",
+  "/offline",
+  "/auth/confirm",
+  "/uslovi-koriscenja",
+  "/politika-privatnosti",
+];
 const AUTH_ONLY_ROUTES = ["/prijava", "/registracija"];
 
 export async function proxy(request: NextRequest) {

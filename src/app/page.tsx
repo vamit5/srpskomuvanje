@@ -96,8 +96,19 @@ export default function LandingPage() {
 
       <footer className="safe-bottom border-t border-[var(--color-border)] px-6 py-6 text-center text-xs text-[var(--color-text-faint)]">
         <p>Srpskomuvanje je namenjeno isključivo punoletnim osobama (18+).</p>
+        <p className="mt-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
+          <Link href="/uslovi-koriscenja" className="underline">
+            Uslovi korišćenja
+          </Link>
+          <Link href="/politika-privatnosti" className="underline">
+            Politika privatnosti
+          </Link>
+        </p>
         <p className="mt-1">
-          Prijava zloupotrebe: <span className="underline">podrska@srpskomuvanje.rs</span>
+          Prijava zloupotrebe / kontakt:{" "}
+          <a href="mailto:adrenalx.challenge@gmail.com" className="underline">
+            adrenalx.challenge@gmail.com
+          </a>
         </p>
       </footer>
     </div>
