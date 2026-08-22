@@ -27,6 +27,8 @@ export default async function AdminOverviewPage() {
     { count: totalMessages },
     { count: openReports },
     { count: pendingVerifications },
+    { count: pendingPhotos },
+    { count: pendingVideos },
   ] = await Promise.all([
     supabase.from("profiles").select("id", { count: "exact", head: true }).is("deleted_at", null),
     supabase.from("profiles").select("id", { count: "exact", head: true }).gte("created_at", todayStart.toISOString()),
@@ -35,7 +37,11 @@ export default async function AdminOverviewPage() {
     supabase.from("messages").select("id", { count: "exact", head: true }),
     supabase.from("reports").select("id", { count: "exact", head: true }).eq("status", "open"),
     supabase.from("verification").select("id", { count: "exact", head: true }).eq("status", "pending"),
+    supabase.from("profile_photos").select("id", { count: "exact", head: true }).eq("moderation_status", "pending"),
+    supabase.from("profile_videos").select("id", { count: "exact", head: true }).eq("moderation_status", "pending"),
   ]);
+
+  const pendingContent = (pendingPhotos ?? 0) + (pendingVideos ?? 0);
 
   return (
     <div className="flex flex-col gap-6">
@@ -46,11 +52,18 @@ export default async function AdminOverviewPage() {
         <StatCard label="Aktivnih matcheva" value={totalMatches ?? 0} />
         <StatCard label="Poruka ukupno" value={totalMessages ?? 0} />
         <StatCard label="Otvorenih prijava" value={openReports ?? 0} />
+        <StatCard label="Sadržaj na čekanju" value={pendingContent} />
       </div>
 
       {(openReports ?? 0) > 0 && (
         <div className="rounded-2xl border border-[var(--color-danger)]/40 bg-[var(--color-danger)]/10 px-4 py-3 text-sm">
           ⚠️ Imaš <strong>{openReports}</strong> neobrađenih prijava. Pogledaj tab &ldquo;Prijave&rdquo;.
+        </div>
+      )}
+      {pendingContent > 0 && (
+        <div className="rounded-2xl border border-[var(--color-warning)]/40 bg-[var(--color-warning)]/10 px-4 py-3 text-sm">
+          ⏳ <strong>{pendingContent}</strong> fotografija/videa čeka ručnu proveru (granični slučajevi iz
+          automatske NSFW provere). Pogledaj tab &ldquo;Sadržaj&rdquo;.
         </div>
       )}
       {(pendingVerifications ?? 0) > 0 && (

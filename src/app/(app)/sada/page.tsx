@@ -103,7 +103,12 @@ export default async function SadaPage() {
 
   const hotNowIds = (hotNowRaw ?? []).map((p) => p.id);
   const { data: hotNowPhotos } = hotNowIds.length
-    ? await supabase.from("profile_photos").select("profile_id, thumbnail_url").in("profile_id", hotNowIds).eq("is_primary", true)
+    ? await supabase
+        .from("profile_photos")
+        .select("profile_id, thumbnail_url")
+        .in("profile_id", hotNowIds)
+        .eq("is_primary", true)
+        .eq("moderation_status", "approved")
     : { data: [] };
 
   const hotNow = (hotNowRaw ?? []).map((p) => ({

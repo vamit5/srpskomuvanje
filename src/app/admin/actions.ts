@@ -102,3 +102,24 @@ export async function deactivateEvent(eventId: string): Promise<{ error: string 
   revalidatePath("/sada");
   return { error: null };
 }
+
+/**
+ * Ručna odluka o graničnom slučaju (moderation_status='pending') iz
+ * automatske NSFW provere (sekcija 9/FAZA 9) -- ili o već odbijenoj
+ * fotografiji/videu ako admin proceni da je automatska provera pogrešila.
+ */
+export async function reviewMedia(
+  kind: "photo" | "video",
+  mediaId: string,
+  decision: "approved" | "rejected"
+): Promise<{ error: string | null }> {
+  const { supabase, isAdmin } = await requireAdmin();
+  if (!isAdmin) return { error: "Nemaš admin pristup." };
+
+  const table = kind === "photo" ? "profile_photos" : "profile_videos";
+  const { error } = await supabase.from(table).update({ moderation_status: decision }).eq("id", mediaId);
+  if (error) return { error: "Ne mogu da sačuvam odluku." };
+
+  revalidatePath("/admin/sadrzaj");
+  return { error: null };
+}

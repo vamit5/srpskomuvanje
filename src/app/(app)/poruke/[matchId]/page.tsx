@@ -28,7 +28,13 @@ export default async function ChatPage({ params }: { params: Promise<{ matchId: 
 
   const [{ data: other }, { data: photo }, { data: messages }] = await Promise.all([
     supabase.from("profiles").select("name, last_active_at, show_online_status").eq("id", otherId).single(),
-    supabase.from("profile_photos").select("thumbnail_url").eq("profile_id", otherId).eq("is_primary", true).maybeSingle(),
+    supabase
+      .from("profile_photos")
+      .select("thumbnail_url")
+      .eq("profile_id", otherId)
+      .eq("is_primary", true)
+      .eq("moderation_status", "approved")
+      .maybeSingle(),
     supabase
       .from("messages")
       .select("id, match_id, sender_id, content, image_url, created_at, read_at")

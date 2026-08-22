@@ -23,7 +23,12 @@ export default async function MatchPage() {
   const [{ data: others }, { data: photos }] = otherIds.length
     ? await Promise.all([
         supabase.from("profiles").select("id, name, birth_date").in("id", otherIds),
-        supabase.from("profile_photos").select("profile_id, thumbnail_url").in("profile_id", otherIds).eq("is_primary", true),
+        supabase
+          .from("profile_photos")
+          .select("profile_id, thumbnail_url")
+          .in("profile_id", otherIds)
+          .eq("is_primary", true)
+          .eq("moderation_status", "approved"),
       ])
     : [{ data: [] }, { data: [] }];
 

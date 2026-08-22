@@ -12,12 +12,12 @@ export default async function FotoPage() {
   const [{ data: photos }, { data: videos }] = await Promise.all([
     supabase
       .from("profile_photos")
-      .select("id, url, thumbnail_url, position, is_primary")
+      .select("id, url, thumbnail_url, position, is_primary, moderation_status")
       .eq("profile_id", user!.id)
       .order("position"),
     supabase
       .from("profile_videos")
-      .select("id, url, thumbnail_url, duration_seconds")
+      .select("id, url, thumbnail_url, duration_seconds, moderation_status")
       .eq("profile_id", user!.id)
       .order("position"),
   ]);

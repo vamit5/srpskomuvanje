@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { computeProfileCompletionScore } from "@/lib/scoring";
 import { MAX_PHOTOS, MAX_VIDEOS } from "@/lib/media/constants";
+import { moderateImage } from "@/lib/moderation";
 
 
 async function getAuthedUser() {
@@ -48,14 +49,18 @@ export async function addPhoto(input: {
   thumbPath: string;
   width: number;
   height: number;
-}): Promise<{ error: string | null; photoId: string | null }> {
+}): Promise<{
+  error: string | null;
+  photoId: string | null;
+  moderationStatus: "approved" | "pending" | "rejected" | null;
+}> {
   const { supabase, user } = await getAuthedUser();
-  if (!user) return { error: "Nisi prijavljen/a.", photoId: null };
+  if (!user) return { error: "Nisi prijavljen/a.", photoId: null, moderationStatus: null };
 
   // Odbrana u dubinu: iako Storage RLS već sprečava upload van sopstvenog
   // foldera, ne verujemo klijentu ni ovde.
   if (!input.path.startsWith(`${user.id}/`) || !input.thumbPath.startsWith(`${user.id}/`)) {
-    return { error: "Nevažeća putanja fajla.", photoId: null };
+    return { error: "Nevažeća putanja fajla.", photoId: null, moderationStatus: null };
   }
 
   const { count } = await supabase
@@ -64,11 +69,15 @@ export async function addPhoto(input: {
     .eq("profile_id", user.id);
 
   if ((count ?? 0) >= MAX_PHOTOS) {
-    return { error: `Možeš imati najviše ${MAX_PHOTOS} fotografija.`, photoId: null };
+    return { error: `Možeš imati najviše ${MAX_PHOTOS} fotografija.`, photoId: null, moderationStatus: null };
   }
 
   const { data: mainUrl } = supabase.storage.from("photos").getPublicUrl(input.path);
   const { data: thumbUrl } = supabase.storage.from("photos").getPublicUrl(input.thumbPath);
+
+  // NSFW provera PRE nego što foto uđe u bazu kao vidljiva -- nikad ne
+  // odobravamo automatski bez provere (vidi lib/moderation.ts).
+  const moderation = await moderateImage(mainUrl.publicUrl);
 
   const { data: photo, error } = await supabase
     .from("profile_photos")
@@ -82,18 +91,16 @@ export async function addPhoto(input: {
       height: input.height,
       position: count ?? 0,
       is_primary: (count ?? 0) === 0,
-      // MVP: nema automatske NSFW/sadržajne moderacije još (dolazi u FAZI 9),
-      // zato foto odmah postaje vidljiva. Videti README napomenu o riziku.
-      moderation_status: "approved",
+      moderation_status: moderation.status,
     })
     .select("id")
     .single();
 
-  if (error || !photo) return { error: "Ne mogu da sačuvam fotografiju. Pokušaj ponovo.", photoId: null };
+  if (error || !photo) return { error: "Ne mogu da sačuvam fotografiju. Pokušaj ponovo.", photoId: null, moderationStatus: null };
 
   await recomputeCompletionScore(supabase, user.id);
   revalidateProfileRoutes();
-  return { error: null, photoId: photo.id };
+  return { error: null, photoId: photo.id, moderationStatus: moderation.status };
 }
 
 export async function deletePhoto(photoId: string): Promise<{ error: string | null }> {
@@ -156,15 +163,19 @@ export async function addVideo(input: {
   path: string;
   thumbPath: string;
   durationSeconds: number;
-}): Promise<{ error: string | null; videoId: string | null }> {
+}): Promise<{
+  error: string | null;
+  videoId: string | null;
+  moderationStatus: "approved" | "pending" | "rejected" | null;
+}> {
   const { supabase, user } = await getAuthedUser();
-  if (!user) return { error: "Nisi prijavljen/a.", videoId: null };
+  if (!user) return { error: "Nisi prijavljen/a.", videoId: null, moderationStatus: null };
 
   if (!input.path.startsWith(`${user.id}/`) || !input.thumbPath.startsWith(`${user.id}/`)) {
-    return { error: "Nevažeća putanja fajla.", videoId: null };
+    return { error: "Nevažeća putanja fajla.", videoId: null, moderationStatus: null };
   }
   if (input.durationSeconds > 15) {
-    return { error: "Video mora biti kraći od 15 sekundi.", videoId: null };
+    return { error: "Video mora biti kraći od 15 sekundi.", videoId: null, moderationStatus: null };
   }
 
   const { count } = await supabase
@@ -173,11 +184,20 @@ export async function addVideo(input: {
     .eq("profile_id", user.id);
 
   if ((count ?? 0) >= MAX_VIDEOS) {
-    return { error: `Možeš imati najviše ${MAX_VIDEOS} video snimak. Obriši postojeći da dodaš novi.`, videoId: null };
+    return {
+      error: `Možeš imati najviše ${MAX_VIDEOS} video snimak. Obriši postojeći da dodaš novi.`,
+      videoId: null,
+      moderationStatus: null,
+    };
   }
 
   const { data: mainUrl } = supabase.storage.from("videos").getPublicUrl(input.path);
   const { data: thumbUrl } = supabase.storage.from("videos").getPublicUrl(input.thumbPath);
+
+  // Proveravamo THUMBNAIL frejm (slika) -- Sightengine ovde radi nad slikama,
+  // ne nad video fajlom. Ne skenira ceo video kadar-po-kadar (van MVP budžeta),
+  // ali pokriva najčešći slučaj (thumbnail se bira sa reprezentativnog kadra).
+  const moderation = await moderateImage(thumbUrl.publicUrl);
 
   const { data: video, error } = await supabase
     .from("profile_videos")
@@ -189,16 +209,16 @@ export async function addVideo(input: {
       thumbnail_path: input.thumbPath,
       duration_seconds: Math.round(input.durationSeconds),
       position: count ?? 0,
-      moderation_status: "approved",
+      moderation_status: moderation.status,
     })
     .select("id")
     .single();
 
-  if (error || !video) return { error: "Ne mogu da sačuvam video. Pokušaj ponovo.", videoId: null };
+  if (error || !video) return { error: "Ne mogu da sačuvam video. Pokušaj ponovo.", videoId: null, moderationStatus: null };
 
   await recomputeCompletionScore(supabase, user.id);
   revalidateProfileRoutes();
-  return { error: null, videoId: video.id };
+  return { error: null, videoId: video.id, moderationStatus: moderation.status };
 }
 
 export async function deleteVideo(videoId: string): Promise<{ error: string | null }> {

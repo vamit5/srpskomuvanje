@@ -35,7 +35,12 @@ export async function getConversations(): Promise<{ conversations: Conversation[
 
   const [{ data: others }, { data: photos }, { data: recentMessages }, { data: unread }] = await Promise.all([
     supabase.from("profiles").select("id, name").in("id", otherIds),
-    supabase.from("profile_photos").select("profile_id, thumbnail_url").in("profile_id", otherIds).eq("is_primary", true),
+    supabase
+      .from("profile_photos")
+      .select("profile_id, thumbnail_url")
+      .in("profile_id", otherIds)
+      .eq("is_primary", true)
+      .eq("moderation_status", "approved"),
     supabase
       .from("messages")
       .select("match_id, content, created_at, sender_id")

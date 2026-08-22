@@ -54,7 +54,12 @@ export default async function KoTeZeliPage() {
     const ids = likers.map((l) => l.id);
     const [{ data: profiles }, { data: photos }] = await Promise.all([
       supabase.from("profiles").select("id, name, birth_date").in("id", ids),
-      supabase.from("profile_photos").select("profile_id, thumbnail_url").in("profile_id", ids).eq("is_primary", true),
+      supabase
+        .from("profile_photos")
+        .select("profile_id, thumbnail_url")
+        .in("profile_id", ids)
+        .eq("is_primary", true)
+        .eq("moderation_status", "approved"),
     ]);
     profilesById = new Map(
       (profiles ?? []).map((p) => [

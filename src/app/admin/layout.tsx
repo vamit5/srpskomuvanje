@@ -27,6 +27,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         {[
           { href: "/admin", label: "Pregled" },
           { href: "/admin/reports", label: "Prijave" },
+          { href: "/admin/sadrzaj", label: "Sadržaj" },
           { href: "/admin/users", label: "Korisnici" },
           { href: "/admin/events", label: "Događaji" },
         ].map((tab) => (

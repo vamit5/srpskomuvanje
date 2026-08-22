@@ -5,7 +5,7 @@ Srpska dating PWA aplikacija — naziv **Srpskomuvanje**. Projekat i dalje živi
 i folder preimenujem). Promena naziva u budućnosti je mehanička (find & replace kroz kod, novi
 domen, novo ime u `manifest.ts`/`layout.tsx`).
 
-## Status: FAZA 1-8 uživo na produkciji (srpskomuvanje.vercel.app, Stripe Live) + deo FAZE 9
+## Status: FAZA 1-9 uživo na produkciji (srpskomuvanje.vercel.app, Stripe Live)
 
 **Live na adresi**: https://srpskomuvanje.vercel.app (Vercel, auto-deploy na svaki push na `main`
 grane GitHub repozitorijuma `vamit5/srpskomuvanje`). Stripe je u **Live režimu** — Premium
@@ -129,15 +129,24 @@ vremena) testirana odvojenim skriptom sa konkretnim datumima pre ugrađivanja u 
 Nijedna nova SQL migracija nije bila potrebna — sve potrebne kolone/tabele su već postojale
 od FAZE 1 (dizajnirane unapred baš za ovo).
 
-**FAZA 9 (samo deo — Prijavi/Blokiraj + Admin panel; automatska NSFW/sadržajna moderacija
-i dalje ne postoji):**
+**FAZA 9 (kompletna — Prijavi/Blokiraj, Admin panel, i automatska NSFW moderacija):**
 - ✅ **Prijavi** i **Blokiraj** dugmad u chatu (meni "⋮" pored imena) — prijava ide pravo
   admin redu za pregled; blokiranje odmah prekida match/razgovor i sklanja tu osobu iz
   budućeg Otkrij feed-a (obostrano).
 - ✅ **Admin panel** (`/admin`, samo za naloge upisane u `admin_users`) — pregled (broj
-  korisnika, novih danas, aktivnih 24h, matchevi, poruke, otvorene prijave), red za prijave
-  sa dugmadima Reši / Odbaci / Sakrij profil, i lista korisnika sa prekidačem
-  vidljivosti (Otkrij feed).
+  korisnika, novih danas, aktivnih 24h, matchevi, poruke, otvorene prijave, sadržaj na
+  čekanju), red za prijave sa dugmadima Reši / Odbaci / Sakrij profil, i lista korisnika sa
+  prekidačem vidljivosti (Otkrij feed).
+- ✅ **Automatska NSFW moderacija** (`src/lib/moderation.ts`, Sightengine `nudity-2.1` model)
+  — svaka fotografija (i thumbnail video snimka) se proverava PRE nego što postane vidljiva
+  drugima. Eksplicitan sadržaj (skor ≥ 0.5) se odmah odbija ("🚫 Odbijeno" na Profilu, vlasnik
+  vidi zašto). Granični slučajevi (0.2-0.5) idu na ručni pregled ("⏳ Na proveri") u novi
+  admin tab **Sadržaj** (`/admin/sadrzaj`) sa Odobri/Odbij dugmadima. Ispod 0.2 (kupaći
+  kostim, bez majice i sl. — normalno za dating app) se automatski odobrava. Ako Sightengine
+  ne odgovori (mreža, limit) -- ide na ručni pregled, NIKAD se tiho ne odobrava bez provere.
+  Filtrirano iz Discovery/Duel/Match/Poruke/"Ko te želi" (samo `moderation_status='approved'`
+  se ikad prikazuje DRUGIM korisnicima; vlasnik uvek vidi sopstvene fotografije bez obzira
+  na status).
 
 Testirano uživo: poslata prijava iz chata → pojavila se u `/admin/reports` sa tačnim
 podacima → "Reši" je uklanja iz reda. "Sakrij profil" i "Blokiraj" testirani i potvrđeni
@@ -302,6 +311,15 @@ stvarno sačuvaju korisnika (Supabase URL je trenutno placeholder u `.env.local`
    radi (kreira sesiju, preusmerava na Stripe), ali sâmo plaćanje neće otključati Premium u
    bazi — to je očekivano do deploy-a.
 
+### Poveži Sightengine (NSFW moderacija fotografija/videa)
+
+1. Besplatan nalog na [sightengine.com](https://sightengine.com) (~2000 provera/mesec besplatno).
+2. Na Dashboard-u kopiraj **API User** i **API Secret** u `.env.local` kao
+   `SIGHTENGINE_API_USER` / `SIGHTENGINE_API_SECRET`.
+3. Bez ovog koraka: upload i dalje radi, ali SVAKA fotografija/video ide na `pending`
+   (ručni pregled u `/admin/sadrzaj`) umesto automatske odluke — kod se nikad ne "predaje"
+   i tiho odobrava bez provere kad servis nije podešen (videti `src/lib/moderation.ts`).
+
 ### Testiraj push notifikacije na svom telefonu
 
 Ovo se ne može testirati na `localhost` sa telefona (telefon ne zna šta je "localhost" na
@@ -374,8 +392,8 @@ node scripts/generate-icons.mjs
 - [x] **FAZA 7** — push notifikacije
 - [~] **FAZA 8** — Premium/Stripe Checkout ✅ (Live režim), "Ko te želi" ✅, dnevni limit Duela ✅,
       webhook end-to-end testiran uživo ✅, Boost ⬜, dodatni filteri ⬜
-- [~] **FAZA 9** — Prijavi/Blokiraj ✅, Admin panel (osnova) ✅, Uslovi korišćenja/Privatnost ✅,
-      automatska NSFW moderacija ⬜
+- [x] **FAZA 9** — Prijavi/Blokiraj ✅, Admin panel ✅, Uslovi korišćenja/Privatnost ✅,
+      automatska NSFW moderacija ✅ (Sightengine)
 - [~] **FAZA 10** — Deploy na Vercel ✅ (uživo, auto-deploy), analytics ⬜, dodatni performance/
       security hardening ⬜
 
@@ -466,12 +484,13 @@ node scripts/generate-icons.mjs
 
 ## Pre nego što pravi (nepoznati) korisnici počnu da uploaduju slike
 
-Ovo NIJE hitno dok samo ti i ja testiramo, ali ne sme se preskočiti pre javnog lansiranja:
+Sve stavke sa ove liste su gotove (22.08.2026), pre nego što je krenula prava reklama:
 
-- [ ] Automatska NSFW/sadržajna moderacija fotografija i videa (FAZA 9) — trenutno ništa ne
-      sprečava neprikladan upload da odmah bude vidljiv.
-- [ ] Provera maloletnosti / signali za moderatora (FAZA 9).
-- [ ] Admin panel sa redom za pregled prijavljenog sadržaja (FAZA 9).
+- [x] Automatska NSFW/sadržajna moderacija fotografija i videa (FAZA 9, Sightengine).
+- [x] Provera punoletstva pri registraciji (self-declared datum rođenja, blokira ispod 18) +
+      dugme "Prijavi" za signale ka moderatoru.
+- [x] Admin panel sa redom za pregled prijavljenog sadržaja (`/admin/reports`) i redom za
+      granične slučajeve NSFW provere (`/admin/sadrzaj`).
 
 ## Šta može biti skupo kasnije (na radaru, ne hitno)
 

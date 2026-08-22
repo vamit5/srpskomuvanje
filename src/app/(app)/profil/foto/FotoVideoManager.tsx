@@ -19,12 +19,15 @@ import {
 import { addPhoto, deletePhoto, reorderPhotos, addVideo, deleteVideo } from "./actions";
 import { cn } from "@/lib/utils";
 
+type ModerationStatus = "approved" | "pending" | "rejected";
+
 interface PhotoRow {
   id: string;
   url: string;
   thumbnail_url: string | null;
   position: number;
   is_primary: boolean;
+  moderation_status: ModerationStatus;
 }
 
 interface VideoRow {
@@ -32,6 +35,25 @@ interface VideoRow {
   url: string;
   thumbnail_url: string | null;
   duration_seconds: number;
+  moderation_status: ModerationStatus;
+}
+
+// Pozicionirano vertikalno na sredini (ne gore/dole) da ne pokrije GLAVNA/X
+// dugme (gore) ni strelice za pomeranje (dole, samo kod fotografija).
+function ModerationBadge({ status }: { status: ModerationStatus }) {
+  if (status === "approved") return null;
+  if (status === "pending") {
+    return (
+      <span className="pointer-events-none absolute inset-x-1 top-1/2 -translate-y-1/2 rounded-md bg-[var(--color-warning)] px-1.5 py-1 text-center text-[10px] font-semibold leading-tight text-black">
+        ⏳ Na proveri
+      </span>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-x-1 top-1/2 -translate-y-1/2 rounded-md bg-[var(--color-danger)] px-1.5 py-1 text-center text-[10px] font-semibold leading-tight text-white">
+      🚫 Odbijeno
+    </span>
+  );
 }
 
 export function FotoVideoManager({
@@ -49,6 +71,7 @@ export function FotoVideoManager({
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const photoInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
@@ -59,6 +82,7 @@ export function FotoVideoManager({
     if (!file) return;
 
     setError(null);
+    setNotice(null);
     if (file.size > MAX_RAW_PHOTO_PICK_BYTES) {
       setError("Fotografija je prevelika (maksimalno 20MB).");
       return;
@@ -102,8 +126,20 @@ export function FotoVideoManager({
       const thumbUrl = supabase.storage.from("photos").getPublicUrl(thumbPath).data.publicUrl;
       setPhotos((prev) => [
         ...prev,
-        { id: photoId, url: mainUrl, thumbnail_url: thumbUrl, position: prev.length, is_primary: prev.length === 0 },
+        {
+          id: photoId,
+          url: mainUrl,
+          thumbnail_url: thumbUrl,
+          position: prev.length,
+          is_primary: prev.length === 0,
+          moderation_status: result.moderationStatus ?? "pending",
+        },
       ]);
+      if (result.moderationStatus === "rejected") {
+        setError("Fotografija je odbijena — sadrži neprikladan sadržaj po pravilima zajednice. Možeš je obrisati i probati sa drugom.");
+      } else if (result.moderationStatus === "pending") {
+        setNotice("Fotografija čeka ručnu proveru pre nego što postane vidljiva drugima — obično brzo.");
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Nešto nije u redu, probaj ponovo.");
     } finally {
@@ -144,6 +180,7 @@ export function FotoVideoManager({
     if (!file) return;
 
     setError(null);
+    setNotice(null);
     if (file.size > MAX_RAW_VIDEO_PICK_BYTES) {
       setError("Video je prevelik (maksimalno 25MB) — snimi kraći ili u nižoj rezoluciji.");
       return;
@@ -187,8 +224,19 @@ export function FotoVideoManager({
       const thumbUrl = supabase.storage.from("videos").getPublicUrl(thumbPath).data.publicUrl;
       setVideos((prev) => [
         ...prev,
-        { id: videoId, url: mainUrl, thumbnail_url: thumbUrl, duration_seconds: Math.round(meta.duration) },
+        {
+          id: videoId,
+          url: mainUrl,
+          thumbnail_url: thumbUrl,
+          duration_seconds: Math.round(meta.duration),
+          moderation_status: result.moderationStatus ?? "pending",
+        },
       ]);
+      if (result.moderationStatus === "rejected") {
+        setError("Video je odbijen — sadrži neprikladan sadržaj po pravilima zajednice. Možeš ga obrisati i probati sa drugim.");
+      } else if (result.moderationStatus === "pending") {
+        setNotice("Video čeka ručnu proveru pre nego što postane vidljiv drugima — obično brzo.");
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Nešto nije u redu, probaj ponovo.");
     } finally {
@@ -224,6 +272,7 @@ export function FotoVideoManager({
                 alt=""
                 className="h-full w-full object-cover"
               />
+              <ModerationBadge status={photo.moderation_status} />
               {i === 0 && (
                 <span className="absolute left-1 top-1 rounded-full bg-gradient-accent px-2 py-0.5 text-[10px] font-semibold text-white">
                   GLAVNA
@@ -302,6 +351,7 @@ export function FotoVideoManager({
                 // pointer-events-none sprečava da nativni video sloj "pojede"
                 // klik na X dugme za brisanje koje je pozicionirano preko njega.
               />
+              <ModerationBadge status={video.moderation_status} />
               <button
                 type="button"
                 onClick={() => handleDeleteVideo(video.id)}
@@ -339,6 +389,9 @@ export function FotoVideoManager({
         />
       </section>
 
+      {notice && (
+        <p className="rounded-xl bg-[var(--color-warning)]/10 px-4 py-3 text-sm text-[var(--color-warning)]">{notice}</p>
+      )}
       {error && (
         <p className="rounded-xl bg-[var(--color-danger)]/10 px-4 py-3 text-sm text-[var(--color-danger)]">{error}</p>
       )}

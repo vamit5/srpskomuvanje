@@ -185,6 +185,10 @@ create policy "korisnik upravlja svojim fotografijama"
   using (auth.uid() = profile_id)
   with check (auth.uid() = profile_id);
 
+-- Admin mora moći da odobri/odbije granične slučajeve (NSFW moderacija, FAZA 9).
+create policy "admin upravlja moderacijom fotografija"
+  on profile_photos for update using (is_admin());
+
 create table profile_videos (
   id uuid primary key default gen_random_uuid(),
   profile_id uuid not null references profiles(id) on delete cascade,
@@ -209,6 +213,9 @@ create policy "korisnik upravlja svojim video snimcima"
   on profile_videos for all
   using (auth.uid() = profile_id)
   with check (auth.uid() = profile_id);
+
+create policy "admin upravlja moderacijom videa"
+  on profile_videos for update using (is_admin());
 
 -- ---------------------------------------------------------------------
 -- PREFERENCES
@@ -902,7 +909,7 @@ begin
   return query
   select
     p.id, p.name, p.birth_date, p.city, p.bio, p.interests, p.is_verified, p.hot_mode_enabled,
-    (select pp.url from profile_photos pp where pp.profile_id = p.id and pp.is_primary = true limit 1) as primary_photo_url,
+    (select pp.url from profile_photos pp where pp.profile_id = p.id and pp.is_primary = true and pp.moderation_status = 'approved' limit 1) as primary_photo_url,
     round((
       coalesce(w_compatibility, 0) * (
         case when coalesce(array_length(v_interests, 1), 0) = 0 or coalesce(array_length(p.interests, 1), 0) = 0 then 30
@@ -1128,7 +1135,7 @@ begin
     and p.gender = any(coalesce(v_interested_in, array[]::text[]))
     and v_gender = any(coalesce(pref.interested_in, array[]::text[]))
     and date_part('year', age(p.birth_date)) between coalesce(v_age_min, 18) and coalesce(v_age_max, 99)
-    and exists (select 1 from profile_photos pp where pp.profile_id = p.id and pp.is_primary = true)
+    and exists (select 1 from profile_photos pp where pp.profile_id = p.id and pp.is_primary = true and pp.moderation_status = 'approved')
   order by random()
   limit 1;
 
@@ -1142,7 +1149,7 @@ begin
     and p.gender = any(coalesce(v_interested_in, array[]::text[]))
     and v_gender = any(coalesce(pref.interested_in, array[]::text[]))
     and date_part('year', age(p.birth_date)) between coalesce(v_age_min, 18) and coalesce(v_age_max, 99)
-    and exists (select 1 from profile_photos pp where pp.profile_id = p.id and pp.is_primary = true)
+    and exists (select 1 from profile_photos pp where pp.profile_id = p.id and pp.is_primary = true and pp.moderation_status = 'approved')
   order by random()
   limit 1;
 
@@ -1158,9 +1165,9 @@ begin
   select
     v_duel_id,
     a.id, a.name, a.birth_date,
-    (select pp.url from profile_photos pp where pp.profile_id = a.id and pp.is_primary = true limit 1),
+    (select pp.url from profile_photos pp where pp.profile_id = a.id and pp.is_primary = true and pp.moderation_status = 'approved' limit 1),
     b.id, b.name, b.birth_date,
-    (select pp.url from profile_photos pp where pp.profile_id = b.id and pp.is_primary = true limit 1)
+    (select pp.url from profile_photos pp where pp.profile_id = b.id and pp.is_primary = true and pp.moderation_status = 'approved' limit 1)
   from profiles a, profiles b
   where a.id = v_a and b.id = v_b;
 end;
