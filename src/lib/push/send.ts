@@ -7,7 +7,7 @@ function ensureConfigured() {
   if (configured) return;
   const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
   const privateKey = process.env.VAPID_PRIVATE_KEY;
-  const subject = process.env.VAPID_SUBJECT || "mailto:podrska@srpskomuvanje.rs";
+  const subject = process.env.VAPID_SUBJECT || "mailto:srpskomuvanje@gmail.com";
   if (!publicKey || !privateKey) return; // push jednostavno preskačemo ako nije podešeno
   webpush.setVapidDetails(subject, publicKey, privateKey);
   configured = true;

@@ -106,8 +106,8 @@ export default function LandingPage() {
         </p>
         <p className="mt-1">
           Prijava zloupotrebe / kontakt:{" "}
-          <a href="mailto:adrenalx.challenge@gmail.com" className="underline">
-            adrenalx.challenge@gmail.com
+          <a href="mailto:srpskomuvanje@gmail.com" className="underline">
+            srpskomuvanje@gmail.com
           </a>
         </p>
       </footer>

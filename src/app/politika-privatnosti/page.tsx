@@ -17,7 +17,7 @@ export default function PolitikaPrivatnostiPage() {
         <h2 className="mb-1 font-semibold text-[var(--color-text)]">1. Rukovalac podacima</h2>
         <p>
           Rukovalac tvojih ličnih podataka je Borislav Kukić, fizičko lice, Republika Srbija.
-          Kontakt: <a href="mailto:adrenalx.challenge@gmail.com" className="underline">adrenalx.challenge@gmail.com</a>,
+          Kontakt: <a href="mailto:srpskomuvanje@gmail.com" className="underline">srpskomuvanje@gmail.com</a>,
           tel. 063 706 7172.
         </p>
       </section>
@@ -80,7 +80,7 @@ export default function PolitikaPrivatnostiPage() {
           <li>uložiš pritužbu Povereniku za informacije od javnog značaja i zaštitu podataka o ličnosti Republike Srbije</li>
         </ul>
         <p className="mt-2">
-          Zahteve šalji na <a href="mailto:adrenalx.challenge@gmail.com" className="underline">adrenalx.challenge@gmail.com</a> — odgovaramo u razumnom roku.
+          Zahteve šalji na <a href="mailto:srpskomuvanje@gmail.com" className="underline">srpskomuvanje@gmail.com</a> — odgovaramo u razumnom roku.
         </p>
       </section>
 

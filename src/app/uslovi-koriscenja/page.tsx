@@ -123,7 +123,7 @@ export default function UsloviKoriscenjaPage() {
       <section>
         <h2 className="mb-1 font-semibold text-[var(--color-text)]">12. Kontakt</h2>
         <p>
-          Pitanja i prijave: <a href="mailto:adrenalx.challenge@gmail.com" className="underline">adrenalx.challenge@gmail.com</a>
+          Pitanja i prijave: <a href="mailto:srpskomuvanje@gmail.com" className="underline">srpskomuvanje@gmail.com</a>
         </p>
       </section>
     </div>
