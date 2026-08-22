@@ -8,12 +8,16 @@ const PUBLIC_ROUTES = [
   "/",
   "/prijava",
   "/registracija",
+  "/zaboravljena-lozinka",
   "/offline",
   "/auth/confirm",
   "/uslovi-koriscenja",
   "/politika-privatnosti",
 ];
-const AUTH_ONLY_ROUTES = ["/prijava", "/registracija"];
+// "/nova-lozinka" NIJE ovde -- korisnik do nje stiže SA sesijom (verifyOtp
+// type=recovery je već postavio kolačić pre redirekcije), pa običan
+// auth-gate (zahteva ulogovanog korisnika) je tačno ono što nam treba.
+const AUTH_ONLY_ROUTES = ["/prijava", "/registracija", "/zaboravljena-lozinka"];
 
 export async function proxy(request: NextRequest) {
   const response = NextResponse.next({ request });

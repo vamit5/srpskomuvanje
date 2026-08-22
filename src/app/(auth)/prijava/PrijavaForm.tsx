@@ -62,6 +62,12 @@ export function PrijavaForm() {
         {loading ? "Sačekaj..." : "Prijavi se"}
       </Button>
 
+      <p className="text-center text-sm">
+        <Link href="/zaboravljena-lozinka" className="text-[var(--color-text-muted)] underline">
+          Zaboravljena lozinka?
+        </Link>
+      </p>
+
       <p className="text-center text-sm text-[var(--color-text-muted)]">
         Nemaš nalog?{" "}
         <Link href="/registracija" className="text-[var(--color-text)] underline">
