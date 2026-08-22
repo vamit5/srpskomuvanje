@@ -1,6 +1,8 @@
 "use server";
 
+import { after } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { sendPushToProfile } from "@/lib/push/send";
 
 export interface DiscoveryCandidate {
   id: string;
@@ -58,6 +60,24 @@ async function reactToProfile(
   // podacima -- samo bi terala Next.js da odmah iznova renderuje OVU
   // (/otkrij) rutu i pri tom resetuje lokalni state (match ekran).
   const result = data as { matched: boolean; match_id: string | null };
+
+  if (result.matched) {
+    const { data: me } = await supabase.from("profiles").select("name").eq("id", user.id).single();
+    // after(): push se šalje POSLE što je odgovor već otišao korisniku koji
+    // gleda "MATCH!" ekran (ne usporava njega), ali Next.js garantuje da se
+    // izvrši do kraja i na serverless hostingu (Vercel) -- obično
+    // "ispali-pa-zaboravi" async poziv bi mogao da se prekine pre nego što
+    // stigne da pošalje.
+    after(() =>
+      sendPushToProfile(targetId, {
+        title: "🔥 MATCH!",
+        body: `Ti i ${me?.name ?? "neko"} ste se svideli jedno drugom.`,
+        url: "/match",
+        tag: "match",
+      })
+    );
+  }
+
   return { error: null, matched: result.matched, matchId: result.match_id };
 }
 
@@ -89,6 +109,35 @@ export async function sendSecretSpark(
   if (error) return { error: "Nešto nije u redu. Pokušaj ponovo.", mutual: false, matchId: null };
 
   const result = data as { mutual: boolean; match_id: string | null };
+
+  if (result.mutual) {
+    after(() =>
+      sendPushToProfile(targetId, {
+        title: "🔥 Obostrana privlačnost!",
+        body: "Vas dvoje ste se izabrali tajno — otključan je match!",
+        url: "/match",
+        tag: "match",
+      })
+    );
+    // Pošiljaocu (koji sad gleda ekran) ne treba push -- već je u appu.
+  } else {
+    // Diskretno: primalac dobija push BEZ otkrivanja identiteta pošiljaoca
+    // (isti tekst kao notifikacija u bazi, iz send_secret_spark funkcije).
+    const { data: target } = await supabase.from("profiles").select("gender").eq("id", targetId).single();
+    const { data: sender } = await supabase.from("profiles").select("gender").eq("id", user.id).single();
+    const senderLabel =
+      sender?.gender === "musko" ? "Tajni Srbin" : sender?.gender === "zensko" ? "Tajna Srpkinja" : "Tajna osoba";
+    const targetAdj = target?.gender === "musko" ? "zanimljiv" : target?.gender === "zensko" ? "zanimljiva" : "zanimljiv/a";
+    after(() =>
+      sendPushToProfile(targetId, {
+        title: "🤫 Tajni signal",
+        body: `${senderLabel} misli da si ${targetAdj}.`,
+        url: "/sada",
+        tag: "secret_spark",
+      })
+    );
+  }
+
   return { error: null, mutual: result.mutual, matchId: result.match_id };
 }
 

@@ -1,6 +1,8 @@
 "use server";
 
+import { after } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { sendPushToProfile } from "@/lib/push/send";
 
 export interface Conversation {
   matchId: string;
@@ -113,6 +115,18 @@ export async function sendMessage(
     .single();
 
   if (error || !data) return { error: "Ne mogu da pošaljem poruku. Pokušaj ponovo.", message: null };
+
+  const otherId = match.profile_a_id === user.id ? match.profile_b_id : match.profile_a_id;
+  const { data: me } = await supabase.from("profiles").select("name").eq("id", user.id).single();
+  after(() =>
+    sendPushToProfile(otherId, {
+      title: `💬 ${me?.name ?? "Nova poruka"}`,
+      body: trimmed.length > 100 ? trimmed.slice(0, 97) + "..." : trimmed,
+      url: `/poruke/${matchId}`,
+      tag: `chat-${matchId}`,
+    })
+  );
+
   return { error: null, message: data };
 }
 

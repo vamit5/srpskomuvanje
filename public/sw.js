@@ -82,8 +82,7 @@ self.addEventListener("fetch", (event) => {
   // real-time podaci (lajkovi, poruke, online status) NIKAD ne smeju doći iz keša.
 });
 
-// --- Push notifikacije (žica je spremna, aktivira se u FAZI 7 kad dodamo
-// push subscription + VAPID ključeve na serveru) ---
+// --- Push notifikacije (FAZA 7) ---
 self.addEventListener("push", (event) => {
   if (!event.data) return;
   let payload;

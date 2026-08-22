@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { calculateAge } from "@/lib/utils";
 import { signOutAction } from "./actions";
 import { HotModeToggle } from "./HotModeToggle";
+import { PushToggle } from "./PushToggle";
 
 export const metadata = { title: "Profil" };
 
@@ -102,6 +103,8 @@ export default async function ProfilPage() {
           </div>
         </section>
       ) : null}
+
+      <PushToggle />
 
       <HotModeToggle initialEnabled={profile.hot_mode_enabled} initialVibes={profile.hot_mode_vibes ?? []} />
 

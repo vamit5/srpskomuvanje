@@ -5,7 +5,7 @@ Srpska dating PWA aplikacija — naziv **Srpskomuvanje**. Projekat i dalje živi
 i folder preimenujem). Promena naziva u budućnosti je mehanička (find & replace kroz kod, novi
 domen, novo ime u `manifest.ts`/`layout.tsx`).
 
-## Status: FAZA 1, 2, 3, 4 gotove + FAZA 6 kompletna + deo FAZE 9 (Prijavi/Blokiraj, Admin panel)
+## Status: FAZA 1, 2, 3, 4, 7 gotove + FAZA 6 kompletna + deo FAZE 9 (Prijavi/Blokiraj, Admin panel)
 
 **FAZA 1:**
 - ✅ Next.js 16 (App Router, TypeScript, Tailwind v4, Turbopack)
@@ -128,6 +128,31 @@ Usput otkrivene i ispravljene **dve prave bezbednosne/tačnosti greške**:
    izgledali verovatno, ali su bili pogrešni. Dodate su prave admin-only politike da se broji
    stvarno sve u aplikaciji.
 
+**FAZA 7 — Push notifikacije:**
+- ✅ Prekidač "🔔 Push notifikacije" na Profil ekranu (traži dozvolu pregledača, pretplaćuje
+  se preko service workera, čuva pretplatu u `push_subscriptions`)
+- ✅ Server šalje pravu push notifikaciju (ne samo upisuje u bazu) za: **match** (i preko
+  lajka i preko tajnog signala — sa istim "OBOSTRANA PRIVLAČNOST" tekstom), **novu poruku**,
+  i **tajni signal** (diskretno, bez otkrivanja identiteta — isti tekst kao notifikacija u
+  aplikaciji)
+- ✅ VAPID ključevi generisani lokalno (`npx web-push generate-vapid-keys`, nema spoljni
+  nalog); slanje ide preko `web-push` biblioteke sa Supabase `service_role` ključem (mora da
+  čita tuđe pretplate, RLS to inače ne dozvoljava)
+- ✅ Service worker se sada registruje UVEK (ranije samo u produkciji) — push se ne može
+  testirati bez aktivne registracije, a naša cache strategija je dovoljno bezbedna i za dev
+
+Testirano: poslata poruka posle kačenja push koda — server je odgovorio uspešno, bez
+grešaka, dok nijedan nalog još nema aktivnu pretplatu (potvrđuje da kod ne ruši glavnu akciju
+kad push nema kome da ode — realno stanje dok niko nije test-uređaj pretplatio). **Stvarnu
+vizuelnu notifikaciju NISAM mogao da potvrdim** — moj test browser ima trajno blokirane
+notifikacije (bezbednosna politika sandbox okruženja koju ne mogu da zaobiđem). Ti treba da
+probaš na svom telefonu (uputstvo ispod) da vidiš pravu notifikaciju.
+
+Bitna tehnička odluka: slanje push-a koristi Next.js `after()` API, ne običan
+"ispali-pa-zaboravi" async poziv — na serverless hostingu (Vercel, kuda ćemo na kraju da
+deploy-ujemo) bi se takav poziv mogao prekinuti pre nego što stigne da pošalje, jer se
+funkcija gasi čim se odgovor pošalje korisniku. `after()` garantuje da se izvrši do kraja.
+
 ## Tech stack i zašto
 
 | Deo | Izbor | Zašto |
@@ -176,6 +201,23 @@ Otvara se na `http://localhost:3000`.
 
 Bez ovog koraka: landing stranica i navigacija rade, ali registracija/prijava neće moći da
 stvarno sačuvaju korisnika (Supabase URL je trenutno placeholder u `.env.local`).
+
+### Testiraj push notifikacije na svom telefonu
+
+Ovo se ne može testirati na `localhost` sa telefona (telefon ne zna šta je "localhost" na
+tvom računaru), ali može preko lokalne mreže:
+
+1. Pokreni `npm run dev` na računaru (ostani na istom WiFi-ju kao telefon).
+2. Na telefonu otvori `http://<IP-adresa-računara>:3000` (terminal ispiše tu adresu kao
+   "Network:" kad pokreneš server).
+3. Uloguj se, idi na **Profil → 🔔 Push notifikacije**, uključi, dozvoli kad pregledač pita.
+4. Zaključaj telefon ili pređi na drugu aplikaciju (notifikacije se ne prikazuju dok si
+   aktivno na toj stranici u nekim pregledačima).
+5. Sa drugog naloga (npr. na računaru) pošalji poruku ili lajkuj taj profil — notifikacija bi
+   trebalo da stigne na telefon za par sekundi.
+
+Ako ne stigne: proveri da li si zaista dozvolio notifikacije (Podešavanja pregledača →
+Sajtovi → dozvole), i da je `SUPABASE_SERVICE_ROLE_KEY` popunjen u `.env.local`.
 
 ## Struktura projekta
 
@@ -226,7 +268,7 @@ node scripts/generate-icons.mjs
 - [x] **FAZA 4** — real-time chat
 - [ ] **FAZA 5** — "Sada" feed sa pravim aktivnostima
 - [x] **FAZA 6** — Tajni Srbin/Srpkinja, Duel, Hot Mode, Noćni mod
-- [ ] **FAZA 7** — push notifikacije (VAPID + service worker push handler je već spreman)
+- [x] **FAZA 7** — push notifikacije
 - [ ] **FAZA 8** — pretplate (Premium), Boost
 - [~] **FAZA 9** — Prijavi/Blokiraj ✅, Admin panel (osnova) ✅, automatska NSFW moderacija ⬜
 - [ ] **FAZA 10** — analytics, performance, security hardening, deploy na Vercel
