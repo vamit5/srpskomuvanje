@@ -105,14 +105,14 @@ export function FotoVideoManager({
       const { error: err1 } = await supabase.storage
         .from("photos")
         .upload(path, mainBlob, { contentType: "image/webp" });
-      if (err1) throw new Error("Upload nije uspeo. Proveri internet konekciju i probaj ponovo.");
+      if (err1) throw new Error(`Upload fotografije nije uspeo: ${err1.message}`);
 
       const { error: err2 } = await supabase.storage
         .from("photos")
         .upload(thumbPath, thumbBlob, { contentType: "image/webp" });
       if (err2) {
         await supabase.storage.from("photos").remove([path]);
-        throw new Error("Upload nije uspeo. Proveri internet konekciju i probaj ponovo.");
+        throw new Error(`Upload thumbnail-a nije uspeo: ${err2.message}`);
       }
 
       const result = await addPhoto({ path, thumbPath, width, height });
@@ -198,19 +198,29 @@ export function FotoVideoManager({
 
       const thumbBlob = await captureVideoThumbnail(file);
       const id = crypto.randomUUID();
-      const ext = file.type === "video/webm" ? "webm" : file.type === "video/quicktime" ? "mov" : "mp4";
+      // Telefoni ponekad ne prijave file.type uopšte (prazan string) --
+      // tada nagađamo mp4 (najčešći format) umesto da pošaljemo prazan
+      // Content-Type, koji Storage uvek odbija (mora biti na "allowed
+      // mime types" listi bucket-a).
+      const uploadContentType = file.type || "video/mp4";
+      const ext = uploadContentType === "video/webm" ? "webm" : uploadContentType === "video/quicktime" ? "mov" : "mp4";
       path = `${userId}/${id}.${ext}`;
       thumbPath = `${userId}/${id}-thumb.webp`;
 
-      const { error: err1 } = await supabase.storage.from("videos").upload(path, file, { contentType: file.type });
-      if (err1) throw new Error("Upload nije uspeo. Proveri internet konekciju i probaj ponovo.");
+      const { error: err1 } = await supabase.storage
+        .from("videos")
+        .upload(path, file, { contentType: uploadContentType });
+      // Prikazujemo STVARNU Supabase grešku (npr. "mime type X is not
+      // supported") umesto generičke poruke -- prethodno je bilo nemoguće
+      // dijagnostikovati zašto upload padne na nekim telefonima.
+      if (err1) throw new Error(`Upload videa nije uspeo: ${err1.message}`);
 
       const { error: err2 } = await supabase.storage
         .from("videos")
         .upload(thumbPath, thumbBlob, { contentType: "image/webp" });
       if (err2) {
         await supabase.storage.from("videos").remove([path]);
-        throw new Error("Upload nije uspeo. Proveri internet konekciju i probaj ponovo.");
+        throw new Error(`Upload thumbnail-a nije uspeo: ${err2.message}`);
       }
 
       const result = await addVideo({ path, thumbPath, durationSeconds: meta.duration });
