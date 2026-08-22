@@ -5,7 +5,31 @@ Srpska dating PWA aplikacija — naziv **Srpskomuvanje**. Projekat i dalje živi
 i folder preimenujem). Promena naziva u budućnosti je mehanička (find & replace kroz kod, novi
 domen, novo ime u `manifest.ts`/`layout.tsx`).
 
-## Status: FAZA 1, 2, 3, 4, 5, 6, 7 gotove + deo FAZE 8 (Premium/Stripe) + deo FAZE 9 (Prijavi/Blokiraj, Admin panel)
+## Status: FAZA 1-8 uživo na produkciji (srpskomuvanje.vercel.app, Stripe Live) + deo FAZE 9
+
+**Live na adresi**: https://srpskomuvanje.vercel.app (Vercel, auto-deploy na svaki push na `main`
+grane GitHub repozitorijuma `vamit5/srpskomuvanje`). Stripe je u **Live režimu** — Premium
+plaćanja su prava, ne test.
+
+**FAZA 10 (deo — Deploy, uživo je otkriven i ispravljen jedan pravi bag):**
+- ✅ Deploy na Vercel, povezan sa GitHub-om (auto-deploy na push)
+- ✅ Supabase Site URL/Redirect URLs ažurirani na produkcioni domen
+- ✅ Email potvrda naloga uključena (Confirm email), sa custom SMTP-om (Brevo, jer Supabase-ov
+  besplatni ugrađeni email servis ima jako mali limit slanja i ne dozvoljava izmenu templejta)
+- ✅ Confirm signup email templejt preveden na srpski i usmeren na `/auth/confirm` rutu
+- ✅ Uslovi korišćenja + Politika privatnosti (nove javne stranice, obavezno prihvatanje pri
+  registraciji) — pre javnog lansiranja i reklame
+- ✅ Stripe prebačen sa test na Live režim (novi live secret key, live Price ID, live webhook)
+
+**Pravi bag otkriven i ispravljen uživo na produkciji:** auth middleware (`src/proxy.ts`) je
+štitio SVE rute uključujući `/api/stripe/webhook` — kad Stripe pošalje webhook (nema "ulogovanog
+korisnika"/kolačić), middleware ga je preusmeravao (307) na `/prijava` umesto da pusti webhook da
+radi. Otkriveno preko Stripe Dashboard → Webhooks → failed deliveries. Ispravljeno izuzimanjem
+`/api/*` ruta iz middleware matcher-a — API rute imaju sopstvenu proveru (Stripe potpis), ne
+treba im cookie-based auth gate.
+
+Nije još urađeno (ostatak FAZE 10): Analytics dashboard UI, dodatni performance/security
+hardening. Vidi i FAZA 8/9 liste ispod za preostale stavke u tim fazama.
 
 **FAZA 1:**
 - ✅ Next.js 16 (App Router, TypeScript, Tailwind v4, Turbopack)
@@ -348,10 +372,12 @@ node scripts/generate-icons.mjs
 - [x] **FAZA 5** — "Sada" feed sa pravim aktivnostima
 - [x] **FAZA 6** — Tajni Srbin/Srpkinja, Duel, Hot Mode, Noćni mod
 - [x] **FAZA 7** — push notifikacije
-- [~] **FAZA 8** — Premium/Stripe Checkout ✅, "Ko te želi" ✅, dnevni limit Duela ✅, Boost ⬜,
-      dodatni filteri ⬜, webhook end-to-end test ⬜ (do Deploy-a)
-- [~] **FAZA 9** — Prijavi/Blokiraj ✅, Admin panel (osnova) ✅, automatska NSFW moderacija ⬜
-- [ ] **FAZA 10** — analytics, performance, security hardening, deploy na Vercel
+- [~] **FAZA 8** — Premium/Stripe Checkout ✅ (Live režim), "Ko te želi" ✅, dnevni limit Duela ✅,
+      webhook end-to-end testiran uživo ✅, Boost ⬜, dodatni filteri ⬜
+- [~] **FAZA 9** — Prijavi/Blokiraj ✅, Admin panel (osnova) ✅, Uslovi korišćenja/Privatnost ✅,
+      automatska NSFW moderacija ⬜
+- [~] **FAZA 10** — Deploy na Vercel ✅ (uživo, auto-deploy), analytics ⬜, dodatni performance/
+      security hardening ⬜
 
 ## Odluke koje sam doneo bez pitanja (i zašto)
 
@@ -427,6 +453,14 @@ node scripts/generate-icons.mjs
   pretplati, sad je na svakoj stavci/`subscription item`) — novija verzija `stripe` paketa to
   odražava, kod čita `subscription.items.data[0].current_period_end`. Ako se ovo opet promeni
   posle nadogradnje paketa, prvo mesto za proveru je `src/app/api/stripe/webhook/route.ts`.
+
+- **Stripe nalog je deljen sa drugim projektom (VAMIT-5)**, po odluci vlasnika projekta. To znači:
+  ceo prihod od oba projekta ide u ISTI bankovni račun/isplatu (Stripe ih ne razdvaja sam), i
+  svaka automatizacija na tom nalogu (npr. make.com scenario) koja nije eksplicitno filtrirana po
+  proizvodu/ceni "vidi" evente iz OBA projekta. Kad se to prvi put desilo (make.com scenario za
+  VAMIT-5 dobrodošlicu je poslao mejlove i za Srpskomuvanje test kupovinu), dogovoreno rešenje je
+  filter u tom scenariju (po VAMIT-5 price ID-u), ne odvajanje naloga -- vlasnik projekta to
+  podešava direktno u make.com, van ovog koda.
 
 ## Pre nego što pravi (nepoznati) korisnici počnu da uploaduju slike
 
