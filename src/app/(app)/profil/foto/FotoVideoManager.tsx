@@ -19,6 +19,16 @@ import {
 import { addPhoto, deletePhoto, reorderPhotos, addVideo, deleteVideo } from "./actions";
 import { cn } from "@/lib/utils";
 
+// canvas.toBlob("image/webp", ...) NIJE garantovano -- pregledači koji ne
+// podržavaju WebP enkodiranje (stariji Safari/iOS, neki Android WebView-ovi)
+// TIHO vrate PNG umesto da bace grešku. Zato se ekstenzija/Content-Type
+// UVEK čita sa stvarnog blob.type, nikad se ne pretpostavlja "webp".
+function extForImageBlob(blob: Blob): string {
+  if (blob.type === "image/png") return "png";
+  if (blob.type === "image/jpeg") return "jpg";
+  return "webp";
+}
+
 type ModerationStatus = "approved" | "pending" | "rejected";
 
 interface PhotoRow {
@@ -99,17 +109,17 @@ export function FotoVideoManager({
       ]);
 
       const id = crypto.randomUUID();
-      path = `${userId}/${id}.webp`;
-      thumbPath = `${userId}/${id}-thumb.webp`;
+      path = `${userId}/${id}.${extForImageBlob(mainBlob)}`;
+      thumbPath = `${userId}/${id}-thumb.${extForImageBlob(thumbBlob)}`;
 
       const { error: err1 } = await supabase.storage
         .from("photos")
-        .upload(path, mainBlob, { contentType: "image/webp" });
+        .upload(path, mainBlob, { contentType: mainBlob.type || "image/webp" });
       if (err1) throw new Error(`Upload fotografije nije uspeo: ${err1.message}`);
 
       const { error: err2 } = await supabase.storage
         .from("photos")
-        .upload(thumbPath, thumbBlob, { contentType: "image/webp" });
+        .upload(thumbPath, thumbBlob, { contentType: thumbBlob.type || "image/webp" });
       if (err2) {
         await supabase.storage.from("photos").remove([path]);
         throw new Error(`Upload thumbnail-a nije uspeo: ${err2.message}`);
@@ -205,7 +215,7 @@ export function FotoVideoManager({
       const uploadContentType = file.type || "video/mp4";
       const ext = uploadContentType === "video/webm" ? "webm" : uploadContentType === "video/quicktime" ? "mov" : "mp4";
       path = `${userId}/${id}.${ext}`;
-      thumbPath = `${userId}/${id}-thumb.webp`;
+      thumbPath = `${userId}/${id}-thumb.${extForImageBlob(thumbBlob)}`;
 
       const { error: err1 } = await supabase.storage
         .from("videos")
@@ -217,7 +227,7 @@ export function FotoVideoManager({
 
       const { error: err2 } = await supabase.storage
         .from("videos")
-        .upload(thumbPath, thumbBlob, { contentType: "image/webp" });
+        .upload(thumbPath, thumbBlob, { contentType: thumbBlob.type || "image/webp" });
       if (err2) {
         await supabase.storage.from("videos").remove([path]);
         throw new Error(`Upload thumbnail-a nije uspeo: ${err2.message}`);

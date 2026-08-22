@@ -22,7 +22,11 @@ where id = 'photos';
 update storage.buckets set
   public = true,
   file_size_limit = 26214400, -- 25MB (kratki 10-15s video klipovi)
-  allowed_mime_types = array['video/mp4', 'video/webm', 'video/quicktime', 'image/webp']
+  -- image/png i image/jpeg su OVDE zbog thumbnail-a (frejm iz videa) --
+  -- canvas.toBlob("image/webp") NIJE garantovan, pregledači bez WebP
+  -- enkodiranja (stariji Safari/iOS, neki Android WebView-ovi) tiho vrate
+  -- PNG umesto toga (vidi src/app/(app)/profil/foto/FotoVideoManager.tsx).
+  allowed_mime_types = array['video/mp4', 'video/webm', 'video/quicktime', 'image/webp', 'image/png', 'image/jpeg']
 where id = 'videos';
 
 update storage.buckets set
