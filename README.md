@@ -458,9 +458,11 @@ node scripts/generate-icons.mjs
   ceo prihod od oba projekta ide u ISTI bankovni račun/isplatu (Stripe ih ne razdvaja sam), i
   svaka automatizacija na tom nalogu (npr. make.com scenario) koja nije eksplicitno filtrirana po
   proizvodu/ceni "vidi" evente iz OBA projekta. Kad se to prvi put desilo (make.com scenario za
-  VAMIT-5 dobrodošlicu je poslao mejlove i za Srpskomuvanje test kupovinu), dogovoreno rešenje je
-  filter u tom scenariju (po VAMIT-5 price ID-u), ne odvajanje naloga -- vlasnik projekta to
-  podešava direktno u make.com, van ovog koda.
+  VAMIT-5 dobrodošlicu je poslao mejlove i za Srpskomuvanje test kupovinu), rešeno je (22.08.2026)
+  dodavanjem filtera u tom scenariju -- uslov na `payment_link` polju (Stripe Payment Link ID koji
+  koristi SAMO VAMIT-5; Srpskomuvanje pravi Checkout sesije direktno bez Payment Link-a, pa je to
+  polje kod nas uvek prazno) umesto odvajanja naloga. Podešeno direktno u make.com, van ovog koda
+  -- ako se doda još neka automatizacija na ovom nalogu ubuduće, mora dobiti isti tip filtera.
 
 ## Pre nego što pravi (nepoznati) korisnici počnu da uploaduju slike
 
