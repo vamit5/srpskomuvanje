@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/Button";
 import { calculateAge } from "@/lib/utils";
 import { signOutAction } from "./actions";
+import { HotModeToggle } from "./HotModeToggle";
 
 export const metadata = { title: "Profil" };
 
@@ -16,7 +17,9 @@ export default async function ProfilPage() {
   const [{ data: profile }, { data: primaryPhoto }] = await Promise.all([
     supabase
       .from("profiles")
-      .select("name, birth_date, city, is_verified, profile_completion_score, bio, interests")
+      .select(
+        "name, birth_date, city, is_verified, profile_completion_score, bio, interests, hot_mode_enabled, hot_mode_vibes"
+      )
       .eq("id", user!.id)
       .single(),
     supabase
@@ -99,6 +102,8 @@ export default async function ProfilPage() {
           </div>
         </section>
       ) : null}
+
+      <HotModeToggle initialEnabled={profile.hot_mode_enabled} initialVibes={profile.hot_mode_vibes ?? []} />
 
       <div className="flex flex-col gap-2">
         <Link href="/profil/foto">

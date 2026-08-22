@@ -5,7 +5,7 @@ Srpska dating PWA aplikacija — naziv **Srpskomuvanje**. Projekat i dalje živi
 i folder preimenujem). Promena naziva u budućnosti je mehanička (find & replace kroz kod, novi
 domen, novo ime u `manifest.ts`/`layout.tsx`).
 
-## Status: FAZA 1, 2, 3, 4 gotove + deo FAZE 6 (Tajni Srbin/Srpkinja, Duel) + deo FAZE 9 (Prijavi/Blokiraj, Admin panel)
+## Status: FAZA 1, 2, 3, 4 gotove + FAZA 6 kompletna + deo FAZE 9 (Prijavi/Blokiraj, Admin panel)
 
 **FAZA 1:**
 - ✅ Next.js 16 (App Router, TypeScript, Tailwind v4, Turbopack)
@@ -67,7 +67,7 @@ proveravaju ko si) tiho odbacivao sve promene — konekcija je izgledala uspešn
 ali ništa nije stizalo. Ispravka: sačekati da se sesija učita pre nego što se pretplatimo na
 promene.
 
-**FAZA 6 (samo deo — Tajni Srbin/Srpkinja i Duel; Hot Mode/Noćni mod nisu još rađeni):**
+**FAZA 6 (kompletna):**
 - ✅ **Tajni Srbin/Srpkinja** (Secret Spark, sekcija 12 iz spec-a) — pošalji nekome anoniman
   signal na Otkrij kartici (🎭 dugme). Primalac dobija diskretno obaveštenje ("Tajni Srbin/
   Tajna Srpkinja misli da si zanimljiv/a") bez otkrivanja identiteta. Ako i on/ona pošalje
@@ -84,6 +84,26 @@ običnih matcheva). Duel testiran sa dva kandidata — glasanje ispravno učitav
 Usput otkrivena i ispravljena greška: `.single()` na Supabase RPC pozivu baca grešku kad
 funkcija vrati nula redova (npr. nema dovoljno kandidata za Duel) — trebalo je čitati kao
 niz i proveriti da li je prazan, ne oslanjati se na `.single()` da to sam otkrije.
+
+- ✅ **Hot Mode** (sekcija 13) — prekidač i izbor "vibe"-ova (Flert/Vrelo/Večeras/Piće/Izlazak)
+  na Profil ekranu, traje dok ga korisnik sam ne isključi. Već se prikazuje kao bedž na
+  Otkrij karticama (od FAZE 3).
+- ✅ **Večeras** (sekcija 15) — brzi izbor na Sada ekranu (Flert/Piće/Izlazak/Upoznavanje),
+  automatski ističe u 04:00 po beogradskom vremenu (ne po vremenu servera — Vercel je
+  obično UTC, pa je ovo namerno rešeno preko `Europe/Belgrade` vremenske zone).
+- ✅ **Noćni mod** (sekcija 14) — Sada ekran se menja između 22:00–04:00 (podesivo u bazi,
+  `night_modes` tabela): naslov postaje "😏 Ko je još budan?", i prikazuje se stvarna lista
+  ljudi koji su trenutno u Hot Mode-u i odgovaraju tvom tipu — real-time, nema izmišljenih
+  profila.
+
+Testirano uživo: Hot Mode uključen na jednom nalogu → odmah se pojavio na Sada ekranu
+DRUGOG (kompatibilnog) naloga u "Hot Mode sada" listi, sa tačnim imenom/godinama. "Večeras"
+dugmad testirana — status ispravno pokazuje "aktivan do 04:00" i vidljiv je drugim nalozima.
+Logika za beogradsko vreme (uključujući prelazak preko ponoći i letnje/zimsko računanje
+vremena) testirana odvojenim skriptom sa konkretnim datumima pre ugrađivanja u app.
+
+Nijedna nova SQL migracija nije bila potrebna — sve potrebne kolone/tabele su već postojale
+od FAZE 1 (dizajnirane unapred baš za ovo).
 
 **FAZA 9 (samo deo — Prijavi/Blokiraj + Admin panel; automatska NSFW/sadržajna moderacija
 i dalje ne postoji):**
@@ -205,7 +225,7 @@ node scripts/generate-icons.mjs
 - [x] **FAZA 3** — Otkrij (swipe), lajkovi, matchevi, Discovery algoritam
 - [x] **FAZA 4** — real-time chat
 - [ ] **FAZA 5** — "Sada" feed sa pravim aktivnostima
-- [~] **FAZA 6** — Tajni Srbin/Srpkinja ✅, Duel ✅, Hot Mode ⬜, Noćni mod ⬜
+- [x] **FAZA 6** — Tajni Srbin/Srpkinja, Duel, Hot Mode, Noćni mod
 - [ ] **FAZA 7** — push notifikacije (VAPID + service worker push handler je već spreman)
 - [ ] **FAZA 8** — pretplate (Premium), Boost
 - [~] **FAZA 9** — Prijavi/Blokiraj ✅, Admin panel (osnova) ✅, automatska NSFW moderacija ⬜
@@ -265,6 +285,11 @@ node scripts/generate-icons.mjs
 - **Admin panel nema svoj tab u donjoj navigaciji** — namerno, to nije deo iskustva
   običnog korisnika. Dostupan je samo direktno na `/admin`, i samo nalozima upisanim u
   `admin_users` (dodaju se ručno kroz SQL Editor, nikad kroz aplikaciju).
+- **"Ko je u Hot Mode-u sada" (Sada ekran) filtrira samo u jednom smeru** (da li TI želiš
+  da vidiš njihov pol), ne proverava obostrano kao Otkrij algoritam (koji dodatno proverava
+  da li i oni žele tvoj pol). Namerno pojednostavljeno — ovo je ambijentalni prikaz
+  ("dešava se nešto"), ne akcija poput lajka, pa manja preciznost nije značajan problem, a
+  izbegava potrebu za još jednom SECURITY DEFINER funkcijom.
 
 ## Pre nego što pravi (nepoznati) korisnici počnu da uploaduju slike
 
