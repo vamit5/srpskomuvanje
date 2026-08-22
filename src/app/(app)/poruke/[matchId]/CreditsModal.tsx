@@ -34,13 +34,13 @@ export function CreditsModal({ onClose }: { onClose: () => void }) {
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 sm:items-center">
       <div className="w-full max-w-sm rounded-t-3xl bg-[var(--color-bg-card)] p-5 sm:rounded-3xl">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-semibold">🔥 Kupi Iskrice</h2>
+          <h2 className="font-semibold">🔥 Kupi Credits</h2>
           <button type="button" onClick={onClose} className="tap-scale text-[var(--color-text-muted)]" aria-label="Zatvori">
             <X size={20} />
           </button>
         </div>
         <p className="mb-4 text-sm text-[var(--color-text-muted)]">
-          Iskrice otključavaju zaključan sadržaj u Noćnom muvanju. Premium korisnici ne moraju da ih kupuju.
+          Credits otključavaju zaključan sadržaj u Noćnom muvanju. Premium korisnici ne moraju da ih kupuju.
         </p>
 
         {!packages ? (
@@ -57,7 +57,7 @@ export function CreditsModal({ onClose }: { onClose: () => void }) {
                 disabled={buyingId === p.id}
                 className="tap-scale flex items-center justify-between rounded-2xl border border-[var(--color-border-strong)] px-4 py-3 text-left disabled:opacity-50"
               >
-                <span className="text-sm font-semibold">🔥 {p.name}</span>
+                <span className="text-sm font-semibold">🔥 {p.credits} Credits</span>
                 <span className="text-sm text-[var(--color-text-muted)]">
                   {buyingId === p.id ? "Otvaram..." : formatPrice(p.priceCents, p.currency)}
                 </span>

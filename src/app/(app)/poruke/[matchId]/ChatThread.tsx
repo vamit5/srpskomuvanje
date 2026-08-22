@@ -222,20 +222,22 @@ export function ChatThread({
         <Link href="/poruke" className="tap-scale p-1" aria-label="Nazad">
           <ArrowLeft size={22} />
         </Link>
-        {otherPhotoUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={otherPhotoUrl} alt={otherName} className="h-10 w-10 rounded-full object-cover" />
-        ) : (
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-accent text-sm font-bold text-white">
-            {otherName[0]?.toUpperCase() ?? "?"}
+        <Link href={`/profil/${otherId}`} className="tap-scale flex flex-1 items-center gap-3">
+          {otherPhotoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={otherPhotoUrl} alt={otherName} className="h-10 w-10 rounded-full object-cover" />
+          ) : (
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-accent text-sm font-bold text-white">
+              {otherName[0]?.toUpperCase() ?? "?"}
+            </div>
+          )}
+          <div className="flex-1">
+            <p className="font-semibold leading-tight">{otherName}</p>
+            <p className="text-xs text-[var(--color-text-muted)]">
+              {otherTyping ? "kuca..." : otherOnline ? "🟢 Online" : ""}
+            </p>
           </div>
-        )}
-        <div className="flex-1">
-          <p className="font-semibold leading-tight">{otherName}</p>
-          <p className="text-xs text-[var(--color-text-muted)]">
-            {otherTyping ? "kuca..." : otherOnline ? "🟢 Online" : ""}
-          </p>
-        </div>
+        </Link>
 
         <div className="relative">
           <button
@@ -357,10 +359,11 @@ export function ChatThread({
           <button
             type="button"
             onClick={openNightPanel}
-            aria-label="Noćno muvanje"
-            className="tap-scale relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-accent text-lg shadow-[0_4px_16px_-4px_rgba(255,45,107,0.55)]"
+            aria-label="Noćno muvanje — pošalji provokativnu fotografiju ili video"
+            className="tap-scale relative flex h-11 shrink-0 items-center gap-1 rounded-full bg-gradient-accent px-3 text-white shadow-[0_4px_16px_-4px_rgba(255,45,107,0.55)]"
           >
-            🌙😈
+            <span className="text-base leading-none">🌙😈</span>
+            <span className="text-xs font-bold leading-none">Zagolicaj</span>
             <span className="absolute -inset-0.5 -z-10 animate-pulse rounded-full bg-gradient-accent opacity-40 blur-md" />
           </button>
           <input
@@ -371,13 +374,13 @@ export function ChatThread({
               if (e.key === "Enter") handleSend();
             }}
             placeholder="Napiši poruku..."
-            className="h-11 flex-1 rounded-full border border-[var(--color-border-strong)] bg-[var(--color-bg-elevated)] px-4 text-[15px] outline-none focus:border-[var(--color-accent)]"
+            className="h-11 min-w-0 flex-1 rounded-full border border-[var(--color-border-strong)] bg-[var(--color-bg-elevated)] px-4 text-[15px] outline-none focus:border-[var(--color-accent)]"
           />
           <button
             type="button"
             onClick={handleSend}
             disabled={!draft.trim() || sending}
-            className="tap-scale flex h-11 w-11 items-center justify-center rounded-full bg-gradient-accent text-white disabled:opacity-40"
+            className="tap-scale flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-accent text-white disabled:opacity-40"
             aria-label="Pošalji"
           >
             <Send size={18} />

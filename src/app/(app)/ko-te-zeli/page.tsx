@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { calculateAge } from "@/lib/utils";
+import { calculateAge, personCountPhrase } from "@/lib/utils";
 import { isPremium } from "@/lib/premium";
 import { LikerCard } from "./LikerCard";
 import { UnlockCard } from "./UnlockCard";
@@ -49,24 +49,40 @@ export default async function KoTeZeliPage() {
     string,
     { id: string; name: string; birth_date: string; photoUrl: string | null }
   >();
+  let teaserPhotoUrls: string[] = [];
 
-  if (premium && likers.length) {
+  if (likers.length) {
     const ids = likers.map((l) => l.id);
-    const [{ data: profiles }, { data: photos }] = await Promise.all([
-      supabase.from("profiles").select("id, name, birth_date").in("id", ids),
-      supabase
+    if (premium) {
+      const [{ data: profiles }, { data: photos }] = await Promise.all([
+        supabase.from("profiles").select("id, name, birth_date").in("id", ids),
+        supabase
+          .from("profile_photos")
+          .select("profile_id, thumbnail_url")
+          .in("profile_id", ids)
+          .eq("is_primary", true)
+          .eq("moderation_status", "approved"),
+      ]);
+      profilesById = new Map(
+        (profiles ?? []).map((p) => [
+          p.id,
+          { ...p, photoUrl: photos?.find((ph) => ph.profile_id === p.id)?.thumbnail_url ?? null },
+        ])
+      );
+    } else {
+      // Besplatan nalog ne dobija imena/profile, ali PRIKAZ (zamućene)
+      // stvarne slike umesto generičkih katanaca -- to je i poenta teasera.
+      const { data: photos } = await supabase
         .from("profile_photos")
         .select("profile_id, thumbnail_url")
-        .in("profile_id", ids)
+        .in("profile_id", ids.slice(0, 6))
         .eq("is_primary", true)
-        .eq("moderation_status", "approved"),
-    ]);
-    profilesById = new Map(
-      (profiles ?? []).map((p) => [
-        p.id,
-        { ...p, photoUrl: photos?.find((ph) => ph.profile_id === p.id)?.thumbnail_url ?? null },
-      ])
-    );
+        .eq("moderation_status", "approved");
+      teaserPhotoUrls = ids
+        .slice(0, 6)
+        .map((id) => photos?.find((ph) => ph.profile_id === id)?.thumbnail_url ?? null)
+        .filter((u): u is string => !!u);
+    }
   }
 
   return (
@@ -82,7 +98,7 @@ export default async function KoTeZeliPage() {
           <p className="text-sm text-[var(--color-text-muted)]">
             {likers.length === 0
               ? "Još niko"
-              : `${likers.length} ${likers.length === 1 ? "osoba te je" : "osobe/a te je"} lajkovalo`}
+              : `${likers.length} ${personCountPhrase(likers.length, "lajkova")}`}
           </p>
         </div>
       </header>
@@ -94,7 +110,7 @@ export default async function KoTeZeliPage() {
           description="Čim te neko lajkuje, pojaviće se ovde. U međuvremenu, budi aktivan/na na Otkrij da te više ljudi vidi."
         />
       ) : !premium ? (
-        <UnlockCard count={likers.length} />
+        <UnlockCard count={likers.length} photoUrls={teaserPhotoUrls} />
       ) : (
         <div className="flex flex-col gap-2">
           {likers.map((l) => {

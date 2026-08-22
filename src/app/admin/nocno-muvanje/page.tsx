@@ -83,7 +83,7 @@ export default async function AdminNightFlirtingPage() {
         <StatCard label="Automatski zaključano" value={autoLocked ?? 0} />
         <StatCard label="Automatski odobreno" value={autoApproved ?? 0} />
         <StatCard label="Broj otključavanja" value={totalUnlocks ?? 0} />
-        <StatCard label="Kupovina Iskrica" value={purchaseCount} />
+        <StatCard label="Kupovina Credits-a" value={purchaseCount} />
         <StatCard label="Premium pristupi" value={premiumAccesses ?? 0} />
         <StatCard label="Prijavljen sadržaj" value={reportedCount ?? 0} />
         <StatCard label="Verovatno false positive" value={falsePositives ?? 0} />

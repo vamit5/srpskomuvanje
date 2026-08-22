@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { calculateAge } from "@/lib/utils";
+import { calculateAge, personCountPhrase } from "@/lib/utils";
 import { belgradeTimeHHMM, isWithinDailyWindow } from "@/lib/time";
 import { TonightPicker } from "./TonightPicker";
 import { LocationCard } from "./LocationCard";
@@ -157,17 +157,19 @@ export default async function SadaPage() {
           className="glass tap-scale flex items-center justify-between rounded-2xl px-4 py-3.5"
         >
           <span className="text-sm">
-            👀 <strong>{pendingLikesCount}</strong> {pendingLikesCount === 1 ? "osoba te je" : "osobe/a te je"}{" "}
-            lajkovalo
+            👀 <strong>{pendingLikesCount}</strong> {personCountPhrase(pendingLikesCount, "lajkova")}
           </span>
           <span className="text-xs text-[var(--color-text-muted)]">Vidi →</span>
         </Link>
       )}
 
       {(unreadNotifications ?? 0) > 0 && (
-        <div className="glass rounded-2xl px-4 py-3 text-sm">
-          Imaš <strong>{unreadNotifications}</strong> nepročitanih obaveštenja.
-        </div>
+        <Link href="/obavestenja" className="glass tap-scale flex items-center justify-between rounded-2xl px-4 py-3 text-sm">
+          <span>
+            🔔 Imaš <strong>{unreadNotifications}</strong> nepročitanih obaveštenja.
+          </span>
+          <span className="text-xs text-[var(--color-text-muted)]">Vidi →</span>
+        </Link>
       )}
 
       {showFeatured && (

@@ -138,7 +138,7 @@ export function NightFlirtingBubble({ contentId, isMine }: { contentId: string; 
                     ? "..."
                     : view.premium
                       ? "OTKLJUČAJ (Premium) 👑"
-                      : `OTKLJUČAJ · ${view.unlockCostCredits} 🔥`}
+                      : `OTKLJUČAJ · ${view.unlockCostCredits} Credits 🔥`}
                 </button>
               </>
             )}
