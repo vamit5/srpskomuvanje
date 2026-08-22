@@ -74,3 +74,19 @@ export function nextBelgrade4AMISO(date: Date = new Date()): string {
   // Vrati u pravi UTC oduzimanjem offseta.
   return new Date(target.getTime() - offsetMin * 60000).toISOString();
 }
+
+/**
+ * Konvertuje vrednost iz <input type="datetime-local"> ("YYYY-MM-DDTHH:MM"),
+ * TUMAČENU KAO beogradsko lokalno vreme, u pravi UTC ISO timestamp. Koristi
+ * se za admin unos datuma (npr. eventi) da "20:00" uvek znači 20h u Srbiji,
+ * bez obzira gde je hostovan server ili u kojoj je zoni admin-ov pregledač.
+ */
+export function belgradeLocalInputToISO(dateTimeLocal: string): string {
+  const [datePart, timePart] = dateTimeLocal.split("T");
+  const [year, month, day] = datePart.split("-").map(Number);
+  const [hour, minute] = timePart.split(":").map(Number);
+
+  const guess = new Date(Date.UTC(year, month - 1, day, hour, minute));
+  const offsetMin = belgradeOffsetMinutes(guess);
+  return new Date(guess.getTime() - offsetMin * 60000).toISOString();
+}

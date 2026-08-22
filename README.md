@@ -5,7 +5,7 @@ Srpska dating PWA aplikacija — naziv **Srpskomuvanje**. Projekat i dalje živi
 i folder preimenujem). Promena naziva u budućnosti je mehanička (find & replace kroz kod, novi
 domen, novo ime u `manifest.ts`/`layout.tsx`).
 
-## Status: FAZA 1, 2, 3, 4, 7 gotove + FAZA 6 kompletna + deo FAZE 9 (Prijavi/Blokiraj, Admin panel)
+## Status: FAZA 1, 2, 3, 4, 5, 7 gotove + FAZA 6 kompletna + deo FAZE 9 (Prijavi/Blokiraj, Admin panel)
 
 **FAZA 1:**
 - ✅ Next.js 16 (App Router, TypeScript, Tailwind v4, Turbopack)
@@ -153,6 +153,39 @@ Bitna tehnička odluka: slanje push-a koristi Next.js `after()` API, ne običan
 deploy-ujemo) bi se takav poziv mogao prekinuti pre nego što stigne da pošalje, jer se
 funkcija gasi čim se odgovor pošalje korisniku. `after()` garantuje da se izvrši do kraja.
 
+**FAZA 5 — "Sada" ekran, dovršen (ranije rađen samo delimično usput kroz druge faze):**
+- ✅ **Blizu sada** (sekcija 16) — dugme "Uključi lokaciju" (pravi geolocation API iz
+  pregledača), pa "📍 X ljudi je u tvojoj blizini" (pravi broj, 25km radijus, samo kompatibilni
+  ljudi). Tačna lokacija se NIKAD ne šalje drugima — samo broj/udaljenost.
+- ✅ **Istaknuti profil** (💫) — profil koji se najviše uklapa sa tobom (≥70% Match Score),
+  ponovo koristi već postojeći Discovery algoritam, nema novog koda za računanje.
+- ✅ **Vrelo petak / vremenski događaji** (sekcija 25) — admin pravi događaj (`/admin/events`,
+  nov tab), Sada ga prikazuje svima u tom gradu (ili svima ako je grad prazan) dok traje.
+
+**Bezbednosna ispravka pre ovoga:** `profiles.lat`/`lng` kolone su od FAZE 1 bile čitljive
+SVAKOM ulogovanom korisniku direktno preko API-ja (deo šire "javni profil" politike) — niko
+ih dosad nije popunio pa ništa nije procurelo, ali smo morali zatvoriti pre nego što
+korisnici počnu da dele pravu GPS lokaciju. Sad je `revoke select (lat, lng)` na nivou baze
+— čak ni sopstveni red nije čitljiv direktno, samo kroz posebne funkcije koje računaju
+udaljenost, nikad ne vraćaju sirove koordinate.
+
+Testirano uživo (uz jedan trik): moj test pregledač ima trajno odbijenu dozvolu za lokaciju
+(isto sandbox ograničenje kao za push notifikacije), pa sam simulirao pravi GPS API
+(`navigator.geolocation.getCurrentPosition`) sa poznatim koordinatama da testiram STVARNI
+kod, ne zaobilazan put. Sa dva naloga na različitim (bliskim) koordinatama: "📍 1 osoba je u
+tvojoj blizini" — tačno. Vrelo petak događaj napravljen u admin panelu odmah se pojavio na
+Sada ekranu, sa ispravnim vremenom do kraja.
+
+Usput otkrivene i ispravljene **dve prave greške**:
+1. `nearby_count` RPC poziv je čitao rezultat iz pogrešnog polja (`count` umesto `data` —
+   PostgREST razlikuje ta dva, TypeScript to nije uhvatio) — broj je tiho uvek bio prazan.
+2. Klasična React zamka: kad server (posle `router.refresh()`) pošalje sveže podatke
+   komponenti koja ih čuva u `useState(initialX)`, React NE ažurira taj state sam od sebe
+   (`useState`-ova početna vrednost se koristi samo pri prvom renderu). Pogodilo je i listu
+   događaja u adminu i broj "ljudi u blizini" — oba ispravljena (drugo uz React-ov zvanično
+   preporučen obrazac "podešavanje state-a tokom render-a", ne u efektu, da izbegnemo
+   dodatni lint upozorenje o kaskadnim render-ima).
+
 ## Tech stack i zašto
 
 | Deo | Izbor | Zašto |
@@ -266,7 +299,7 @@ node scripts/generate-icons.mjs
 - [x] **FAZA 2** — profil, upload fotografija/videa, profile completion (stvarna logika)
 - [x] **FAZA 3** — Otkrij (swipe), lajkovi, matchevi, Discovery algoritam
 - [x] **FAZA 4** — real-time chat
-- [ ] **FAZA 5** — "Sada" feed sa pravim aktivnostima
+- [x] **FAZA 5** — "Sada" feed sa pravim aktivnostima
 - [x] **FAZA 6** — Tajni Srbin/Srpkinja, Duel, Hot Mode, Noćni mod
 - [x] **FAZA 7** — push notifikacije
 - [ ] **FAZA 8** — pretplate (Premium), Boost

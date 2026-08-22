@@ -148,6 +148,12 @@ create policy "admin moze da menja bilo koji profil"
   on profiles for update
   using (is_admin());
 
+-- Tačna GPS lokacija se NIKAD ne izlaže preko API-ja, ni sopstvenog reda --
+-- jedini put do "koliko si daleko" je distance_km() unutar SECURITY DEFINER
+-- funkcija (nearby_count, discover_profiles, create_duel), koje rade kao
+-- vlasnik i zato zaobilaze ovo ograničenje.
+revoke select (lat, lng) on profiles from authenticated, anon;
+
 -- ---------------------------------------------------------------------
 -- PROFILE PHOTOS / VIDEOS
 -- ---------------------------------------------------------------------
@@ -1158,6 +1164,92 @@ end;
 $$;
 
 grant execute on function create_duel(uuid, text) to authenticated;
+
+-- ---------------------------------------------------------------------
+-- "BLIZU SADA" (sekcija 16) -- vidi potpun komentar u
+-- supabase/migrations/0008_faza5_blizu_sada.sql
+-- ---------------------------------------------------------------------
+
+create or replace function nearby_count(viewer_id uuid, radius_km int default 25)
+returns int
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_lat double precision;
+  v_lng double precision;
+  v_gender text;
+  v_interested_in text[];
+  v_count int;
+begin
+  if auth.uid() is distinct from viewer_id then
+    raise exception 'Nije dozvoljeno.';
+  end if;
+
+  select profiles.lat, profiles.lng, profiles.gender into v_lat, v_lng, v_gender
+  from profiles where profiles.id = viewer_id;
+
+  if v_lat is null or v_lng is null then
+    return null;
+  end if;
+
+  select interested_in into v_interested_in from preferences where profile_id = viewer_id;
+
+  select count(*) into v_count
+  from profiles p
+  join preferences pref on pref.profile_id = p.id
+  where p.id <> viewer_id
+    and p.deleted_at is null
+    and p.is_discoverable = true
+    and p.lat is not null
+    and p.lng is not null
+    and p.gender = any(coalesce(v_interested_in, array[]::text[]))
+    and v_gender = any(coalesce(pref.interested_in, array[]::text[]))
+    and distance_km(v_lat, v_lng, p.lat, p.lng) <= radius_km
+    and not exists (
+      select 1 from blocks b
+      where (b.blocker_id = viewer_id and b.blocked_id = p.id)
+         or (b.blocker_id = p.id and b.blocked_id = viewer_id)
+    );
+
+  return v_count;
+end;
+$$;
+
+grant execute on function nearby_count(uuid, int) to authenticated;
+
+create or replace function update_my_location(new_lat double precision, new_lng double precision)
+returns void
+language plpgsql
+security invoker
+set search_path = public
+as $$
+begin
+  if new_lat < -90 or new_lat > 90 or new_lng < -180 or new_lng > 180 then
+    raise exception 'Nevažeće koordinate.';
+  end if;
+
+  update profiles
+  set lat = new_lat, lng = new_lng, location_updated_at = now()
+  where id = auth.uid();
+end;
+$$;
+
+grant execute on function update_my_location(double precision, double precision) to authenticated;
+
+create or replace function clear_my_location()
+returns void
+language plpgsql
+security invoker
+set search_path = public
+as $$
+begin
+  update profiles set lat = null, lng = null, location_updated_at = null where id = auth.uid();
+end;
+$$;
+
+grant execute on function clear_my_location() to authenticated;
 
 -- =====================================================================
 -- Storage: napravi ove bucket-e ručno u Supabase dashboard -> Storage
