@@ -148,14 +148,14 @@ export default async function SadaPage() {
 
       {pendingLikesCount > 0 && (
         <Link
-          href="/otkrij"
+          href="/ko-te-zeli"
           className="glass tap-scale flex items-center justify-between rounded-2xl px-4 py-3.5"
         >
           <span className="text-sm">
             👀 <strong>{pendingLikesCount}</strong> {pendingLikesCount === 1 ? "osoba te je" : "osobe/a te je"}{" "}
             lajkovalo
           </span>
-          <span className="text-xs text-[var(--color-text-muted)]">Otkrij →</span>
+          <span className="text-xs text-[var(--color-text-muted)]">Vidi →</span>
         </Link>
       )}
 

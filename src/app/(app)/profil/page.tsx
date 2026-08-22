@@ -6,16 +6,22 @@ import { calculateAge } from "@/lib/utils";
 import { signOutAction } from "./actions";
 import { HotModeToggle } from "./HotModeToggle";
 import { PushToggle } from "./PushToggle";
+import { PremiumCard } from "./PremiumCard";
 
 export const metadata = { title: "Profil" };
 
-export default async function ProfilPage() {
+export default async function ProfilPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ premium?: string }>;
+}) {
+  const { premium } = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [{ data: profile }, { data: primaryPhoto }] = await Promise.all([
+  const [{ data: profile }, { data: primaryPhoto }, { data: subscription }] = await Promise.all([
     supabase
       .from("profiles")
       .select(
@@ -29,9 +35,14 @@ export default async function ProfilPage() {
       .eq("profile_id", user!.id)
       .eq("is_primary", true)
       .maybeSingle(),
+    supabase.from("subscriptions").select("status, current_period_end").eq("profile_id", user!.id).maybeSingle(),
   ]);
 
   if (!profile) return null;
+
+  const isPremiumActive =
+    subscription?.status === "active" &&
+    (!subscription.current_period_end || new Date(subscription.current_period_end) > new Date());
 
   const age = calculateAge(profile.birth_date);
   const score = profile.profile_completion_score ?? 0;
@@ -60,6 +71,22 @@ export default async function ProfilPage() {
           <p className="text-sm text-[var(--color-text-muted)]">{profile.city || "Grad nije podešen"}</p>
         </div>
       </header>
+
+      {premium === "uspesno" && !isPremiumActive && (
+        <p className="rounded-2xl border border-[var(--color-border-strong)] bg-[var(--color-bg-card)] px-4 py-3 text-sm text-[var(--color-text-muted)]">
+          ⏳ Obrađujemo plaćanje — osveži za par sekundi ako se Premium ne pojavi odmah.
+        </p>
+      )}
+
+      <PremiumCard isPremium={!!isPremiumActive} currentPeriodEnd={subscription?.current_period_end ?? null} />
+
+      <Link
+        href="/ko-te-zeli"
+        className="glass tap-scale flex items-center justify-between rounded-2xl px-4 py-3.5"
+      >
+        <span className="text-sm font-medium">👀 Ko te želi</span>
+        <span className="text-xs text-[var(--color-text-muted)]">→</span>
+      </Link>
 
       <section className="glass rounded-2xl p-4">
         <div className="mb-2 flex items-center justify-between text-sm">

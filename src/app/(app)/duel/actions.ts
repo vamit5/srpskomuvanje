@@ -1,6 +1,8 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { belgradeStartOfDayISO } from "@/lib/time";
+import { isPremium, FREE_DAILY_DUEL_LIMIT } from "@/lib/premium";
 
 export interface DuelPair {
   duelId: string;
@@ -16,12 +18,30 @@ const PROMPTS = [
   "Ko ti je više \"tvoj tip\"?",
 ];
 
-export async function getNextDuel(): Promise<{ duel: DuelPair | null; error: string | null }> {
+export async function getNextDuel(): Promise<{
+  duel: DuelPair | null;
+  error: string | null;
+  limitReached: boolean;
+}> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { duel: null, error: "Nisi prijavljen/a." };
+  if (!user) return { duel: null, error: "Nisi prijavljen/a.", limitReached: false };
+
+  // Besplatni korisnici imaju dnevni limit Duela (sekcija 27) -- Premium nema.
+  if (!(await isPremium(user.id))) {
+    const { count: playedToday } = await supabase
+      .from("activity_events")
+      .select("id", { count: "exact", head: true })
+      .eq("profile_id", user.id)
+      .eq("event_name", "duel_completed")
+      .gte("created_at", belgradeStartOfDayISO());
+
+    if ((playedToday ?? 0) >= FREE_DAILY_DUEL_LIMIT) {
+      return { duel: null, error: null, limitReached: true };
+    }
+  }
 
   const prompt = PROMPTS[Math.floor(Math.random() * PROMPTS.length)];
 
@@ -30,7 +50,7 @@ export async function getNextDuel(): Promise<{ duel: DuelPair | null; error: str
   // kao grešku umesto kao legitiman "nema još" odgovor.
   const { data, error } = await supabase.rpc("create_duel", { viewer_id: user.id, prompt });
 
-  if (error) return { duel: null, error: "Ne mogu da učitam duel. Pokušaj ponovo." };
+  if (error) return { duel: null, error: "Ne mogu da učitam duel. Pokušaj ponovo.", limitReached: false };
 
   const rows = data as {
     duel_id: string | null;
@@ -45,7 +65,7 @@ export async function getNextDuel(): Promise<{ duel: DuelPair | null; error: str
   }[];
 
   const row = rows?.[0];
-  if (!row?.duel_id || !row.a_id || !row.b_id) return { duel: null, error: null };
+  if (!row?.duel_id || !row.a_id || !row.b_id) return { duel: null, error: null, limitReached: false };
 
   await supabase.from("activity_events").insert({
     profile_id: user.id,
@@ -55,6 +75,7 @@ export async function getNextDuel(): Promise<{ duel: DuelPair | null; error: str
 
   return {
     error: null,
+    limitReached: false,
     duel: {
       duelId: row.duel_id,
       prompt,

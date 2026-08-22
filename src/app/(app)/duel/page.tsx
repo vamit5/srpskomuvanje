@@ -1,11 +1,13 @@
+import Link from "next/link";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Button } from "@/components/ui/Button";
 import { getNextDuel } from "./actions";
 import { DuelGame } from "./DuelGame";
 
 export const metadata = { title: "Duel" };
 
 export default async function DuelPage() {
-  const { duel, error } = await getNextDuel();
+  const { duel, error, limitReached } = await getNextDuel();
 
   return (
     <div className="flex flex-col gap-4 px-4 pt-4">
@@ -18,6 +20,17 @@ export default async function DuelPage() {
 
       {error ? (
         <EmptyState emoji="⚠️" title="Nešto nije u redu" description={error} />
+      ) : limitReached ? (
+        <EmptyState
+          emoji="⭐"
+          title="Iskoristio/la si dnevni Duel"
+          description="Besplatni nalog ima ograničen broj Duela dnevno. Premium ima neograničeno."
+          action={
+            <Link href="/profil">
+              <Button>Postani Premium</Button>
+            </Link>
+          }
+        />
       ) : !duel ? (
         <EmptyState
           emoji="⚔️"

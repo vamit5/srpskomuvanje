@@ -5,7 +5,7 @@ Srpska dating PWA aplikacija — naziv **Srpskomuvanje**. Projekat i dalje živi
 i folder preimenujem). Promena naziva u budućnosti je mehanička (find & replace kroz kod, novi
 domen, novo ime u `manifest.ts`/`layout.tsx`).
 
-## Status: FAZA 1, 2, 3, 4, 5, 7 gotove + FAZA 6 kompletna + deo FAZE 9 (Prijavi/Blokiraj, Admin panel)
+## Status: FAZA 1, 2, 3, 4, 5, 6, 7 gotove + deo FAZE 8 (Premium/Stripe) + deo FAZE 9 (Prijavi/Blokiraj, Admin panel)
 
 **FAZA 1:**
 - ✅ Next.js 16 (App Router, TypeScript, Tailwind v4, Turbopack)
@@ -186,6 +186,34 @@ Usput otkrivene i ispravljene **dve prave greške**:
    preporučen obrazac "podešavanje state-a tokom render-a", ne u efektu, da izbegnemo
    dodatni lint upozorenje o kaskadnim render-ima).
 
+**FAZA 8 (deo — Premium pretplata preko Stripe-a; Boost i dodatni filteri još ne postoje):**
+- ✅ **Stripe Checkout** — "Postani Premium" na Profil ekranu otvara pravu Stripe stranicu za
+  plaćanje (hostuje je Stripe, mi nikad ne dodirujemo broj kartice). Radi u **test režimu** dok
+  ne budemo spremni za prava plaćanja.
+- ✅ **Webhook** (`/api/stripe/webhook`) prima potvrdu od Stripe-a i UPISUJE Premium status u
+  bazu — korisnik ga ne dobija sam upisivanjem, samo pravom potvrdom plaćanja od Stripe-a.
+- ✅ **"Ko te želi"** (`/ko-te-zeli`, sekcija 20) — Premium korisnici vide STVARAN identitet
+  (foto, ime) svih koji su ih lajkovali, sa dugmetom da lajkuju nazad (odmah pravi match ako je
+  obostrano). Besplatni nalozi vide samo broj + zamućen pregled + poziv da postanu Premium.
+- ✅ **Dnevni limit Duela za besplatne naloge** (5 dnevno, po beogradskom danu) — Premium
+  neograničeno.
+- ✅ **Upravljanje pretplatom** — Premium korisnik ima dugme "Upravljaj pretplatom" koje vodi na
+  Stripe-ov Billing Portal (sam menja karticu ili otkazuje, mi ne moramo da gradimo taj UI).
+
+Testirano uživo: dugme "Postani Premium" ispravno kreira Stripe Checkout sesiju i preusmerava
+na pravu (test-mode) Stripe stranicu za plaćanje, sa tačnim email-om i cenom. Grešku (npr.
+pogrešan Price ID iz drugog režima) app prikazuje korisniku umesto da puca. **Sâmo plaćanje +
+webhook potvrda još NISU end-to-end testirani** — namerno odloženo do FAZE 10 (Deploy), gde je
+podešavanje webhook-a jednostavnije (par klikova u Stripe Dashboard-u, umesto instaliranja
+Stripe CLI alata za lokalno testiranje). Do tada: `STRIPE_WEBHOOK_SECRET` u `.env.local` je
+prazan.
+
+Nije još urađeno (ostatak FAZE 8, sledeći koraci):
+- [ ] Boost (privremeno više prikazivanje profila) — tabela `boosts` postoji u bazi od FAZE 1,
+      kod za kupovinu/aktivaciju još ne postoji.
+- [ ] Dodatni filteri za Premium (napredni Discovery).
+- [ ] Premium bedž vidljiv drugima (na profilu/karticama u Otkrij).
+
 ## Tech stack i zašto
 
 | Deo | Izbor | Zašto |
@@ -235,6 +263,21 @@ Otvara se na `http://localhost:3000`.
 Bez ovog koraka: landing stranica i navigacija rade, ali registracija/prijava neće moći da
 stvarno sačuvaju korisnika (Supabase URL je trenutno placeholder u `.env.local`).
 
+### Poveži Stripe (obavezno pre nego što Premium dugme radi)
+
+1. Napravi/koristi postojeći nalog na [stripe.com](https://stripe.com). Pređi u **Test mode**
+   (Sandboxes) — dok razvijamo, nikad ne koristi live ključeve, da slučajno ne dođe do prave
+   naplate.
+2. **Developers → API keys** → kopiraj **Secret key** (počinje `sk_test_...`) u `.env.local` kao
+   `STRIPE_SECRET_KEY`.
+3. **Product catalog → Add product** → napravi proizvod (npr. "Srpskomuvanje Premium") sa
+   **Recurring/monthly** cenom. Klikni na cenu, kopiraj **Price ID** (`price_...`) u
+   `STRIPE_PREMIUM_PRICE_ID`.
+4. **Webhook** (`STRIPE_WEBHOOK_SECRET`) — popunjava se tek u FAZI 10 (Deploy), kad postoji
+   javna adresa na koju Stripe može da šalje potvrde plaćanja. Dok je prazno, Checkout dugme
+   radi (kreira sesiju, preusmerava na Stripe), ali sâmo plaćanje neće otključati Premium u
+   bazi — to je očekivano do deploy-a.
+
 ### Testiraj push notifikacije na svom telefonu
 
 Ovo se ne može testirati na `localhost` sa telefona (telefon ne zna šta je "localhost" na
@@ -262,6 +305,8 @@ iskra/
       (auth)/prijava, registracija
       onboarding/                -- kreiranje profila posle registracije
       (app)/sada, otkrij, match, poruke, profil  -- glavni ekrani (zaštićeni)
+      (app)/ko-te-zeli           -- Premium reveal ko te je lajkovao (FAZA 8)
+      api/stripe/webhook         -- prima potvrde plaćanja od Stripe-a
       manifest.ts                -- PWA manifest
       offline/                   -- offline fallback stranica
     components/
@@ -272,6 +317,7 @@ iskra/
       supabase/                  -- browser + server Supabase klijenti
       media/                     -- kompresija slika/videa u browseru (Canvas API)
       scoring.ts                 -- Profile Completion Score (jedina definicija, deljena svuda)
+      stripe.ts, premium.ts      -- Stripe klijent + provera "da li sam Premium" (FAZA 8)
     proxy.ts                     -- auth middleware (Next.js 16: middleware.ts -> proxy.ts)
   public/
     sw.js                        -- service worker (ručno pisan, bez build-tool magije)
@@ -302,7 +348,8 @@ node scripts/generate-icons.mjs
 - [x] **FAZA 5** — "Sada" feed sa pravim aktivnostima
 - [x] **FAZA 6** — Tajni Srbin/Srpkinja, Duel, Hot Mode, Noćni mod
 - [x] **FAZA 7** — push notifikacije
-- [ ] **FAZA 8** — pretplate (Premium), Boost
+- [~] **FAZA 8** — Premium/Stripe Checkout ✅, "Ko te želi" ✅, dnevni limit Duela ✅, Boost ⬜,
+      dodatni filteri ⬜, webhook end-to-end test ⬜ (do Deploy-a)
 - [~] **FAZA 9** — Prijavi/Blokiraj ✅, Admin panel (osnova) ✅, automatska NSFW moderacija ⬜
 - [ ] **FAZA 10** — analytics, performance, security hardening, deploy na Vercel
 
@@ -366,6 +413,21 @@ node scripts/generate-icons.mjs
   ("dešava se nešto"), ne akcija poput lajka, pa manja preciznost nije značajan problem, a
   izbegava potrebu za još jednom SECURITY DEFINER funkcijom.
 
+- **Stripe Checkout (hostovana stranica), ne Stripe Elements** za naplatu — Stripe hostuje
+  celu formu za karticu, mi joj samo napravimo sesiju i preusmerimo korisnika. Nikad ne vidimo
+  ni dodirujemo broj kartice, nema potrebe za PCI compliance na našoj strani, i implementacija
+  je mnogo manja površina za greške.
+- **`client_reference_id` u Checkout sesiji, ne prethodno čuvan Stripe Customer ID**, za
+  povezivanje plaćanja sa korisnikom — webhook nema pristup ulogovanoj sesiji korisnika, pa
+  mu ovako direktno prosleđujemo naš `profiles.id` kad sesiju kreiramo.
+- **Jedan red pretplate po korisniku** (`unique (profile_id)` na `subscriptions`, dodato u
+  FAZI 8) — webhook upisuje sa `upsert`, pa ponovna pretplata posle otkazivanja samo ažurira
+  isti red umesto da pravi duplikate.
+- **Stripe Subscription API je promenio gde živi `current_period_end`** (nije više na samoj
+  pretplati, sad je na svakoj stavci/`subscription item`) — novija verzija `stripe` paketa to
+  odražava, kod čita `subscription.items.data[0].current_period_end`. Ako se ovo opet promeni
+  posle nadogradnje paketa, prvo mesto za proveru je `src/app/api/stripe/webhook/route.ts`.
+
 ## Pre nego što pravi (nepoznati) korisnici počnu da uploaduju slike
 
 Ovo NIJE hitno dok samo ti i ja testiramo, ali ne sme se preskočiti pre javnog lansiranja:
@@ -383,6 +445,9 @@ Ovo NIJE hitno dok samo ti i ja testiramo, ali ne sme se preskočiti pre javnog 
   free/pay-as-you-go tier za transformacije (imamo iskustva sa Cloudinary iz drugog projekta —
   slična ideja radi i ovde).
 - **SMS verifikacija** ako je kasnije uvedemo — po poruci se plaća.
+- **Stripe naplaćuje procenat + fiksni iznos po transakciji** (standardno ~1.5-2.9% + fiksni
+  iznos, zavisi od zemlje/kartice) — normalan trošak za bilo koji payment provider, ne nešto
+  što možemo izbeći, samo treba da uđe u cenu Premium-a kad je budemo finalno određivali.
 - **Push notifikacije na velikom broju korisnika** — same po sebi besplatne (Web Push), ali
   compute za slanje (cron job / edge function) raste sa brojem korisnika.
 

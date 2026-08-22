@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 import { calculateAge, cn } from "@/lib/utils";
 import { getNextDuel, voteDuel, type DuelPair } from "./actions";
 
@@ -55,6 +57,7 @@ export function DuelGame({ initialDuel }: { initialDuel: DuelPair }) {
   const [chosenId, setChosenId] = useState<string | null>(null);
   const [loadingNext, setLoadingNext] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [limitReached, setLimitReached] = useState(false);
 
   async function handlePick(personId: string) {
     if (!duel || chosenId) return;
@@ -73,7 +76,23 @@ export function DuelGame({ initialDuel }: { initialDuel: DuelPair }) {
       setError(result.error);
       return;
     }
+    setLimitReached(result.limitReached);
     setDuel(result.duel);
+  }
+
+  if (limitReached) {
+    return (
+      <div className="flex flex-col items-center gap-3 rounded-3xl border border-[var(--color-border)] bg-[var(--color-bg-card)] px-6 py-10 text-center">
+        <span className="text-4xl">⭐</span>
+        <h2 className="text-lg font-semibold">Iskoristio/la si dnevni Duel</h2>
+        <p className="text-sm text-[var(--color-text-muted)]">
+          Besplatni nalog ima ograničen broj Duela dnevno. Premium ima neograničeno.
+        </p>
+        <Link href="/profil">
+          <Button>Postani Premium</Button>
+        </Link>
+      </div>
+    );
   }
 
   if (!duel) {

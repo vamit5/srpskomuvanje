@@ -569,13 +569,16 @@ create table subscriptions (
   status text not null default 'active' check (status in ('active', 'canceled', 'expired', 'trialing')),
   provider text not null default 'stripe',
   provider_subscription_id text,
+  stripe_customer_id text,
   current_period_end timestamptz,
   cancel_at_period_end boolean not null default false,
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  unique (profile_id)
 );
 
 create index subscriptions_profile_idx on subscriptions (profile_id);
+create index subscriptions_stripe_customer_idx on subscriptions (stripe_customer_id);
 
 create trigger subscriptions_set_updated_at before update on subscriptions
   for each row execute function set_updated_at();

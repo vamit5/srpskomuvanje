@@ -75,6 +75,16 @@ export function nextBelgrade4AMISO(date: Date = new Date()): string {
   return new Date(target.getTime() - offsetMin * 60000).toISOString();
 }
 
+/** ISO timestamp ponoći (00:00) danas po beogradskom vremenu -- za brojanje "koliko puta danas" (npr. besplatni dnevni limit Duela). */
+export function belgradeStartOfDayISO(date: Date = new Date()): string {
+  const offsetMin = belgradeOffsetMinutes(date);
+  const belgradeShifted = new Date(date.getTime() + offsetMin * 60000);
+  const target = new Date(
+    Date.UTC(belgradeShifted.getUTCFullYear(), belgradeShifted.getUTCMonth(), belgradeShifted.getUTCDate(), 0, 0, 0)
+  );
+  return new Date(target.getTime() - offsetMin * 60000).toISOString();
+}
+
 /**
  * Konvertuje vrednost iz <input type="datetime-local"> ("YYYY-MM-DDTHH:MM"),
  * TUMAČENU KAO beogradsko lokalno vreme, u pravi UTC ISO timestamp. Koristi
