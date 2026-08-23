@@ -2463,17 +2463,24 @@ stable
 security definer
 set search_path = public
 as $$
+  -- NAPOMENA: "x = any((select ... ))" je NAMERNO izbegnuto -- kad je
+  -- desna strana ANY(...) podupit (a ne kolona/promenljiva tipa text[]),
+  -- Postgres ga tumaci kao "ANY podupita" (poredi x sa svakim REDOM koji
+  -- podupit vrati), a ne kao element niza -- tu bi podupit vratio JEDAN
+  -- red tipa text[], pa bi ispalo "text = text[]" (greska 42883). Zato
+  -- ovde koristimo p2.food_favorites kao pravu kolonu (iz JOIN-a), ne
+  -- podupit -- tada ANY() ispravno gleda njene elemente.
   select coalesce(
     (
       select array_agg(x)
-      from unnest(
-        (select food_favorites from profiles where id = viewer_id)
-      ) x
-      where x = any((select food_favorites from profiles where id = other_id))
+      from unnest(p1.food_favorites) as x
+      where x = any(p2.food_favorites)
     ),
     array[]::text[]
   )
-  where auth.uid() = viewer_id;
+  from profiles p1
+  join profiles p2 on p2.id = other_id
+  where p1.id = viewer_id and auth.uid() = viewer_id;
 $$;
 
 grant execute on function get_secret_room_food_match(uuid, uuid) to authenticated;
