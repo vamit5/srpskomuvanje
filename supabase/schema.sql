@@ -1723,7 +1723,7 @@ create table secret_room_candidates (
   id uuid primary key default gen_random_uuid(),
   round_id uuid not null references secret_room_rounds(id) on delete cascade,
   candidate_id uuid not null references profiles(id) on delete cascade,
-  position smallint not null,
+  card_position smallint not null,
   is_secret_card boolean not null default false,
   swipe text check (swipe in ('like', 'pass')),
   swiped_at timestamptz,
@@ -1731,7 +1731,7 @@ create table secret_room_candidates (
   unique (round_id, candidate_id)
 );
 
-create index secret_room_candidates_round_idx on secret_room_candidates (round_id, position);
+create index secret_room_candidates_round_idx on secret_room_candidates (round_id, card_position);
 
 alter table secret_room_candidates enable row level security;
 
@@ -1921,7 +1921,7 @@ begin
   -- to Postgres-u dozvoljava top-N (bounded heap) sortiranje umesto da
   -- mora da materijalizuje i rangira SVE kandidate. row_number() se
   -- primenjuje tek POSLE, na vec skraceni skup od najvise v_limit redova.
-  insert into secret_room_candidates (round_id, candidate_id, position, is_secret_card)
+  insert into secret_room_candidates (round_id, candidate_id, card_position, is_secret_card)
   select v_new_round_id, x.id, row_number() over (order by x.score desc), false
   from (
     select
@@ -1976,22 +1976,22 @@ begin
     limit v_limit
   ) x;
 
-  -- "Tajna karta": najbolje ocenjeni kandidat (position = 1), ali se
+  -- "Tajna karta": najbolje ocenjeni kandidat (card_position = 1), ali se
   -- prikazuje tek posle par swipe-ova -- zato ga fizicki pomeramo na
   -- kasniju poziciju (min(4, poslednja)), da FE prirodno dodje do njega
   -- posle nekoliko izbora, kako spec trazi.
   select candidate_id into v_secret_candidate_id
-    from secret_room_candidates where round_id = v_new_round_id and position = 1;
+    from secret_room_candidates where round_id = v_new_round_id and card_position = 1;
 
   if v_secret_candidate_id is not null then
     select least(4, count(*)) into v_secret_position from secret_room_candidates where round_id = v_new_round_id;
 
-    update secret_room_candidates set position = 0
-      where round_id = v_new_round_id and position = v_secret_position and candidate_id <> v_secret_candidate_id;
-    update secret_room_candidates set position = v_secret_position, is_secret_card = true
+    update secret_room_candidates set card_position = 0
+      where round_id = v_new_round_id and card_position = v_secret_position and candidate_id <> v_secret_candidate_id;
+    update secret_room_candidates set card_position = v_secret_position, is_secret_card = true
       where round_id = v_new_round_id and candidate_id = v_secret_candidate_id;
-    update secret_room_candidates set position = 1
-      where round_id = v_new_round_id and position = 0;
+    update secret_room_candidates set card_position = 1
+      where round_id = v_new_round_id and card_position = 0;
   end if;
 
   return query select v_new_round_id, v_new_expires, true;
@@ -2013,7 +2013,7 @@ returns table (
   city text,
   bio text,
   primary_photo_url text,
-  position smallint,
+  card_position smallint,
   is_secret_card boolean
 )
 language plpgsql
@@ -2032,11 +2032,11 @@ begin
   select
     c.id, p.id, p.name, p.birth_date, p.city, p.bio,
     (select pp.url from profile_photos pp where pp.profile_id = p.id and pp.is_primary = true and pp.moderation_status = 'approved' limit 1),
-    c.position, c.is_secret_card
+    c.card_position, c.is_secret_card
   from secret_room_candidates c
   join profiles p on p.id = c.candidate_id
   where c.round_id = p_round_id and c.swipe is null
-  order by c.position asc;
+  order by c.card_position asc;
 end;
 $$;
 

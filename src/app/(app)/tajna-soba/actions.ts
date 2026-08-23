@@ -76,7 +76,7 @@ export async function getSecretRoomRoundCandidates(roundId: string): Promise<{ c
     city: string | null;
     bio: string | null;
     primary_photo_url: string | null;
-    position: number;
+    card_position: number;
     is_secret_card: boolean;
   }[];
 
@@ -90,7 +90,7 @@ export async function getSecretRoomRoundCandidates(roundId: string): Promise<{ c
       city: r.city,
       bio: r.bio,
       photoUrl: r.primary_photo_url,
-      position: r.position,
+      position: r.card_position,
       isSecretCard: r.is_secret_card,
     })),
   };
