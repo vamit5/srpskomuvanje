@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { getCreditPackages, createCreditsCheckoutSession, type CreditPackage } from "../../_night/creditsActions";
+import { getCreditPackages, createCreditsCheckoutSession, type CreditPackage } from "@/app/(app)/_night/creditsActions";
 
 function formatPrice(cents: number, currency: string) {
   return new Intl.NumberFormat("sr-RS", { style: "currency", currency: currency.toUpperCase() }).format(cents / 100);

@@ -58,7 +58,7 @@ async function reactToProfile(
   // Nema revalidatePath ovde namerno: /match je već potpuno dinamična ruta
   // (svaki put sveže čita bazu), pa revalidacija ne bi ništa promenila u
   // podacima -- samo bi terala Next.js da odmah iznova renderuje OVU
-  // (/otkrij) rutu i pri tom resetuje lokalni state (match ekran).
+  // (/muvaj) rutu i pri tom resetuje lokalni state (match ekran).
   const result = data as { matched: boolean; match_id: string | null };
 
   if (result.matched) {

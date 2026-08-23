@@ -26,7 +26,7 @@ export default async function ChatPage({ params }: { params: Promise<{ matchId: 
 
   const otherId = match.profile_a_id === user!.id ? match.profile_b_id : match.profile_a_id;
 
-  const [{ data: other }, { data: photo }, { data: messages }] = await Promise.all([
+  const [{ data: other }, { data: photo }, { data: messages }, { data: foodMatchesRaw }] = await Promise.all([
     supabase.from("profiles").select("name, last_active_at, show_online_status").eq("id", otherId).single(),
     supabase
       .from("profile_photos")
@@ -40,6 +40,7 @@ export default async function ChatPage({ params }: { params: Promise<{ matchId: 
       .select("id, match_id, sender_id, content, image_url, night_content_id, created_at, read_at")
       .eq("match_id", matchId)
       .order("created_at"),
+    supabase.rpc("get_secret_room_food_match", { viewer_id: user!.id, other_id: otherId }),
   ]);
 
   const isOnline = !!other?.show_online_status && isRecentlyActive(other.last_active_at, ONLINE_WINDOW_MS);
@@ -54,6 +55,7 @@ export default async function ChatPage({ params }: { params: Promise<{ matchId: 
       otherOnline={isOnline}
       initialMessages={messages ?? []}
       isUnmatched={!!match.unmatched_at}
+      foodMatches={(foodMatchesRaw as string[] | null) ?? []}
     />
   );
 }

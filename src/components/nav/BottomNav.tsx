@@ -2,18 +2,19 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Flame, Compass, Heart, MessageCircle, User } from "lucide-react";
+import { Flame, Compass, Heart, MessageCircle, Swords, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const TABS = [
-  { href: "/sada", label: "Sada", icon: Flame },
-  { href: "/otkrij", label: "Otkrij", icon: Compass },
-  { href: "/match", label: "Match", icon: Heart },
-  { href: "/poruke", label: "Poruke", icon: MessageCircle },
-  { href: "/profil", label: "Profil", icon: User },
+  { href: "/sada", label: "Home", icon: Flame, secret: false },
+  { href: "/muvaj", label: "Muvaj", icon: Compass, secret: false },
+  { href: "/match", label: "Match", icon: Heart, secret: false },
+  { href: "/tajna-soba", label: "Tajna soba", icon: Lock, secret: true },
+  { href: "/poruke", label: "Poruke", icon: MessageCircle, secret: false },
+  { href: "/duel", label: "Duel", icon: Swords, secret: false },
 ] as const;
 
-export function BottomNav() {
+export function BottomNav({ secretRoomLive = false }: { secretRoomLive?: boolean }) {
   const pathname = usePathname();
 
   return (
@@ -21,19 +22,25 @@ export function BottomNav() {
       className="glass safe-bottom fixed inset-x-0 bottom-0 z-50 border-t border-[var(--color-border)]"
       aria-label="Glavna navigacija"
     >
-      <ul className="mx-auto flex max-w-md items-stretch justify-between px-2">
-        {TABS.map(({ href, label, icon: Icon }) => {
+      <ul className="mx-auto flex max-w-md items-stretch justify-between px-1">
+        {TABS.map(({ href, label, icon: Icon, secret }) => {
           const active = pathname === href || pathname.startsWith(href + "/");
+          const glow = secret && secretRoomLive;
           return (
             <li key={href} className="flex-1">
               <Link
                 href={href}
-                className="tap-scale flex flex-col items-center gap-1 py-2.5 text-[11px]"
+                className="tap-scale relative flex flex-col items-center gap-0.5 py-2.5 text-[10px]"
               >
+                {glow && (
+                  <span className="absolute -top-0.5 right-1/2 h-1.5 w-1.5 translate-x-3 animate-pulse rounded-full bg-red-500" />
+                )}
                 <Icon
-                  size={22}
+                  size={21}
                   strokeWidth={active ? 2.4 : 1.8}
-                  className={active ? "text-gradient" : "text-[var(--color-text-muted)]"}
+                  className={cn(
+                    active ? "text-gradient" : glow ? "text-[var(--color-accent-to)]" : "text-[var(--color-text-muted)]"
+                  )}
                   style={
                     active
                       ? { stroke: "url(#iskra-nav-gradient)" }
@@ -42,7 +49,7 @@ export function BottomNav() {
                 />
                 <span
                   className={cn(
-                    "font-medium",
+                    "font-medium leading-tight",
                     active ? "text-[var(--color-text)]" : "text-[var(--color-text-muted)]"
                   )}
                 >

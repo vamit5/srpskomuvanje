@@ -1,12 +1,23 @@
 import Link from "next/link";
+import { User } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { calculateAge, personCountPhrase } from "@/lib/utils";
+import { calculateAge, cn, personCountPhrase } from "@/lib/utils";
 import { belgradeTimeHHMM, isWithinDailyWindow } from "@/lib/time";
+import { isSecretRoomEveningLive } from "@/lib/secretRoom";
 import { TonightPicker } from "./TonightPicker";
 import { LocationCard } from "./LocationCard";
 
 export const metadata = { title: "Sada" };
+
+/** "1 osoba je" / "3 osobe su" / "5 osoba je" -- srpska brojna pridevska/imenička kongruencija. */
+function personCountSubject(n: number): string {
+  const lastTwo = n % 100;
+  const last = n % 10;
+  if (last === 1 && lastTwo !== 11) return `${n} osoba je`;
+  if (last >= 2 && last <= 4 && !(lastTwo >= 12 && lastTwo <= 14)) return `${n} osobe su`;
+  return `${n} osoba je`;
+}
 
 interface FeaturedCandidate {
   id: string;
@@ -122,24 +133,67 @@ export default async function SadaPage() {
   const hasSignals =
     pendingLikesCount > 0 || (unreadNotifications ?? 0) > 0 || !!showFeatured || (activeEvents?.length ?? 0) > 0;
 
+  const [{ data: secretRoomLiveCount }, secretRoomEveningLive] = await Promise.all([
+    supabase.rpc("get_secret_room_live_count"),
+    isSecretRoomEveningLive(),
+  ]);
+
   return (
     <div className="flex flex-col gap-3 px-4 pt-4">
-      <header>
-        <h1 className="text-2xl font-bold">
-          {isNight ? (
-            <>
-              😏 <span className="text-gradient">Ko je još budan?</span>
-            </>
-          ) : (
-            <>
-              🔥 <span className="text-gradient">Sada</span>
-            </>
-          )}
-        </h1>
-        <p className="text-sm text-[var(--color-text-muted)]">
-          {isNight ? "Noćni mod je aktivan" : "Šta se dešava upravo sada"}
-        </p>
+      <header className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">
+            {isNight ? (
+              <>
+                😏 <span className="text-gradient">Ko je još budan?</span>
+              </>
+            ) : (
+              <>
+                🔥 <span className="text-gradient">Sada</span>
+              </>
+            )}
+          </h1>
+          <p className="text-sm text-[var(--color-text-muted)]">
+            {isNight ? "Noćni mod je aktivan" : "Šta se dešava upravo sada"}
+          </p>
+        </div>
+        <Link
+          href="/profil"
+          aria-label="Moj profil"
+          className="tap-scale flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-bg-elevated)] text-[var(--color-text-muted)]"
+        >
+          <User size={20} />
+        </Link>
       </header>
+
+      <Link
+        href="/tajna-soba"
+        className={cn(
+          "tap-scale relative overflow-hidden rounded-2xl px-4 py-4 text-white",
+          secretRoomEveningLive
+            ? "bg-gradient-to-br from-[#2b0b3f] via-[#5b0e6b] to-[#c0195e]"
+            : "bg-gradient-to-br from-[#241633] to-[#3a1a4a]"
+        )}
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="flex items-center gap-1.5 text-base font-extrabold">
+              🔥 Tajna soba
+              {secretRoomEveningLive && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-bold">
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-400" /> UŽIVO
+                </span>
+              )}
+            </p>
+            <p className="mt-1 text-xs text-white/80">
+              {(secretRoomLiveCount ?? 0) > 0
+                ? `${personCountSubject(secretRoomLiveCount ?? 0)} trenutno unutra`
+                : "Da vidiš ko je večeras unutra?"}
+            </p>
+          </div>
+          <span className="text-xs font-semibold">Uđi →</span>
+        </div>
+      </Link>
 
       {activeEvents?.map((ev) => (
         <div key={ev.id} className="rounded-2xl bg-gradient-accent px-4 py-3.5 text-white">
@@ -174,7 +228,7 @@ export default async function SadaPage() {
 
       {showFeatured && (
         <Link
-          href="/otkrij"
+          href="/muvaj"
           className="glass tap-scale flex items-center gap-3 rounded-2xl px-4 py-3.5"
         >
           {featured.primary_photo_url ? (
@@ -205,7 +259,7 @@ export default async function SadaPage() {
             {hotNow.map((p) => (
               <Link
                 key={p.id}
-                href="/otkrij"
+                href="/muvaj"
                 className="tap-scale flex w-20 shrink-0 flex-col items-center gap-1 text-center"
               >
                 <div className="relative">

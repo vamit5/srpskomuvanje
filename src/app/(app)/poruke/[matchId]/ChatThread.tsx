@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Send, Check, CheckCheck, MoreVertical } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+import { foodFavoriteLabel } from "@/lib/foodFavorites";
 import { Button } from "@/components/ui/Button";
 import { sendMessage, markAsRead, unmatchAction, type MessageRow } from "../actions";
 import { reportUser, blockUser, type ReportReason } from "../../_safety/actions";
@@ -40,6 +41,7 @@ export function ChatThread({
   otherOnline,
   initialMessages,
   isUnmatched,
+  foodMatches,
 }: {
   matchId: string;
   currentUserId: string;
@@ -49,6 +51,7 @@ export function ChatThread({
   otherOnline: boolean;
   initialMessages: MessageRow[];
   isUnmatched: boolean;
+  foodMatches: string[];
 }) {
   const router = useRouter();
   const [messages, setMessages] = useState<MessageRow[]>(initialMessages);
@@ -311,6 +314,16 @@ export function ChatThread({
       )}
 
       <div className="flex-1 space-y-2 overflow-y-auto px-4 py-4">
+        {foodMatches.length > 0 && (
+          <div className="mx-auto mb-2 w-fit max-w-[85%] rounded-full bg-[var(--color-bg-elevated)] px-4 py-2 text-center text-xs font-medium text-[var(--color-text-muted)]">
+            {foodMatches
+              .slice(0, 2)
+              .map((f) => foodFavoriteLabel(f))
+              .map((f) => `${f.emoji} `)
+              .join("")}
+            Oboje volite {foodMatches.slice(0, 2).map((f) => foodFavoriteLabel(f).label.toLowerCase()).join(" i ")}!
+          </div>
+        )}
         {messages.length === 0 && (
           <p className="pt-10 text-center text-sm text-[var(--color-text-muted)]">
             Recite zdravo — vi ste se međusobno svideli 👋

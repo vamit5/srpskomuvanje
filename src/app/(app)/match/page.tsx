@@ -54,7 +54,7 @@ export default async function MatchPage() {
         <EmptyState
           emoji="❤️"
           title="Još nemaš matcheva"
-          description="Kad se ti i neko drugi međusobno lajkujete, ovde se pojavljuje match. Idi na Otkrij da počneš."
+          description="Kad se ti i neko drugi međusobno lajkujete, ovde se pojavljuje match. Idi na Muvaj da počneš."
         />
       ) : (
         <ul className="flex flex-col gap-2">

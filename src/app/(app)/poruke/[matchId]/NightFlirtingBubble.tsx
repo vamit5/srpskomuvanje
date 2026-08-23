@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Loader2, Flame, Flag, Lock, Eye, Clock } from "lucide-react";
 import { getNightContentView, unlockNightContent, reportNightContent } from "../../_night/actions";
-import { CreditsModal } from "./CreditsModal";
+import { CreditsModal } from "@/components/CreditsModal";
 
 function ReportButton({ reported, onClick }: { reported: boolean; onClick: () => void }) {
   return (

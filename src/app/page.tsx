@@ -8,14 +8,19 @@ const FEATURES = [
     text: "Ne listaš profile u prazno. Vidiš šta se dešava upravo sada — ko je nov, ko te je lajkovao, ko je blizu.",
   },
   {
-    emoji: "💘",
-    title: "Otkrij",
+    emoji: "🔥",
+    title: "Muvaj",
     text: "Swipe kartice sa fotografijama, kratkim video snimcima i personalizovanim Match Score-om.",
   },
   {
     emoji: "❤️",
     title: "Match",
     text: "Kad se međusobno lajkujete, otvara se razgovor u trenutku. Bez čekanja, bez nagađanja.",
+  },
+  {
+    emoji: "🚪",
+    title: "Tajna soba",
+    text: "Večernja igra u realnom vremenu — nekoliko minuta, mali broj pažljivo biranih ljudi, i pravi obostrani signal umesto beskonačnog swipovanja.",
   },
   {
     emoji: "🎭",

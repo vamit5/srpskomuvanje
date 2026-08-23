@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { cn } from "@/lib/utils";
+import { FOOD_FAVORITE_OPTIONS } from "@/lib/foodFavorites";
 import { completeOnboarding, type OnboardingInput } from "./actions";
 
 const GENDERS: { value: OnboardingInput["gender"]; label: string }[] = [
@@ -25,7 +26,7 @@ const INTERESTS = [
   "Noćni život", "Kućni ljubimci", "Joga", "Tehnologija",
 ];
 
-const STEPS = ["osnovno", "trazim", "grad", "opis", "interesi"] as const;
+const STEPS = ["osnovno", "trazim", "grad", "opis", "interesi", "srbin"] as const;
 
 export function OnboardingWizard() {
   const router = useRouter();
@@ -40,6 +41,7 @@ export function OnboardingWizard() {
   const [city, setCity] = useState("");
   const [bio, setBio] = useState("");
   const [interests, setInterests] = useState<string[]>([]);
+  const [foodFavorites, setFoodFavorites] = useState<string[]>([]);
 
   function toggle<T>(list: T[], value: T, setter: (v: T[]) => void) {
     setter(list.includes(value) ? list.filter((v) => v !== value) : [...list, value]);
@@ -56,6 +58,8 @@ export function OnboardingWizard() {
       case "opis":
         return true;
       case "interesi":
+        return true;
+      case "srbin":
         return true;
     }
   }
@@ -75,6 +79,7 @@ export function OnboardingWizard() {
       city,
       bio,
       interests,
+      foodFavorites,
     });
     // completeOnboarding radi redirect() na uspehu (baca NEXT_REDIRECT),
     // pa se do ovde stiže samo ako postoji greška.
@@ -209,6 +214,31 @@ export function OnboardingWizard() {
                   )}
                 >
                   {interest}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+        {STEPS[step] === "srbin" && (
+          <div className="flex flex-col gap-4">
+            <h1 className="text-xl font-bold">Da li si pravi Srbin/Srpkinja? 🇷🇸</h1>
+            <p className="text-sm text-[var(--color-text-muted)]">
+              Izaberi šta voliš — kad upoznaš nekog ko voli isto, javićemo vam u chatu.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {FOOD_FAVORITE_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => toggle(foodFavorites, opt.value, setFoodFavorites)}
+                  className={cn(
+                    "tap-scale rounded-full border px-3.5 py-2 text-sm",
+                    foodFavorites.includes(opt.value)
+                      ? "border-transparent bg-gradient-accent text-white"
+                      : "border-[var(--color-border-strong)] text-[var(--color-text-muted)]"
+                  )}
+                >
+                  {opt.emoji} {opt.label}
                 </button>
               ))}
             </div>

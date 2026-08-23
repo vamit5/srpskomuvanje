@@ -12,6 +12,7 @@ export interface OnboardingInput {
   city: string;
   bio: string;
   interests: string[];
+  foodFavorites: string[];
 }
 
 function calculateAge(birthDateStr: string) {
@@ -62,6 +63,7 @@ export async function completeOnboarding(input: OnboardingInput) {
     city: input.city.trim() || null,
     bio: input.bio.trim() || null,
     interests: input.interests,
+    food_favorites: input.foodFavorites,
     is_18_confirmed: true,
     onboarding_completed_at: new Date().toISOString(),
     profile_completion_score: score,

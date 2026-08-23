@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AppShell } from "@/components/nav/AppShell";
+import { isSecretRoomEveningLive } from "@/lib/secretRoom";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -20,5 +21,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   if (!profile?.onboarding_completed_at) redirect("/onboarding");
 
-  return <AppShell>{children}</AppShell>;
+  const secretRoomLive = await isSecretRoomEveningLive();
+
+  return <AppShell secretRoomLive={secretRoomLive}>{children}</AppShell>;
 }

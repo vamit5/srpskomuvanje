@@ -118,7 +118,7 @@ function SwipeCard({
   );
 }
 
-export function OtkrijDeck({ initialCandidates }: { initialCandidates: DiscoveryCandidate[] }) {
+export function MuvajDeck({ initialCandidates }: { initialCandidates: DiscoveryCandidate[] }) {
   const [stack, setStack] = useState(initialCandidates);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);

@@ -107,7 +107,7 @@ export default async function KoTeZeliPage() {
         <EmptyState
           emoji="👀"
           title="Još nema lajkova"
-          description="Čim te neko lajkuje, pojaviće se ovde. U međuvremenu, budi aktivan/na na Otkrij da te više ljudi vidi."
+          description="Čim te neko lajkuje, pojaviće se ovde. U međuvremenu, budi aktivan/na na Muvaj da te više ljudi vidi."
         />
       ) : !premium ? (
         <UnlockCard count={likers.length} photoUrls={teaserPhotoUrls} />
