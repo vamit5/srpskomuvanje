@@ -56,6 +56,9 @@ export default function LandingPage() {
 
       <main className="flex-1">
         <section className="flex flex-col items-center px-6 pb-10 pt-8 text-center">
+          <span className="bg-gradient-serbia mb-4 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold text-white">
+            🇷🇸 Napravljeno za Srbe, od Srba
+          </span>
           <h1 className="text-4xl font-extrabold leading-tight">
             Uđi. <span className="text-gradient">Vidi ko je tu.</span>
           </h1>

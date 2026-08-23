@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/Button";
 import { calculateAge } from "@/lib/utils";
+import { foodFavoriteLabel } from "@/lib/foodFavorites";
 import { signOutAction } from "./actions";
 import { BoostCard } from "./BoostCard";
 import { PushToggle } from "./PushToggle";
@@ -25,7 +26,7 @@ export default async function ProfilPage({
     supabase
       .from("profiles")
       .select(
-        "name, birth_date, city, is_verified, profile_completion_score, bio, interests, boost_expires_at"
+        "name, birth_date, city, is_verified, profile_completion_score, bio, interests, boost_expires_at, food_favorites"
       )
       .eq("id", user!.id)
       .single(),
@@ -114,6 +115,22 @@ export default async function ProfilPage({
           <p className="text-sm">{profile.bio}</p>
         </section>
       )}
+
+      {profile.food_favorites?.length ? (
+        <section>
+          <h2 className="mb-2 text-sm font-semibold text-[var(--color-text-muted)]">🇷🇸 Voli</h2>
+          <div className="flex flex-wrap gap-2">
+            {profile.food_favorites.map((f: string) => {
+              const { label, emoji } = foodFavoriteLabel(f);
+              return (
+                <span key={f} className="bg-gradient-serbia rounded-full px-3 py-1 text-xs font-medium text-white">
+                  {emoji} {label}
+                </span>
+              );
+            })}
+          </div>
+        </section>
+      ) : null}
 
       {profile.interests?.length ? (
         <section>

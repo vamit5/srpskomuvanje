@@ -324,7 +324,7 @@ export function ChatThread({
 
       <div className="flex-1 space-y-2 overflow-y-auto px-4 py-4">
         {foodMatches.length > 0 && (
-          <div className="mx-auto mb-2 w-fit max-w-[85%] rounded-full bg-[var(--color-bg-elevated)] px-4 py-2 text-center text-xs font-medium text-[var(--color-text-muted)]">
+          <div className="bg-gradient-serbia mx-auto mb-2 w-fit max-w-[85%] rounded-full px-4 py-2 text-center text-xs font-semibold text-white">
             {foodMatches
               .slice(0, 2)
               .map((f) => foodFavoriteLabel(f))

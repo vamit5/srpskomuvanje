@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 import { BottomNav } from "./BottomNav";
 import { cn } from "@/lib/utils";
 
@@ -30,7 +31,26 @@ export function AppShell({
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col">
-      <main className={cn("flex-1", fullScreen ? "" : "safe-top pb-24")}>{children}</main>
+      <main className={cn("flex-1", fullScreen ? "" : "safe-top pb-24")}>
+        {fullScreen ? (
+          children
+        ) : (
+          // "Bubble" prelaz izmedju tabova donjeg menija -- namerno NE za
+          // fullScreen rute (chat/18+ Muvanje) da se ne kosi sa njihovim
+          // sopstvenim animacijama i da ostanu trenutno responzivne.
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={pathname}
+              initial={{ opacity: 0, scale: 0.97, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 1.02 }}
+              transition={{ duration: 0.22, ease: [0.34, 1.2, 0.64, 1] }}
+            >
+              {children}
+            </motion.div>
+          </AnimatePresence>
+        )}
+      </main>
       {!fullScreen && <BottomNav eighteenPlusPending={eighteenPlusPending} />}
     </div>
   );

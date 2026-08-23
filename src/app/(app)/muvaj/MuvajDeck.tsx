@@ -6,6 +6,8 @@ import { motion, useMotionValue, useTransform, type PanInfo } from "framer-motio
 import { X, Heart, ShieldCheck, Drama, Check } from "lucide-react";
 import { calculateAge, cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
+import { MatchCelebration } from "@/components/MatchCelebration";
+import { vibrate } from "@/lib/haptics";
 import {
   getMoreCandidates,
   chooseMuvaj,
@@ -158,6 +160,7 @@ export function MuvajDeck({ initialCandidates }: { initialCandidates: DiscoveryC
     if (result.matched) {
       setMatched({ candidate: target, viaSpark: false });
     } else if (choice === "krevet") {
+      vibrate(30);
       setKrevetToast(true);
       if (toastTimeout.current) clearTimeout(toastTimeout.current);
       toastTimeout.current = setTimeout(() => setKrevetToast(false), 2500);
@@ -238,23 +241,13 @@ export function MuvajDeck({ initialCandidates }: { initialCandidates: DiscoveryC
 
       {error && <p className="text-center text-sm text-[var(--color-danger)]">{error}</p>}
 
-      <div className="flex items-center justify-center gap-3 pb-2">
-        <button
-          type="button"
-          onClick={() => handleChoice("nista")}
-          disabled={!current || pending}
-          className="tap-scale flex h-14 w-14 items-center justify-center rounded-full border border-[var(--color-border-strong)] bg-[var(--color-bg-card)] text-[var(--color-danger)] disabled:opacity-40"
-          aria-label="Ništa"
-          title="Ništa"
-        >
-          <X size={26} />
-        </button>
+      <div className="flex items-center justify-end pb-1">
         <button
           type="button"
           onClick={handleSecretSpark}
           disabled={!current || sparkSending || currentSparked}
           className={cn(
-            "tap-scale flex h-12 w-12 items-center justify-center rounded-full border text-white disabled:opacity-40",
+            "tap-scale flex h-9 w-9 items-center justify-center rounded-full border text-white disabled:opacity-40",
             currentSparked
               ? "border-transparent bg-[var(--color-success)]"
               : "border-[var(--color-border-strong)] bg-[var(--color-bg-card)] text-[var(--color-accent)]"
@@ -262,33 +255,41 @@ export function MuvajDeck({ initialCandidates }: { initialCandidates: DiscoveryC
           aria-label="Pošalji tajni signal (Tajni Srbin/Srpkinja)"
           title="Tajni Srbin/Srpkinja — pošalji anoniman signal"
         >
-          {currentSparked ? <Check size={18} /> : <Drama size={18} />}
+          {currentSparked ? <Check size={14} /> : <Drama size={14} />}
         </button>
+      </div>
+
+      <div className="flex items-center justify-center gap-2 pb-2">
         <button
           type="button"
           onClick={() => handleChoice("krevet")}
           disabled={!current || pending}
-          className="tap-scale flex h-14 w-14 items-center justify-center rounded-full border-2 border-[var(--color-accent-to)] bg-[var(--color-bg-card)] text-xl disabled:opacity-40"
-          aria-label="Krevet"
-          title="Krevet"
+          className="tap-scale pulse-glow flex flex-1 items-center justify-center gap-1.5 rounded-full border-2 border-[var(--color-accent-to)] bg-[var(--color-bg-card)] px-3 py-3.5 text-xs font-extrabold tracking-wide disabled:opacity-40"
         >
-          😈
+          😈 KREVET
         </button>
         <button
           type="button"
           onClick={() => handleChoice("upoznavanje")}
           disabled={!current || pending}
-          className="tap-scale flex h-14 w-14 items-center justify-center rounded-full bg-gradient-accent text-white disabled:opacity-40"
-          aria-label="Upoznavanje"
-          title="Upoznavanje"
+          className="tap-scale flex flex-1 items-center justify-center gap-1.5 rounded-full bg-gradient-accent px-3 py-3.5 text-xs font-extrabold tracking-wide text-white disabled:opacity-40"
         >
-          <Heart size={26} />
+          <Heart size={16} /> UPOZNAVANJE
+        </button>
+        <button
+          type="button"
+          onClick={() => handleChoice("nista")}
+          disabled={!current || pending}
+          className="tap-scale flex flex-1 items-center justify-center gap-1.5 rounded-full border border-[var(--color-border-strong)] bg-[var(--color-bg-card)] px-3 py-3.5 text-xs font-extrabold tracking-wide text-[var(--color-danger)] disabled:opacity-40"
+        >
+          <X size={16} /> NIŠTA
         </button>
       </div>
 
       {matched && (
         <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center gap-6 bg-black/92 px-6 text-center text-white">
-          <p className="text-5xl">{matched.viaSpark ? "🤫🔥" : "🔥"}</p>
+          <MatchCelebration />
+          <p className="animate-bubble-in text-5xl">{matched.viaSpark ? "🤫🔥" : "🔥"}</p>
           <h2 className="text-3xl font-extrabold text-gradient">
             {matched.viaSpark ? "OBOSTRANA PRIVLAČNOST!" : "MATCH!"}
           </h2>

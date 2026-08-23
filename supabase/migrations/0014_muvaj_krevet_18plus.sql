@@ -534,3 +534,90 @@ end;
 $$;
 
 grant execute on function unlock_night_content(uuid, uuid) to authenticated;
+
+-- ---------------------------------------------------------------------
+-- PROFILE UNLOCKS -- korisnik NIKAD ne sme videti kompletan tudji profil
+-- (bio, interesovanja, hrana, dodatne slike/video) bez Premium-a ili
+-- placanja Credits-a. Primarna slika + ime/godine/grad ostaju besplatni
+-- (to se vec vidi tokom Muvaj swipe-a, ne bi imalo smisla ponovo
+-- sakrivati) -- sve OSTALO se NE SALJE klijentu dok nije otkljucano
+-- (server-side, ne CSS-blur trik -- "da ne dodje do varanja").
+-- ---------------------------------------------------------------------
+
+create table if not exists profile_unlocks (
+  id uuid primary key default gen_random_uuid(),
+  viewer_id uuid not null references profiles(id) on delete cascade,
+  target_id uuid not null references profiles(id) on delete cascade,
+  unlocked_at timestamptz not null default now(),
+  unique (viewer_id, target_id),
+  check (viewer_id <> target_id)
+);
+
+create index if not exists profile_unlocks_viewer_idx on profile_unlocks (viewer_id);
+
+alter table profile_unlocks enable row level security;
+
+drop policy if exists "korisnik vidi svoja otkljucavanja" on profile_unlocks;
+create policy "korisnik vidi svoja otkljucavanja"
+  on profile_unlocks for select using (auth.uid() = viewer_id);
+
+drop policy if exists "admin vidi sva otkljucavanja profila" on profile_unlocks;
+create policy "admin vidi sva otkljucavanja profila"
+  on profile_unlocks for select using (is_admin());
+
+insert into muvaj_config (key, value, description) values
+  ('profile_unlock_cost_credits', '1', 'Koliko Credits-a kosta otkljucavanje kompletnog profila (bio, interesovanja, dodatne slike) kada nije Premium')
+on conflict (key) do nothing;
+
+create or replace function unlock_profile_view(p_viewer_id uuid, p_target_id uuid)
+returns table (ok boolean, error text)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_is_premium boolean;
+  v_cost int;
+  v_balance int;
+begin
+  if auth.uid() is distinct from p_viewer_id then
+    return query select false, 'Nije dozvoljeno.'; return;
+  end if;
+  if p_viewer_id = p_target_id then
+    return query select true, null::text; return;
+  end if;
+
+  if exists (select 1 from profile_unlocks where viewer_id = p_viewer_id and target_id = p_target_id) then
+    return query select true, null::text; return;
+  end if;
+
+  select exists(
+    select 1 from subscriptions
+    where profile_id = p_viewer_id and status = 'active'
+      and (current_period_end is null or current_period_end > now())
+  ) into v_is_premium;
+
+  if v_is_premium then
+    insert into profile_unlocks (viewer_id, target_id) values (p_viewer_id, p_target_id)
+    on conflict (viewer_id, target_id) do nothing;
+    return query select true, null::text; return;
+  end if;
+
+  select coalesce(value::int, 1) into v_cost from muvaj_config where key = 'profile_unlock_cost_credits';
+  select balance_credits into v_balance from wallets where profile_id = p_viewer_id;
+
+  if coalesce(v_balance, 0) < v_cost then
+    return query select false, 'insufficient_credits'; return;
+  end if;
+
+  update wallets set balance_credits = balance_credits - v_cost where profile_id = p_viewer_id;
+  insert into credit_transactions (profile_id, amount, reason)
+    values (p_viewer_id, -v_cost, 'unlock_spend');
+  insert into profile_unlocks (viewer_id, target_id) values (p_viewer_id, p_target_id)
+    on conflict (viewer_id, target_id) do nothing;
+
+  return query select true, null::text;
+end;
+$$;
+
+grant execute on function unlock_profile_view(uuid, uuid) to authenticated;

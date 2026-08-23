@@ -30,6 +30,13 @@
 
   --gradient-accent: linear-gradient(135deg, var(--color-accent-from), var(--color-accent-to));
 
+  /* Srpski akcenat -- crvena/plava (zastava), koristi se namerno RETKO i
+     ciljano (hrana/kultura bedzevi, "Srbija" naglasci) da ne razvodni
+     glavni pink/violet brend, samo da ga dopuni prepoznatljivim dodirom. */
+  --color-serbia-red: #c6363c;
+  --color-serbia-blue: #0c4076;
+  --gradient-serbia: linear-gradient(135deg, var(--color-serbia-red), var(--color-serbia-blue));
+
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
@@ -82,6 +89,43 @@ body {
 
 .bg-gradient-accent {
   background-image: var(--gradient-accent);
+}
+
+.bg-gradient-serbia {
+  background-image: var(--gradient-serbia);
+}
+.text-gradient-serbia {
+  background-image: var(--gradient-serbia);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 45, 107, 0.55);
+  }
+  50% {
+    box-shadow: 0 0 0 12px rgba(255, 45, 107, 0);
+  }
+}
+.pulse-glow {
+  animation: pulse-glow 1.8s ease-in-out infinite;
+}
+
+@keyframes bubble-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.94) translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+.animate-bubble-in {
+  animation: bubble-in 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .glass {

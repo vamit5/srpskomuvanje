@@ -6,6 +6,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { calculateAge } from "@/lib/utils";
 import { CreditsModal } from "@/components/CreditsModal";
+import { MatchCelebration } from "@/components/MatchCelebration";
 import { chooseMuvaj, type MuvajChoice } from "../muvaj/actions";
 import {
   revealKrevetSignal,
@@ -174,11 +175,17 @@ export function EighteenPlusApp({
 
   return (
     <div className="flex h-full flex-col bg-gradient-to-b from-[#2b0b18] via-[#3a0d20] to-[#1a0710] px-4 pb-4 pt-4 safe-top text-white">
-      <header className="mb-3 flex items-center justify-between">
-        <h1 className="text-xl font-extrabold">😈 18+ Muvanje</h1>
-        <Link href="/poruke" className="text-xs text-white/60 underline">
-          Poruke →
-        </Link>
+      <header className="mb-3">
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl font-extrabold">😈 18+ Muvanje</h1>
+          <Link href="/poruke" className="text-xs text-white/60 underline">
+            Poruke →
+          </Link>
+        </div>
+        <p className="mt-1 text-xs leading-snug text-white/70">
+          Ovde se pojavljuju samo osobe koje su večeras spremne da ih odvedeš u krevet 😈 Ili da igraš hot igrice sa
+          njima, potpuno diskretno.
+        </p>
       </header>
 
       {signals.length > 0 && (
@@ -198,9 +205,7 @@ export function EighteenPlusApp({
           <div className="flex h-full flex-col items-center justify-center gap-2 rounded-3xl border border-white/10 bg-black/20 px-6 text-center text-white/70">
             <span className="text-4xl">🌙</span>
             <p className="font-semibold">Nema još nikog ovde</p>
-            <p className="text-sm">
-              Ovde se pojavljuju samo ljudi koji su bar jednom izabrali 😈 Krevet u Muvaj. Svrati kasnije.
-            </p>
+            <p className="text-sm">Svrati kasnije — čim neko izabere 😈 Krevet u Muvaj, pojaviće se ovde.</p>
           </div>
         ) : (
           <div className="relative h-full overflow-hidden rounded-3xl bg-black/30">
@@ -242,7 +247,7 @@ export function EighteenPlusApp({
           type="button"
           onClick={() => handleChoice("krevet")}
           disabled={!current || pending}
-          className="tap-scale flex h-16 w-16 items-center justify-center rounded-full border-2 border-[var(--color-accent-to)] bg-black/30 text-2xl disabled:opacity-40"
+          className="tap-scale pulse-glow flex h-16 w-16 items-center justify-center rounded-full border-2 border-[var(--color-accent-to)] bg-black/30 text-2xl disabled:opacity-40"
           aria-label="Krevet"
         >
           😈
@@ -266,7 +271,8 @@ export function EighteenPlusApp({
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[60] flex flex-col items-center justify-center gap-6 bg-black/92 px-6 text-center text-white"
           >
-            <p className="text-5xl">🔥</p>
+            <MatchCelebration variant="hot" />
+            <p className="animate-bubble-in text-5xl">🔥</p>
             <h2 className="text-3xl font-extrabold text-gradient">MATCH!</h2>
             {matched.photoUrl && (
               // eslint-disable-next-line @next/next/no-img-element
