@@ -88,6 +88,42 @@ export async function POST(request: Request) {
           break;
         }
 
+        // Boost (60 min plaćena vidljivost) -- odvojeno od Credits i pretplate.
+        if (session.mode === "payment" && session.metadata?.type === "boost") {
+          const profileId = session.metadata.profileId;
+          const durationMinutes = Number(session.metadata.durationMinutes);
+          if (!profileId || !Number.isFinite(durationMinutes) || durationMinutes <= 0) break;
+
+          // Idempotencija -- ista logika kao Credits (Stripe ume da isporuči
+          // isti event više puta).
+          const { data: existing } = await admin
+            .from("credit_transactions")
+            .select("id")
+            .eq("stripe_checkout_session_id", session.id)
+            .maybeSingle();
+          if (existing) break;
+
+          const paymentIntentId =
+            typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id ?? null;
+
+          const boostExpiresAt = new Date(Date.now() + durationMinutes * 60000).toISOString();
+          const { error: profileErr } = await admin.from("profiles").update({ boost_expires_at: boostExpiresAt }).eq("id", profileId);
+          if (profileErr) console.error("Stripe webhook: upis Boost-a nije uspeo.", profileErr);
+
+          // amount=0 red samo za idempotenciju/istoriju (ne dira Credits stanje).
+          const { error: txErr } = await admin.from("credit_transactions").insert({
+            profile_id: profileId,
+            amount: 0,
+            reason: "boost_purchase",
+            stripe_payment_intent_id: paymentIntentId,
+            stripe_checkout_session_id: session.id,
+            amount_paid_cents: session.amount_total,
+            currency: session.currency,
+          });
+          if (txErr) console.error("Stripe webhook: upis Boost transakcije nije uspeo.", txErr);
+          break;
+        }
+
         const profileId = session.client_reference_id;
         if (!profileId || session.mode !== "subscription" || !session.subscription) break;
 

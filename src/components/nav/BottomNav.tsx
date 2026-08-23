@@ -2,25 +2,19 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Flame, Compass, Heart, MessageCircle, Swords, Lock } from "lucide-react";
+import { Flame, Compass, Heart, MessageCircle, Swords, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const TABS = [
-  { href: "/sada", label: "Home", icon: Flame, secret: false },
-  { href: "/muvaj", label: "Muvaj", icon: Compass, secret: false },
-  { href: "/match", label: "Match", icon: Heart, secret: false },
-  { href: "/tajna-soba", label: "Tajna soba", icon: Lock, secret: true },
-  { href: "/poruke", label: "Poruke", icon: MessageCircle, secret: false },
-  { href: "/duel", label: "Duel", icon: Swords, secret: false },
+  { href: "/sada", label: "Home", icon: Flame, eighteenPlus: false },
+  { href: "/muvaj", label: "Muvaj", icon: Compass, eighteenPlus: false },
+  { href: "/match", label: "Match", icon: Heart, eighteenPlus: false },
+  { href: "/18-plus", label: "18+", icon: Zap, eighteenPlus: true },
+  { href: "/poruke", label: "Poruke", icon: MessageCircle, eighteenPlus: false },
+  { href: "/duel", label: "Duel", icon: Swords, eighteenPlus: false },
 ] as const;
 
-export function BottomNav({
-  secretRoomLive = false,
-  secretRoomPending = false,
-}: {
-  secretRoomLive?: boolean;
-  secretRoomPending?: boolean;
-}) {
+export function BottomNav({ eighteenPlusPending = false }: { eighteenPlusPending?: boolean }) {
   const pathname = usePathname();
 
   return (
@@ -29,31 +23,24 @@ export function BottomNav({
       aria-label="Glavna navigacija"
     >
       <ul className="mx-auto flex max-w-md items-stretch justify-between px-1">
-        {TABS.map(({ href, label, icon: Icon, secret }) => {
+        {TABS.map(({ href, label, icon: Icon, eighteenPlus }) => {
           const active = pathname === href || pathname.startsWith(href + "/");
-          const glow = secret && secretRoomLive;
-          const pending = secret && secretRoomPending;
+          const pending = eighteenPlus && eighteenPlusPending;
           return (
             <li key={href} className="flex-1">
               <Link
                 href={href}
                 className="tap-scale relative flex flex-col items-center gap-0.5 py-2.5 text-[10px]"
               >
-                {pending ? (
+                {pending && (
                   <span className="absolute -top-0.5 right-1/2 flex h-4 w-4 translate-x-3 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
                     !
                   </span>
-                ) : (
-                  glow && (
-                    <span className="absolute -top-0.5 right-1/2 h-1.5 w-1.5 translate-x-3 animate-pulse rounded-full bg-red-500" />
-                  )
                 )}
                 <Icon
                   size={21}
                   strokeWidth={active ? 2.4 : 1.8}
-                  className={cn(
-                    active ? "text-gradient" : glow ? "text-[var(--color-accent-to)]" : "text-[var(--color-text-muted)]"
-                  )}
+                  className={cn(active ? "text-gradient" : "text-[var(--color-text-muted)]")}
                   style={
                     active
                       ? { stroke: "url(#iskra-nav-gradient)" }

@@ -7,6 +7,7 @@ import { ArrowLeft, Send, Check, CheckCheck, MoreVertical } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { foodFavoriteLabel } from "@/lib/foodFavorites";
+import { pickIcebreakers } from "@/lib/icebreakers";
 import { Button } from "@/components/ui/Button";
 import { sendMessage, markAsRead, unmatchAction, type MessageRow } from "../actions";
 import { reportUser, blockUser, type ReportReason } from "../../_safety/actions";
@@ -56,6 +57,7 @@ export function ChatThread({
   const router = useRouter();
   const [messages, setMessages] = useState<MessageRow[]>(initialMessages);
   const [draft, setDraft] = useState("");
+  const [icebreakers, setIcebreakers] = useState<string[]>([]);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [otherTyping, setOtherTyping] = useState(false);
@@ -135,6 +137,13 @@ export function ChatThread({
   useEffect(() => {
     markAsRead(matchId);
   }, [matchId]);
+
+  // Predlozi poruka -- SAMO na klijentu (posle mount-a), da se izbegne
+  // hydration mismatch (Math.random() bi se drugačije "izmešao" na
+  // serveru nego u pregledaču).
+  useEffect(() => {
+    Promise.resolve().then(() => setIcebreakers(pickIcebreakers()));
+  }, []);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -368,7 +377,22 @@ export function ChatThread({
           Ovaj match je prekinut. Ne možete više da razmenjujete poruke.
         </div>
       ) : (
-        <div className="safe-bottom flex items-center gap-2 border-t border-[var(--color-border)] px-3 py-3">
+        <div className="safe-bottom border-t border-[var(--color-border)] px-3 py-3">
+          {messages.length === 0 && icebreakers.length > 0 && (
+            <div className="mb-2 flex gap-2 overflow-x-auto pb-1">
+              {icebreakers.map((text) => (
+                <button
+                  key={text}
+                  type="button"
+                  onClick={() => setDraft(text)}
+                  className="tap-scale shrink-0 whitespace-nowrap rounded-full border border-[var(--color-border-strong)] bg-[var(--color-bg-elevated)] px-3 py-1.5 text-xs text-[var(--color-text-muted)]"
+                >
+                  {text}
+                </button>
+              ))}
+            </div>
+          )}
+          <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={openNightPanel}
@@ -398,6 +422,7 @@ export function ChatThread({
           >
             <Send size={18} />
           </button>
+          </div>
         </div>
       )}
 

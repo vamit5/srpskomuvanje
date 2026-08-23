@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AppShell } from "@/components/nav/AppShell";
-import { isSecretRoomEveningLive } from "@/lib/secretRoom";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -21,19 +20,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   if (!profile?.onboarding_completed_at) redirect("/onboarding");
 
-  const [secretRoomLive, { count: secretRoomPendingCount }] = await Promise.all([
-    isSecretRoomEveningLive(),
-    supabase
-      .from("secret_room_requests")
-      .select("id", { count: "exact", head: true })
-      .eq("to_profile_id", user.id)
-      .eq("status", "pending")
-      .gt("expires_at", new Date().toISOString()),
-  ]);
+  const { count: krevetPendingCount } = await supabase
+    .from("krevet_signals")
+    .select("id", { count: "exact", head: true })
+    .eq("to_profile_id", user.id)
+    .eq("status", "pending");
 
-  return (
-    <AppShell secretRoomLive={secretRoomLive} secretRoomPending={(secretRoomPendingCount ?? 0) > 0}>
-      {children}
-    </AppShell>
-  );
+  return <AppShell eighteenPlusPending={(krevetPendingCount ?? 0) > 0}>{children}</AppShell>;
 }

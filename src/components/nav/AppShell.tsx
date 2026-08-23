@@ -5,26 +5,25 @@ import { BottomNav } from "./BottomNav";
 import { cn } from "@/lib/utils";
 
 /**
- * Chat razgovor (/poruke/[matchId]) i Tajna soba su jedine stranice koje
+ * Chat razgovor (/poruke/[matchId]) i 18+ Muvanje su jedine stranice koje
  * treba PUNU visinu ekrana za sebe -- kod chata da polje za kucanje bude
- * odmah iznad tastature/ivice ekrana (kao WhatsApp/Telegram), kod Tajne
- * sobe da atmosfera bude potpuno uronjena (bez donje navigacije koja
- * razbija "igru"). U oba slucaja <main> ne sme imati rezervisan razmak
+ * odmah iznad tastature/ivice ekrana (kao WhatsApp/Telegram), kod 18+
+ * Muvanja da atmosfera bude potpuno uronjena (bez donje navigacije koja
+ * razbija tok). U oba slucaja <main> ne sme imati rezervisan razmak
  * (pb-24), inače se sopstvena h-dvh visina "gura" ispod vidljivog dela
- * ekrana.
+ * ekrana. Svaki ekran ovde SAM dodaje "safe-top" (notch/status bar
+ * razmak) -- AppShell ga NE dodaje za fullScreen rute.
  */
 function isFullScreenRoute(pathname: string | null): boolean {
-  return !!pathname && (/^\/poruke\/[^/]+$/.test(pathname) || pathname.startsWith("/tajna-soba"));
+  return !!pathname && (/^\/poruke\/[^/]+$/.test(pathname) || pathname.startsWith("/18-plus"));
 }
 
 export function AppShell({
   children,
-  secretRoomLive = false,
-  secretRoomPending = false,
+  eighteenPlusPending = false,
 }: {
   children: React.ReactNode;
-  secretRoomLive?: boolean;
-  secretRoomPending?: boolean;
+  eighteenPlusPending?: boolean;
 }) {
   const pathname = usePathname();
   const fullScreen = isFullScreenRoute(pathname);
@@ -32,7 +31,7 @@ export function AppShell({
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col">
       <main className={cn("flex-1", fullScreen ? "" : "safe-top pb-24")}>{children}</main>
-      {!fullScreen && <BottomNav secretRoomLive={secretRoomLive} secretRoomPending={secretRoomPending} />}
+      {!fullScreen && <BottomNav eighteenPlusPending={eighteenPlusPending} />}
     </div>
   );
 }

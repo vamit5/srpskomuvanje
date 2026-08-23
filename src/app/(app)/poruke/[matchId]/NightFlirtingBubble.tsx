@@ -18,12 +18,20 @@ function ReportButton({ reported, onClick }: { reported: boolean; onClick: () =>
   );
 }
 
+function formatCountdown(expiresAt: string): string {
+  const ms = new Date(expiresAt).getTime() - Date.now();
+  if (ms <= 0) return "0:00";
+  const totalSec = Math.floor(ms / 1000);
+  return `${Math.floor(totalSec / 60)}:${String(totalSec % 60).padStart(2, "0")}`;
+}
+
 export function NightFlirtingBubble({ contentId, isMine }: { contentId: string; isMine: boolean }) {
   const [view, setView] = useState<Awaited<ReturnType<typeof getNightContentView>> | null>(null);
   const [unlocking, setUnlocking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showCredits, setShowCredits] = useState(false);
   const [reported, setReported] = useState(false);
+  const [now, setNow] = useState(0);
 
   async function handleReport() {
     if (reported) return;
@@ -38,6 +46,14 @@ export function NightFlirtingBubble({ contentId, isMine }: { contentId: string; 
   useEffect(() => {
     getNightContentView(contentId).then(setView);
   }, [contentId]);
+
+  // Zivi odbrojavanje do isteka (samo za prikaz -- server je jedini
+  // autoritet, ovo je samo vizuelni pritisak da otkljuca na vreme).
+  useEffect(() => {
+    if (!view?.expiresAt || view.expired) return;
+    const id = setInterval(() => setNow((n) => n + 1), 1000);
+    return () => clearInterval(id);
+  }, [view?.expiresAt, view?.expired]);
 
   async function handleUnlock() {
     if (!view) return;
@@ -80,6 +96,16 @@ export function NightFlirtingBubble({ contentId, isMine }: { contentId: string; 
       <div className="flex w-60 items-center gap-2 rounded-3xl border border-[var(--color-warning)]/40 bg-[var(--color-warning)]/10 px-4 py-3 text-sm">
         <Clock size={16} className="shrink-0 text-[var(--color-warning)]" />
         <span>{isMine ? "Šalje se na pregled pre isporuke..." : "Stiže uskoro."}</span>
+      </div>
+    );
+  }
+
+  if (view.expired && !view.isSender) {
+    return (
+      <div className="flex w-60 flex-col items-center gap-1 rounded-3xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-4 py-6 text-center text-sm text-[var(--color-text-muted)]">
+        <span className="text-2xl">⏳</span>
+        <p className="font-semibold">Isteklo</p>
+        <p className="text-xs">Nije otključano na vreme, sadržaj je trajno obrisan.</p>
       </div>
     );
   }
@@ -128,6 +154,11 @@ export function NightFlirtingBubble({ contentId, isMine }: { contentId: string; 
               <>
                 <p className="text-base font-bold">😈 Nešto ti je poslato</p>
                 <p className="text-xs text-white/80">Hoćeš da vidiš?</p>
+                {view.expiresAt && (
+                  <p key={now} className="text-[11px] font-semibold text-[var(--color-danger)]">
+                    ⏱ Nestaje za {formatCountdown(view.expiresAt)}
+                  </p>
+                )}
                 <button
                   type="button"
                   onClick={handleUnlock}

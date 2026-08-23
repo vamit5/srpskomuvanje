@@ -33,9 +33,18 @@ export async function getMoreCandidates(limit = 15): Promise<{ candidates: Disco
   return { candidates: (data as DiscoveryCandidate[]) ?? [], error: null };
 }
 
-async function reactToProfile(
+export type MuvajChoice = "upoznavanje" | "krevet" | "nista";
+
+/**
+ * Jedan od 3 izbora na profilnu sliku u Muvaj -- zamenjuje stari
+ * like/super_like/pass model. "krevet" salje SLEP signal (primalac ne zna
+ * ko je poslao dok ne plati/otkljuca -- vidi muvaj_reveal_krevet), ali
+ * match nastaje NEZAVISNO od toga, cim postoji obostrano pozitivan izbor
+ * (upoznavanje ILI krevet, u bilo kom smeru) -- vidi migraciju 0014.
+ */
+export async function chooseMuvaj(
   targetId: string,
-  kind: "like" | "super_like" | "pass"
+  choice: MuvajChoice
 ): Promise<{ error: string | null; matched: boolean; matchId: string | null }> {
   const supabase = await createClient();
   const {
@@ -43,14 +52,8 @@ async function reactToProfile(
   } = await supabase.auth.getUser();
   if (!user) return { error: "Nisi prijavljen/a.", matched: false, matchId: null };
 
-  if (kind === "pass") {
-    const { error } = await supabase.from("passes").insert({ from_profile_id: user.id, to_profile_id: targetId });
-    if (error) return { error: null, matched: false, matchId: null }; // već pass-ovano ranije, u redu je
-    return { error: null, matched: false, matchId: null };
-  }
-
   const { data, error } = await supabase
-    .rpc("like_profile", { viewer_id: user.id, target_id: targetId, is_super: kind === "super_like" })
+    .rpc("muvaj_choose", { viewer_id: user.id, target_id: targetId, choice })
     .single();
 
   if (error) return { error: "Nešto nije u redu. Pokušaj ponovo.", matched: false, matchId: null };
@@ -76,21 +79,23 @@ async function reactToProfile(
         tag: "match",
       })
     );
+  } else if (choice === "krevet") {
+    after(() =>
+      sendPushToProfile(targetId, {
+        title: "😈 Neko hoće s tobom u krevet",
+        body: "Otključaj da vidiš ko je to.",
+        url: "/18-plus",
+        tag: "krevet_signal",
+      })
+    );
   }
 
   return { error: null, matched: result.matched, matchId: result.match_id };
 }
 
+/** Zadrzano za ko-te-zeli/LikerCard.tsx (uzvracanje "upoznavanje"). */
 export async function likeProfile(targetId: string) {
-  return reactToProfile(targetId, "like");
-}
-
-export async function superLikeProfile(targetId: string) {
-  return reactToProfile(targetId, "super_like");
-}
-
-export async function passProfile(targetId: string) {
-  return reactToProfile(targetId, "pass");
+  return chooseMuvaj(targetId, "upoznavanje");
 }
 
 export async function sendSecretSpark(

@@ -1,13 +1,8 @@
-import { createClient } from "@/lib/supabase/server";
-import { SecretRoomApp } from "./SecretRoomApp";
+import { redirect } from "next/navigation";
 
-export const metadata = { title: "Tajna soba" };
-
-export default async function TajnaSobaPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  return <SecretRoomApp myId={user!.id} />;
+// "Tajna soba" je zamenjena sa "18+ Muvanje" (drugaciji, jednostavniji
+// mehanizam -- Krevet signal direktno iz Muvaj, bez timer-runde). Ova
+// ruta ostaje samo kao trajan redirect za stare linkove/push notifikacije.
+export default function TajnaSobaRedirect() {
+  redirect("/18-plus");
 }

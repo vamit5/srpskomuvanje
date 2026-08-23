@@ -2,22 +2,11 @@ import Link from "next/link";
 import { User } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { calculateAge, cn, personCountPhrase } from "@/lib/utils";
+import { calculateAge, personCountPhrase } from "@/lib/utils";
 import { belgradeTimeHHMM, isWithinDailyWindow } from "@/lib/time";
-import { isSecretRoomEveningLive } from "@/lib/secretRoom";
-import { TonightPicker } from "./TonightPicker";
 import { LocationCard } from "./LocationCard";
 
 export const metadata = { title: "Sada" };
-
-/** "1 osoba je" / "3 osobe su" / "5 osoba je" -- srpska brojna pridevska/imenička kongruencija. */
-function personCountSubject(n: number): string {
-  const lastTwo = n % 100;
-  const last = n % 10;
-  if (last === 1 && lastTwo !== 11) return `${n} osoba je`;
-  if (last >= 2 && last <= 4 && !(lastTwo >= 12 && lastTwo <= 14)) return `${n} osobe su`;
-  return `${n} osoba je`;
-}
 
 interface FeaturedCandidate {
   id: string;
@@ -39,8 +28,8 @@ export default async function SadaPage() {
     { data: incomingSuperLikes },
     { data: myMatches },
     { data: nightConfig },
-    { data: myPrefs },
     { data: myProfile },
+    { count: krevetPendingCount },
   ] = await Promise.all([
     supabase
       .from("notifications")
@@ -55,12 +44,12 @@ export default async function SadaPage() {
       .or(`profile_a_id.eq.${user!.id},profile_b_id.eq.${user!.id}`)
       .is("unmatched_at", null),
     supabase.from("night_modes").select("starts_at, ends_at, is_enabled").eq("id", 1).maybeSingle(),
-    supabase.from("preferences").select("interested_in").eq("profile_id", user!.id).maybeSingle(),
+    supabase.from("profiles").select("location_updated_at, city").eq("id", user!.id).single(),
     supabase
-      .from("profiles")
-      .select("hot_mode_enabled, hot_mode_expires_at, location_updated_at, city")
-      .eq("id", user!.id)
-      .single(),
+      .from("krevet_signals")
+      .select("id", { count: "exact", head: true })
+      .eq("to_profile_id", user!.id)
+      .eq("status", "pending"),
   ]);
 
   const matchedIds = new Set(
@@ -75,68 +64,28 @@ export default async function SadaPage() {
   const isNight =
     !!nightConfig?.is_enabled && isWithinDailyWindow(belgradeTimeHHMM(), nightConfig.starts_at, nightConfig.ends_at);
 
-  const myHotModeActive =
-    !!myProfile?.hot_mode_enabled &&
-    (!myProfile.hot_mode_expires_at || new Date(myProfile.hot_mode_expires_at) > new Date());
-
   const hasLocation = !!myProfile?.location_updated_at;
 
-  const interestedIn = myPrefs?.interested_in ?? [];
-
-  const [{ data: hotNowRaw }, { data: nearbyCount }, { data: featuredRaw }, { data: activeEvents }] =
-    await Promise.all([
-      interestedIn.length
-        ? supabase
-            .from("profiles")
-            .select("id, name, birth_date, hot_mode_vibes")
-            .neq("id", user!.id)
-            .eq("hot_mode_enabled", true)
-            .eq("is_discoverable", true)
-            .is("deleted_at", null)
-            .in("gender", interestedIn)
-            .or(`hot_mode_expires_at.is.null,hot_mode_expires_at.gt.${new Date().toISOString()}`)
-            .order("last_active_at", { ascending: false })
-            .limit(8)
-        : Promise.resolve({ data: [] }),
-      hasLocation
-        ? supabase.rpc("nearby_count", { viewer_id: user!.id, radius_km: 25 })
-        : Promise.resolve({ data: null }),
-      supabase.rpc("discover_profiles", { viewer_id: user!.id, result_limit: 1 }),
-      supabase
-        .from("events")
-        .select("id, title, description, kind, ends_at, city")
-        .eq("is_active", true)
-        .lte("starts_at", new Date().toISOString())
-        .gte("ends_at", new Date().toISOString())
-        .or(`city.is.null,city.eq.${myProfile?.city ?? ""}`)
-        .limit(3),
-    ]);
-
-  const hotNowIds = (hotNowRaw ?? []).map((p) => p.id);
-  const { data: hotNowPhotos } = hotNowIds.length
-    ? await supabase
-        .from("profile_photos")
-        .select("profile_id, thumbnail_url")
-        .in("profile_id", hotNowIds)
-        .eq("is_primary", true)
-        .eq("moderation_status", "approved")
-    : { data: [] };
-
-  const hotNow = (hotNowRaw ?? []).map((p) => ({
-    ...p,
-    photoUrl: hotNowPhotos?.find((ph) => ph.profile_id === p.id)?.thumbnail_url ?? null,
-  }));
+  const [{ data: nearbyCount }, { data: featuredRaw }, { data: activeEvents }] = await Promise.all([
+    hasLocation
+      ? supabase.rpc("nearby_count", { viewer_id: user!.id, radius_km: 25 })
+      : Promise.resolve({ data: null }),
+    supabase.rpc("discover_profiles", { viewer_id: user!.id, result_limit: 1 }),
+    supabase
+      .from("events")
+      .select("id, title, description, kind, ends_at, city")
+      .eq("is_active", true)
+      .lte("starts_at", new Date().toISOString())
+      .gte("ends_at", new Date().toISOString())
+      .or(`city.is.null,city.eq.${myProfile?.city ?? ""}`)
+      .limit(3),
+  ]);
 
   const featured = ((featuredRaw as FeaturedCandidate[] | null) ?? [])[0];
   const showFeatured = featured && featured.score >= 70;
 
   const hasSignals =
     pendingLikesCount > 0 || (unreadNotifications ?? 0) > 0 || !!showFeatured || (activeEvents?.length ?? 0) > 0;
-
-  const [{ data: secretRoomLiveCount }, secretRoomEveningLive] = await Promise.all([
-    supabase.rpc("get_secret_room_live_count"),
-    isSecretRoomEveningLive(),
-  ]);
 
   return (
     <div className="flex flex-col gap-3 px-4 pt-4">
@@ -149,7 +98,7 @@ export default async function SadaPage() {
               </>
             ) : (
               <>
-                🔥 <span className="text-gradient">Sada</span>
+                🔥 <span className="text-gradient">Sada</span> <span className="align-middle text-base">🇷🇸</span>
               </>
             )}
           </h1>
@@ -167,28 +116,21 @@ export default async function SadaPage() {
       </header>
 
       <Link
-        href="/tajna-soba"
-        className={cn(
-          "tap-scale relative overflow-hidden rounded-2xl px-4 py-4 text-white",
-          secretRoomEveningLive
-            ? "bg-gradient-to-br from-[#2b0b3f] via-[#5b0e6b] to-[#c0195e]"
-            : "bg-gradient-to-br from-[#241633] to-[#3a1a4a]"
-        )}
+        href="/18-plus"
+        className="tap-scale relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#3a0d20] via-[#5b0e2e] to-[#c0195e] px-4 py-4 text-white"
       >
         <div className="flex items-center justify-between">
           <div>
             <p className="flex items-center gap-1.5 text-base font-extrabold">
-              🔥 Tajna soba
-              {secretRoomEveningLive && (
+              😈 18+ Muvanje
+              {(krevetPendingCount ?? 0) > 0 && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-bold">
-                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-400" /> UŽIVO
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-400" /> {krevetPendingCount} ČEKA
                 </span>
               )}
             </p>
             <p className="mt-1 text-xs text-white/80">
-              {(secretRoomLiveCount ?? 0) > 0
-                ? `${personCountSubject(secretRoomLiveCount ?? 0)} trenutno unutra`
-                : "Da vidiš ko je večeras unutra?"}
+              {(krevetPendingCount ?? 0) > 0 ? "Neko hoće s tobom u krevet — otključaj da vidiš ko" : "Direktnije. Bez okolišanja."}
             </p>
           </div>
           <span className="text-xs font-semibold">Uđi →</span>
@@ -248,40 +190,6 @@ export default async function SadaPage() {
 
       <LocationCard hasLocation={hasLocation} nearbyCount={nearbyCount ?? null} />
 
-      <TonightPicker alreadyActive={myHotModeActive} />
-
-      {hotNow.length > 0 && (
-        <section>
-          <p className="mb-2 text-sm font-semibold text-[var(--color-text-muted)]">
-            😏 {hotNow.length} {hotNow.length === 1 ? "osoba je" : "osobe/a su"} u Hot Mode-u sada
-          </p>
-          <div className="flex gap-3 overflow-x-auto pb-1">
-            {hotNow.map((p) => (
-              <Link
-                key={p.id}
-                href="/muvaj"
-                className="tap-scale flex w-20 shrink-0 flex-col items-center gap-1 text-center"
-              >
-                <div className="relative">
-                  {p.photoUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={p.photoUrl} alt={p.name} className="h-16 w-16 rounded-full object-cover" />
-                  ) : (
-                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-accent text-lg font-bold text-white">
-                      {p.name?.[0]?.toUpperCase() ?? "?"}
-                    </div>
-                  )}
-                  <span className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full border-2 border-[var(--color-bg)] bg-[var(--color-success)]" />
-                </div>
-                <span className="truncate text-xs text-[var(--color-text-muted)]">
-                  {p.name}, {calculateAge(p.birth_date)}
-                </span>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
-
       <Link
         href="/duel"
         className="tap-scale flex items-center justify-between rounded-2xl bg-gradient-accent px-4 py-3.5 text-white"
@@ -290,7 +198,7 @@ export default async function SadaPage() {
         <span className="text-xs">Igraj →</span>
       </Link>
 
-      {!hasSignals && hotNow.length === 0 && (
+      {!hasSignals && (
         <EmptyState
           emoji="👀"
           title="Ovde uskoro počinje akcija"

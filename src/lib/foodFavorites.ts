@@ -1,6 +1,6 @@
 // Fiksni skup "srpskih" omiljenih stvari za onboarding pitanje (multi-select).
 // NAMERNO bez "server-only" guarda -- koristi se i u klijentskoj komponenti
-// (OnboardingWizard.tsx) i na serveru (src/lib/secretRoom.ts, chat banner).
+// (OnboardingWizard.tsx) i na serveru (poruke/[matchId]/page.tsx, chat banner).
 export const FOOD_FAVORITE_OPTIONS = [
   { value: "sarma", label: "Sarma", emoji: "🥬" },
   { value: "pljeskavica", label: "Pljeskavica", emoji: "🍔" },

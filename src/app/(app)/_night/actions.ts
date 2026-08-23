@@ -198,6 +198,8 @@ export interface NightContentView {
   // se nešto desilo umesto da izgleda kao da je poslato "normalno".
   isFreeForReceiver: boolean;
   pendingReview: boolean;
+  expiresAt: string | null;
+  expired: boolean;
 }
 
 export async function getNightContentView(contentId: string): Promise<NightContentView> {
@@ -214,12 +216,16 @@ export async function getNightContentView(contentId: string): Promise<NightConte
     isSender: false,
     isFreeForReceiver: false,
     pendingReview: false,
+    expiresAt: null,
+    expired: false,
   };
   if (!user) return { ...empty, error: "Nisi prijavljen/a." };
 
   const { data: content } = await supabase
     .from("night_flirting_content")
-    .select("id, sender_id, receiver_id, kind, original_path, preview_path, duration_seconds, is_free, moderation_status")
+    .select(
+      "id, sender_id, receiver_id, kind, original_path, preview_path, duration_seconds, is_free, moderation_status, expires_at, media_deleted_at"
+    )
     .eq("id", contentId)
     .maybeSingle();
 
@@ -250,8 +256,14 @@ export async function getNightContentView(contentId: string): Promise<NightConte
   }
 
   const unlocked = isSender || content.is_free || !!unlock;
+  // Isteklo (disappearing media) SAMO ako NIJE otkljucano -- ko je platio
+  // zadrzava pristup zauvek, original fajl se za njega nikad ne brise
+  // (vidi cron rutu src/app/api/cron/expire-media).
+  const expired =
+    !unlocked &&
+    (!!content.media_deleted_at || (!!content.expires_at && new Date(content.expires_at) < new Date()));
   const path = unlocked ? content.original_path : content.preview_path;
-  const url = await signPath(admin, path);
+  const url = expired && !isSender ? null : await signPath(admin, path);
 
   return {
     error: null,
@@ -265,6 +277,8 @@ export async function getNightContentView(contentId: string): Promise<NightConte
     isSender,
     isFreeForReceiver: content.is_free,
     pendingReview,
+    expiresAt: content.expires_at,
+    expired,
   };
 }
 

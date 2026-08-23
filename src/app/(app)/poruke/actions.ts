@@ -3,6 +3,7 @@
 import { after } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { sendPushToProfile } from "@/lib/push/send";
+import { checkContactInfoFilter } from "@/lib/contentFilter";
 
 export interface Conversation {
   matchId: string;
@@ -110,6 +111,9 @@ export async function sendMessage(
   const trimmed = content.trim();
   if (!trimmed) return { error: "Poruka je prazna.", message: null };
   if (trimmed.length > 2000) return { error: "Poruka je predugačka.", message: null };
+
+  const filterResult = checkContactInfoFilter(trimmed);
+  if (filterResult.blocked) return { error: filterResult.reason, message: null };
 
   const { data: match } = await supabase
     .from("matches")

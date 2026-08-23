@@ -3,16 +3,15 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion, useMotionValue, useTransform, type PanInfo } from "framer-motion";
-import { Heart, X, Flame, ShieldCheck, Drama, Check } from "lucide-react";
+import { X, Heart, ShieldCheck, Drama, Check } from "lucide-react";
 import { calculateAge, cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import {
   getMoreCandidates,
-  likeProfile,
-  passProfile,
-  superLikeProfile,
+  chooseMuvaj,
   sendSecretSpark,
   type DiscoveryCandidate,
+  type MuvajChoice,
 } from "./actions";
 
 const SWIPE_THRESHOLD = 120;
@@ -33,13 +32,11 @@ function ScoreBadge({ score }: { score: number }) {
 function SwipeCard({
   candidate,
   disabled,
-  onLike,
-  onPass,
+  onChoice,
 }: {
   candidate: DiscoveryCandidate;
   disabled: boolean;
-  onLike: () => void;
-  onPass: () => void;
+  onChoice: (choice: MuvajChoice) => void;
 }) {
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-300, 300], [-18, 18]);
@@ -48,8 +45,8 @@ function SwipeCard({
   const age = calculateAge(candidate.birth_date);
 
   function handleDragEnd(_: unknown, info: PanInfo) {
-    if (info.offset.x > SWIPE_THRESHOLD) onLike();
-    else if (info.offset.x < -SWIPE_THRESHOLD) onPass();
+    if (info.offset.x > SWIPE_THRESHOLD) onChoice("upoznavanje");
+    else if (info.offset.x < -SWIPE_THRESHOLD) onChoice("nista");
   }
 
   return (
@@ -80,9 +77,6 @@ function SwipeCard({
         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent px-5 pb-5 pt-24 text-white">
           <div className="mb-2 flex items-center gap-2">
             <ScoreBadge score={candidate.score} />
-            {candidate.hot_mode_enabled && (
-              <span className="rounded-full bg-black/50 px-2.5 py-1 text-xs font-semibold">😏 Hot Mode</span>
-            )}
           </div>
           <h2 className="flex items-center gap-1.5 text-2xl font-bold">
             {candidate.name}, {age}
@@ -105,13 +99,13 @@ function SwipeCard({
           style={{ opacity: likeOpacity }}
           className="absolute left-5 top-8 -rotate-12 rounded-xl border-4 border-[var(--color-success)] px-3 py-1 text-xl font-extrabold text-[var(--color-success)]"
         >
-          SVIĐA MI SE
+          UPOZNAVANJE
         </motion.div>
         <motion.div
           style={{ opacity: nopeOpacity }}
           className="absolute right-5 top-8 rotate-12 rounded-xl border-4 border-[var(--color-danger)] px-3 py-1 text-xl font-extrabold text-[var(--color-danger)]"
         >
-          PRESKOČI
+          NIŠTA
         </motion.div>
       </div>
     </motion.div>
@@ -126,8 +120,9 @@ export function MuvajDeck({ initialCandidates }: { initialCandidates: DiscoveryC
   const [sparkedIds, setSparkedIds] = useState<Set<string>>(new Set());
   const [sparkSending, setSparkSending] = useState(false);
   const [sparkToast, setSparkToast] = useState(false);
+  const [krevetToast, setKrevetToast] = useState(false);
   const fetchingMore = useRef(false);
-  const sparkToastTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const toastTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const current = stack[0];
 
@@ -140,7 +135,7 @@ export function MuvajDeck({ initialCandidates }: { initialCandidates: DiscoveryC
     fetchingMore.current = false;
   }
 
-  async function handleAction(kind: "like" | "pass" | "super_like") {
+  async function handleChoice(choice: MuvajChoice) {
     if (!current || pending) return;
     setPending(true);
     setError(null);
@@ -148,20 +143,25 @@ export function MuvajDeck({ initialCandidates }: { initialCandidates: DiscoveryC
     const rest = stack.slice(1);
     setStack(rest);
 
-    const action = kind === "like" ? likeProfile : kind === "pass" ? passProfile : superLikeProfile;
-    const result = await action(target.id);
+    const result = await chooseMuvaj(target.id, choice);
     setPending(false);
 
-    // Tek POSLE što je lajk/pass upisan u bazu tražimo još kandidata --
-    // inače bi "discover_profiles" mogao da vrati istu osobu koju smo
-    // upravo sklonili, ako fetch stigne pre nego što se upis zabeleži.
+    // Tek POSLE što je izbor upisan u bazu tražimo još kandidata -- inače
+    // bi "discover_profiles" mogao da vrati istu osobu koju smo upravo
+    // sklonili, ako fetch stigne pre nego što se upis zabeleži.
     maybeFetchMore(rest);
 
     if (result.error) {
       setError(result.error);
       return;
     }
-    if (result.matched) setMatched({ candidate: target, viaSpark: false });
+    if (result.matched) {
+      setMatched({ candidate: target, viaSpark: false });
+    } else if (choice === "krevet") {
+      setKrevetToast(true);
+      if (toastTimeout.current) clearTimeout(toastTimeout.current);
+      toastTimeout.current = setTimeout(() => setKrevetToast(false), 2500);
+    }
   }
 
   async function handleSecretSpark() {
@@ -183,14 +183,14 @@ export function MuvajDeck({ initialCandidates }: { initialCandidates: DiscoveryC
       setMatched({ candidate: target, viaSpark: true });
     } else {
       setSparkToast(true);
-      if (sparkToastTimeout.current) clearTimeout(sparkToastTimeout.current);
-      sparkToastTimeout.current = setTimeout(() => setSparkToast(false), 2500);
+      if (toastTimeout.current) clearTimeout(toastTimeout.current);
+      toastTimeout.current = setTimeout(() => setSparkToast(false), 2500);
     }
   }
 
   useEffect(() => {
     return () => {
-      if (sparkToastTimeout.current) clearTimeout(sparkToastTimeout.current);
+      if (toastTimeout.current) clearTimeout(toastTimeout.current);
     };
   }, []);
 
@@ -198,9 +198,9 @@ export function MuvajDeck({ initialCandidates }: { initialCandidates: DiscoveryC
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if (matched) return;
-      if (e.key === "ArrowLeft") handleAction("pass");
-      else if (e.key === "ArrowRight") handleAction("like");
-      else if (e.key === "ArrowUp") handleAction("super_like");
+      if (e.key === "ArrowLeft") handleChoice("nista");
+      else if (e.key === "ArrowRight") handleChoice("upoznavanje");
+      else if (e.key === "ArrowUp") handleChoice("krevet");
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
@@ -213,13 +213,7 @@ export function MuvajDeck({ initialCandidates }: { initialCandidates: DiscoveryC
     <div className="relative flex flex-1 flex-col gap-4">
       <div className="relative flex-1">
         {current ? (
-          <SwipeCard
-            key={current.id}
-            candidate={current}
-            disabled={pending}
-            onLike={() => handleAction("like")}
-            onPass={() => handleAction("pass")}
-          />
+          <SwipeCard key={current.id} candidate={current} disabled={pending} onChoice={handleChoice} />
         ) : (
           <div className="flex h-full flex-col items-center justify-center gap-3 rounded-3xl border border-[var(--color-border)] bg-[var(--color-bg-card)] px-6 text-center">
             <span className="text-4xl">🎉</span>
@@ -235,6 +229,11 @@ export function MuvajDeck({ initialCandidates }: { initialCandidates: DiscoveryC
             🤫 Tajni signal poslat — ako ti i on/ona uzvratite, otključava se match
           </div>
         )}
+        {krevetToast && (
+          <div className="absolute inset-x-0 top-4 z-50 mx-auto w-fit rounded-full bg-black/80 px-4 py-2 text-sm text-white shadow-lg">
+            😈 Poslato — ako i ona/on izabere tebe, otključava se match
+          </div>
+        )}
       </div>
 
       {error && <p className="text-center text-sm text-[var(--color-danger)]">{error}</p>}
@@ -242,10 +241,11 @@ export function MuvajDeck({ initialCandidates }: { initialCandidates: DiscoveryC
       <div className="flex items-center justify-center gap-3 pb-2">
         <button
           type="button"
-          onClick={() => handleAction("pass")}
+          onClick={() => handleChoice("nista")}
           disabled={!current || pending}
           className="tap-scale flex h-14 w-14 items-center justify-center rounded-full border border-[var(--color-border-strong)] bg-[var(--color-bg-card)] text-[var(--color-danger)] disabled:opacity-40"
-          aria-label="Preskoči"
+          aria-label="Ništa"
+          title="Ništa"
         >
           <X size={26} />
         </button>
@@ -266,19 +266,21 @@ export function MuvajDeck({ initialCandidates }: { initialCandidates: DiscoveryC
         </button>
         <button
           type="button"
-          onClick={() => handleAction("super_like")}
+          onClick={() => handleChoice("krevet")}
           disabled={!current || pending}
-          className="tap-scale flex h-12 w-12 items-center justify-center rounded-full border border-[var(--color-border-strong)] bg-[var(--color-bg-card)] text-[var(--color-accent-to)] disabled:opacity-40"
-          aria-label="Super lajk"
+          className="tap-scale flex h-14 w-14 items-center justify-center rounded-full border-2 border-[var(--color-accent-to)] bg-[var(--color-bg-card)] text-xl disabled:opacity-40"
+          aria-label="Krevet"
+          title="Krevet"
         >
-          <Flame size={20} />
+          😈
         </button>
         <button
           type="button"
-          onClick={() => handleAction("like")}
+          onClick={() => handleChoice("upoznavanje")}
           disabled={!current || pending}
           className="tap-scale flex h-14 w-14 items-center justify-center rounded-full bg-gradient-accent text-white disabled:opacity-40"
-          aria-label="Sviđa mi se"
+          aria-label="Upoznavanje"
+          title="Upoznavanje"
         >
           <Heart size={26} />
         </button>

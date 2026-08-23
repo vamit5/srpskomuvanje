@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/Button";
 import { calculateAge } from "@/lib/utils";
 import { signOutAction } from "./actions";
-import { HotModeToggle } from "./HotModeToggle";
+import { BoostCard } from "./BoostCard";
 import { PushToggle } from "./PushToggle";
 import { PremiumCard } from "./PremiumCard";
 
@@ -25,7 +25,7 @@ export default async function ProfilPage({
     supabase
       .from("profiles")
       .select(
-        "name, birth_date, city, is_verified, profile_completion_score, bio, interests, hot_mode_enabled, hot_mode_vibes"
+        "name, birth_date, city, is_verified, profile_completion_score, bio, interests, boost_expires_at"
       )
       .eq("id", user!.id)
       .single(),
@@ -133,7 +133,7 @@ export default async function ProfilPage({
 
       <PushToggle />
 
-      <HotModeToggle initialEnabled={profile.hot_mode_enabled} initialVibes={profile.hot_mode_vibes ?? []} />
+      <BoostCard boostExpiresAt={profile.boost_expires_at ?? null} />
 
       <div className="flex flex-col gap-2">
         <Link href="/profil/foto">

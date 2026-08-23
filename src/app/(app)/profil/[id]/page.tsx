@@ -18,7 +18,7 @@ export default async function OtherProfilePage({ params }: { params: Promise<{ i
   const [{ data: profile }, { data: photos }, { data: videos }] = await Promise.all([
     supabase
       .from("profiles")
-      .select("id, name, birth_date, city, bio, interests, is_verified, hot_mode_enabled, deleted_at")
+      .select("id, name, birth_date, city, bio, interests, is_verified, deleted_at")
       .eq("id", id)
       .maybeSingle(),
     supabase
@@ -67,7 +67,6 @@ export default async function OtherProfilePage({ params }: { params: Promise<{ i
         <h1 className="flex items-center gap-1 text-xl font-bold">
           {profile.name}, {age}
           {profile.is_verified && <span title="Verifikovan profil">✓</span>}
-          {profile.hot_mode_enabled && <span title="Hot Mode aktivan">😏</span>}
         </h1>
         <p className="text-sm text-[var(--color-text-muted)]">{profile.city || "Grad nije podešen"}</p>
       </div>
