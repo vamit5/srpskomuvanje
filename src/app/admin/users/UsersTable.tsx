@@ -12,6 +12,15 @@ interface UserRow {
   isDiscoverable: boolean;
   createdAt: string;
   lastActiveAt: string;
+  isPremium: boolean;
+  spent: { currency: string; cents: number }[];
+}
+
+function formatSpent(spent: UserRow["spent"]) {
+  if (!spent.length) return "—";
+  return spent
+    .map((s) => new Intl.NumberFormat("sr-RS", { style: "currency", currency: s.currency.toUpperCase() }).format(s.cents / 100))
+    .join(" + ");
 }
 
 export function UsersTable({ initialUsers }: { initialUsers: UserRow[] }) {
@@ -35,6 +44,8 @@ export function UsersTable({ initialUsers }: { initialUsers: UserRow[] }) {
             <th className="px-3 py-2">Ime</th>
             <th className="px-3 py-2">Grad</th>
             <th className="px-3 py-2">Registrovan</th>
+            <th className="px-3 py-2">Premium</th>
+            <th className="px-3 py-2">Potrošeno</th>
             <th className="px-3 py-2">Vidljiv</th>
             <th className="px-3 py-2" />
           </tr>
@@ -49,6 +60,14 @@ export function UsersTable({ initialUsers }: { initialUsers: UserRow[] }) {
               <td className="px-3 py-2 text-[var(--color-text-muted)]">
                 {new Date(u.createdAt).toLocaleDateString("sr-RS")}
               </td>
+              <td className="px-3 py-2">
+                {u.isPremium ? (
+                  <span className="rounded-full bg-gradient-accent px-2 py-0.5 text-xs font-semibold text-white">⭐ Premium</span>
+                ) : (
+                  <span className="text-[var(--color-text-faint)]">—</span>
+                )}
+              </td>
+              <td className="px-3 py-2 text-[var(--color-text-muted)]">{formatSpent(u.spent)}</td>
               <td className="px-3 py-2">
                 {u.isDiscoverable ? (
                   <span className="text-[var(--color-success)]">Da</span>

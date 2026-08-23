@@ -81,6 +81,8 @@ export async function POST(request: Request) {
             p_reason: "purchase",
             p_stripe_payment_intent_id: paymentIntentId,
             p_stripe_checkout_session_id: session.id,
+            p_amount_paid_cents: session.amount_total,
+            p_currency: session.currency,
           });
           if (error) console.error("Stripe webhook: dodela Iskrica nije uspela.", error);
           break;

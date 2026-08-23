@@ -1342,6 +1342,8 @@ create table credit_transactions (
   related_content_id uuid, -- fk se dodaje niže (na night_flirting_content)
   stripe_payment_intent_id text,
   stripe_checkout_session_id text,
+  amount_paid_cents int, -- stvaran iznos u novcu (samo za reason='purchase'), da admin ne mora da nagađa
+  currency text,
   created_at timestamptz not null default now()
 );
 
@@ -1563,7 +1565,9 @@ create or replace function credit_wallet(
   p_amount int,
   p_reason text,
   p_stripe_payment_intent_id text default null,
-  p_stripe_checkout_session_id text default null
+  p_stripe_checkout_session_id text default null,
+  p_amount_paid_cents int default null,
+  p_currency text default null
 )
 returns void
 language plpgsql
@@ -1575,13 +1579,19 @@ begin
   values (p_profile_id, greatest(p_amount, 0))
   on conflict (profile_id) do update set balance_credits = wallets.balance_credits + p_amount;
 
-  insert into credit_transactions (profile_id, amount, reason, stripe_payment_intent_id, stripe_checkout_session_id)
-  values (p_profile_id, p_amount, p_reason, p_stripe_payment_intent_id, p_stripe_checkout_session_id);
+  insert into credit_transactions (
+    profile_id, amount, reason, stripe_payment_intent_id, stripe_checkout_session_id,
+    amount_paid_cents, currency
+  )
+  values (
+    p_profile_id, p_amount, p_reason, p_stripe_payment_intent_id, p_stripe_checkout_session_id,
+    p_amount_paid_cents, p_currency
+  );
 end;
 $$;
 
-revoke execute on function credit_wallet(uuid, int, text, text, text) from public;
-grant execute on function credit_wallet(uuid, int, text, text, text) to service_role;
+revoke execute on function credit_wallet(uuid, int, text, text, text, int, text) from public;
+grant execute on function credit_wallet(uuid, int, text, text, text, int, text) to service_role;
 
 create or replace function admin_review_night_content(p_content_id uuid, p_decision text, p_note text default null)
 returns table (ok boolean, error text)
