@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { X, Loader2, Image as ImageIcon, Camera, Video as VideoIcon, FolderOpen } from "lucide-react";
+import { X, Loader2, Image as ImageIcon, Camera } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { compressImage, makeBlurredPreview } from "@/lib/media/image";
 import { captureVideoFrames, readVideoMeta } from "@/lib/media/video";
@@ -37,10 +37,8 @@ export function NightFlirtingPanel({
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const galleryPhotoRef = useRef<HTMLInputElement>(null);
-  const cameraPhotoRef = useRef<HTMLInputElement>(null);
-  const galleryVideoRef = useRef<HTMLInputElement>(null);
-  const cameraVideoRef = useRef<HTMLInputElement>(null);
+  const galleryRef = useRef<HTMLInputElement>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
 
   const limitReached = sentToday >= dailyLimit;
 
@@ -178,22 +176,28 @@ export function NightFlirtingPanel({
     }
   }
 
-  function handlePick(e: React.ChangeEvent<HTMLInputElement>, kind: "photo" | "video") {
+  function handlePick(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
-    if (kind === "photo") {
-      if (file.size > MAX_RAW_PHOTO_PICK_BYTES) {
-        setError("Fotografija je prevelika (maksimalno 20MB).");
-        return;
-      }
-      uploadPhoto(file);
-    } else {
+    setError(null);
+
+    // Jedno polje prihvata i foto i video (accept="image/*,video/*") --
+    // pravi izbor foto/video pravi sam OS (galerija/kamera aplikacija), mi
+    // samo prepoznamo šta je korisnik zapravo poslao po stvarnom tipu fajla.
+    const isVideo = file.type.startsWith("video/");
+    if (isVideo) {
       if (file.size > MAX_RAW_VIDEO_PICK_BYTES) {
         setError("Video je prevelik (maksimalno 25MB).");
         return;
       }
       uploadVideo(file);
+    } else {
+      if (file.size > MAX_RAW_PHOTO_PICK_BYTES) {
+        setError("Fotografija je prevelika (maksimalno 20MB).");
+        return;
+      }
+      uploadPhoto(file);
     }
   }
 
@@ -238,62 +242,36 @@ export function NightFlirtingPanel({
           ) : (
             <>
               <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  logNightEvent("night_flirting_gallery_opened", { kind: "photo" });
-                  galleryPhotoRef.current?.click();
-                }}
-                className="tap-scale flex flex-col items-center gap-2 rounded-2xl bg-[var(--color-bg-elevated)] px-3 py-5 active:brightness-110"
-              >
-                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-accent text-white">
-                  <ImageIcon size={20} />
-                </span>
-                <span className="text-xs font-medium">Izaberi iz galerije</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  logNightEvent("night_flirting_camera_opened", { kind: "photo" });
-                  cameraPhotoRef.current?.click();
-                }}
-                className="tap-scale flex flex-col items-center gap-2 rounded-2xl bg-[var(--color-bg-elevated)] px-3 py-5 active:brightness-110"
-              >
-                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-accent text-white">
-                  <Camera size={20} />
-                </span>
-                <span className="text-xs font-medium">Snimi sada</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  logNightEvent("night_flirting_gallery_opened", { kind: "video" });
-                  galleryVideoRef.current?.click();
-                }}
-                className="tap-scale flex flex-col items-center gap-2 rounded-2xl bg-[var(--color-bg-elevated)] px-3 py-5 active:brightness-110"
-              >
-                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-accent text-white">
-                  <FolderOpen size={20} />
-                </span>
-                <span className="text-xs font-medium">Izaberi video</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  logNightEvent("night_flirting_camera_opened", { kind: "video" });
-                  cameraVideoRef.current?.click();
-                }}
-                className="tap-scale flex flex-col items-center gap-2 rounded-2xl bg-[var(--color-bg-elevated)] px-3 py-5 active:brightness-110"
-              >
-                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-accent text-white">
-                  <VideoIcon size={20} />
-                </span>
-                <span className="text-xs font-medium">Snimi video</span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    logNightEvent("night_flirting_gallery_opened", {});
+                    galleryRef.current?.click();
+                  }}
+                  className="tap-scale flex flex-col items-center gap-2 rounded-2xl bg-[var(--color-bg-elevated)] px-3 py-6 active:brightness-110"
+                >
+                  <span className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-accent text-white">
+                    <ImageIcon size={22} />
+                  </span>
+                  <span className="text-xs font-medium">Izaberi iz galerije</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    logNightEvent("night_flirting_camera_opened", {});
+                    cameraRef.current?.click();
+                  }}
+                  className="tap-scale flex flex-col items-center gap-2 rounded-2xl bg-[var(--color-bg-elevated)] px-3 py-6 active:brightness-110"
+                >
+                  <span className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-accent text-white">
+                    <Camera size={22} />
+                  </span>
+                  <span className="text-xs font-medium">Snimi sada</span>
+                </button>
               </div>
 
               <p className="mt-4 text-center text-xs text-[var(--color-text-faint)]">
-                Preostalo danas: {Math.max(dailyLimit - sentToday, 0)}
+                Foto ili video — bira se automatski. Preostalo danas: {Math.max(dailyLimit - sentToday, 0)}
               </p>
             </>
           )}
@@ -301,23 +279,14 @@ export function NightFlirtingPanel({
           {error && <p className="mt-3 text-sm text-[var(--color-danger)]">{error}</p>}
         </div>
 
-        <input ref={galleryPhotoRef} type="file" accept="image/*" className="hidden" onChange={(e) => handlePick(e, "photo")} />
+        <input ref={galleryRef} type="file" accept="image/*,video/mp4,video/webm,video/quicktime" className="hidden" onChange={handlePick} />
         <input
-          ref={cameraPhotoRef}
+          ref={cameraRef}
           type="file"
-          accept="image/*"
+          accept="image/*,video/mp4,video/webm,video/quicktime"
           capture="environment"
           className="hidden"
-          onChange={(e) => handlePick(e, "photo")}
-        />
-        <input ref={galleryVideoRef} type="file" accept="video/mp4,video/webm,video/quicktime" className="hidden" onChange={(e) => handlePick(e, "video")} />
-        <input
-          ref={cameraVideoRef}
-          type="file"
-          accept="video/mp4,video/webm,video/quicktime"
-          capture="environment"
-          className="hidden"
-          onChange={(e) => handlePick(e, "video")}
+          onChange={handlePick}
         />
       </div>
     </div>

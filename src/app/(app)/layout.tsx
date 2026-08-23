@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { BottomNav } from "@/components/nav/BottomNav";
+import { AppShell } from "@/components/nav/AppShell";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -20,10 +20,5 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   if (!profile?.onboarding_completed_at) redirect("/onboarding");
 
-  return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col">
-      <main className="safe-top flex-1 pb-24">{children}</main>
-      <BottomNav />
-    </div>
-  );
+  return <AppShell>{children}</AppShell>;
 }
