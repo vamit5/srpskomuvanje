@@ -1883,13 +1883,19 @@ begin
   -- Oportunisticko isticanje: nema pozadinskog posla (cron), pa istekle
   -- runde/zahteve zatvaramo cim neko dodirne sistem (isti obrazac kao
   -- Belgrade-vreme dnevni limiti drugde u app-u).
-  update secret_room_rounds set status = 'expired', ended_at = now()
-    where profile_id = viewer_id and status = 'active' and expires_at < now();
-  update secret_room_requests set status = 'expired'
-    where to_profile_id = viewer_id and status = 'pending' and expires_at < now();
+  --
+  -- NAPOMENA: "expires_at" MORA biti kvalifikovano (r./req.) svuda ovde --
+  -- funkcija vraca RETURNS TABLE(..., expires_at timestamptz, ...), sto
+  -- Postgres tretira kao dostupnu plpgsql promenljivu u celom telu
+  -- funkcije, pa se nekvalifikovano "expires_at" kosi sa kolonom istog
+  -- imena (greska 42702, "column reference is ambiguous").
+  update secret_room_rounds r set status = 'expired', ended_at = now()
+    where r.profile_id = viewer_id and r.status = 'active' and r.expires_at < now();
+  update secret_room_requests req set status = 'expired'
+    where req.to_profile_id = viewer_id and req.status = 'pending' and req.expires_at < now();
 
-  select id, expires_at into v_existing_round_id, v_existing_expires
-    from secret_room_rounds where profile_id = viewer_id and status = 'active';
+  select r.id, r.expires_at into v_existing_round_id, v_existing_expires
+    from secret_room_rounds r where r.profile_id = viewer_id and r.status = 'active';
 
   if v_existing_round_id is not null then
     return query select v_existing_round_id, v_existing_expires, false;
@@ -1980,18 +1986,22 @@ begin
   -- prikazuje tek posle par swipe-ova -- zato ga fizicki pomeramo na
   -- kasniju poziciju (min(4, poslednja)), da FE prirodno dodje do njega
   -- posle nekoliko izbora, kako spec trazi.
-  select candidate_id into v_secret_candidate_id
-    from secret_room_candidates where round_id = v_new_round_id and card_position = 1;
+  --
+  -- NAPOMENA: i "round_id" je OUT parametar ove funkcije (RETURNS TABLE),
+  -- pa mora biti kvalifikovano (c.) svuda ovde iz istog razloga kao
+  -- "expires_at" gore.
+  select c.candidate_id into v_secret_candidate_id
+    from secret_room_candidates c where c.round_id = v_new_round_id and c.card_position = 1;
 
   if v_secret_candidate_id is not null then
-    select least(4, count(*)) into v_secret_position from secret_room_candidates where round_id = v_new_round_id;
+    select least(4, count(*)) into v_secret_position from secret_room_candidates c where c.round_id = v_new_round_id;
 
-    update secret_room_candidates set card_position = 0
-      where round_id = v_new_round_id and card_position = v_secret_position and candidate_id <> v_secret_candidate_id;
-    update secret_room_candidates set card_position = v_secret_position, is_secret_card = true
-      where round_id = v_new_round_id and candidate_id = v_secret_candidate_id;
-    update secret_room_candidates set card_position = 1
-      where round_id = v_new_round_id and card_position = 0;
+    update secret_room_candidates c set card_position = 0
+      where c.round_id = v_new_round_id and c.card_position = v_secret_position and c.candidate_id <> v_secret_candidate_id;
+    update secret_room_candidates c set card_position = v_secret_position, is_secret_card = true
+      where c.round_id = v_new_round_id and c.candidate_id = v_secret_candidate_id;
+    update secret_room_candidates c set card_position = 1
+      where c.round_id = v_new_round_id and c.card_position = 0;
   end if;
 
   return query select v_new_round_id, v_new_expires, true;
@@ -2185,8 +2195,10 @@ begin
     raise exception 'Nije dozvoljeno.';
   end if;
 
-  update secret_room_requests set status = 'expired'
-    where to_profile_id = viewer_id and status = 'pending' and expires_at < now();
+  -- "status" i "expires_at" MORAJU biti kvalifikovani (req.) -- oba su
+  -- takodje imena OUT parametara iz RETURNS TABLE(...) ove funkcije.
+  update secret_room_requests req set status = 'expired'
+    where req.to_profile_id = viewer_id and req.status = 'pending' and req.expires_at < now();
 
   return query
   select r.id, r.status, r.created_at, r.expires_at
