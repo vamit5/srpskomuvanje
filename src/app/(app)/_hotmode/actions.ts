@@ -4,7 +4,16 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { nextBelgrade4AMISO } from "@/lib/time";
 
-export type HotModeVibe = "flert" | "vrelo" | "veceras" | "pice" | "izlazak" | "upoznavanje";
+export type HotModeVibe =
+  | "flert"
+  | "vrelo"
+  | "veceras"
+  | "pice"
+  | "izlazak"
+  | "upoznavanje"
+  | "krevet"
+  | "masaza"
+  | "vreo_razgovor";
 
 async function closeOpenHotModeLog(
   supabase: Awaited<ReturnType<typeof createClient>>,

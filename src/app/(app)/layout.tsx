@@ -21,7 +21,19 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   if (!profile?.onboarding_completed_at) redirect("/onboarding");
 
-  const secretRoomLive = await isSecretRoomEveningLive();
+  const [secretRoomLive, { count: secretRoomPendingCount }] = await Promise.all([
+    isSecretRoomEveningLive(),
+    supabase
+      .from("secret_room_requests")
+      .select("id", { count: "exact", head: true })
+      .eq("to_profile_id", user.id)
+      .eq("status", "pending")
+      .gt("expires_at", new Date().toISOString()),
+  ]);
 
-  return <AppShell secretRoomLive={secretRoomLive}>{children}</AppShell>;
+  return (
+    <AppShell secretRoomLive={secretRoomLive} secretRoomPending={(secretRoomPendingCount ?? 0) > 0}>
+      {children}
+    </AppShell>
+  );
 }

@@ -10,7 +10,7 @@ interface NotificationRow {
   type: string;
   title: string;
   body: string | null;
-  matchId: string | null;
+  href: string | null;
   isRead: boolean;
   createdAt: string;
 }
@@ -24,7 +24,7 @@ export function NotificationsList({ initialItems }: { initialItems: Notification
       setItems((prev) => prev.map((i) => (i.id === n.id ? { ...i, isRead: true } : i)));
       markNotificationRead(n.id);
     }
-    if (n.matchId) router.push(`/poruke/${n.matchId}`);
+    if (n.href) router.push(n.href);
   }
 
   return (
@@ -34,7 +34,7 @@ export function NotificationsList({ initialItems }: { initialItems: Notification
           <button
             type="button"
             onClick={() => handleClick(n)}
-            disabled={!n.matchId}
+            disabled={!n.href}
             className={cn(
               "tap-scale flex w-full flex-col gap-0.5 rounded-2xl px-4 py-3 text-left",
               n.isRead ? "bg-[var(--color-bg-card)]" : "glass"

@@ -39,7 +39,11 @@ export default async function ObavestenjaPage() {
             type: n.type,
             title: n.title,
             body: n.body,
-            matchId: (n.data as { matchId?: string } | null)?.matchId ?? null,
+            href: n.type.startsWith("secret_room_")
+              ? "/tajna-soba"
+              : (n.data as { matchId?: string } | null)?.matchId
+                ? `/poruke/${(n.data as { matchId?: string }).matchId}`
+                : null,
             isRead: n.is_read,
             createdAt: n.created_at,
           }))}

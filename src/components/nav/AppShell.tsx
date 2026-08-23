@@ -17,14 +17,22 @@ function isFullScreenRoute(pathname: string | null): boolean {
   return !!pathname && (/^\/poruke\/[^/]+$/.test(pathname) || pathname.startsWith("/tajna-soba"));
 }
 
-export function AppShell({ children, secretRoomLive = false }: { children: React.ReactNode; secretRoomLive?: boolean }) {
+export function AppShell({
+  children,
+  secretRoomLive = false,
+  secretRoomPending = false,
+}: {
+  children: React.ReactNode;
+  secretRoomLive?: boolean;
+  secretRoomPending?: boolean;
+}) {
   const pathname = usePathname();
   const fullScreen = isFullScreenRoute(pathname);
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col">
       <main className={cn("flex-1", fullScreen ? "" : "safe-top pb-24")}>{children}</main>
-      {!fullScreen && <BottomNav secretRoomLive={secretRoomLive} />}
+      {!fullScreen && <BottomNav secretRoomLive={secretRoomLive} secretRoomPending={secretRoomPending} />}
     </div>
   );
 }

@@ -84,7 +84,7 @@ export default async function AdminSecretRoomPage() {
       </div>
 
       <div>
-        <h2 className="mb-3 text-sm font-semibold text-[var(--color-text-muted)]">Zahtevi (RIZIKUJ → OTVORI)</h2>
+        <h2 className="mb-3 text-sm font-semibold text-[var(--color-text-muted)]">Zahtevi (MUVAJ → OTVORI)</h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <StatCard label="Poslatih zahteva" value={totalRequests ?? 0} />
           <StatCard label="Acceptance rate" value={pct(acceptedRequests ?? 0, totalRequests ?? 0)} />

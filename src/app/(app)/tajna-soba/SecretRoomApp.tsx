@@ -146,7 +146,7 @@ export function SecretRoomApp({ myId }: { myId: string }) {
 
   if (screen.kind === "loading") {
     return (
-      <div className="flex h-full items-center justify-center bg-[#150a1e]">
+      <div className="flex h-dvh safe-top items-center justify-center bg-[#150a1e]">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-white" />
       </div>
     );
@@ -154,7 +154,7 @@ export function SecretRoomApp({ myId }: { myId: string }) {
 
   if (screen.kind === "intro") {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-5 bg-gradient-to-b from-[#1a0f24] to-[#2b0b3f] px-6 text-center text-white">
+      <div className="flex h-dvh safe-top flex-col items-center justify-center gap-5 bg-gradient-to-b from-[#1a0f24] to-[#2b0b3f] px-6 text-center text-white">
         <h1 className="text-4xl font-extrabold">🔥 TAJNA SOBA</h1>
         <p className="text-white/70">Ovde nema beskonačnog swipovanja.</p>
         <p className="max-w-xs text-white/85">Imaš 3 minuta da pronađeš nekoga ko te stvarno privlači.</p>
@@ -167,7 +167,7 @@ export function SecretRoomApp({ myId }: { myId: string }) {
 
   if (screen.kind === "limit-reached") {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-4 bg-[#150a1e] px-6 text-center text-white">
+      <div className="flex h-dvh safe-top flex-col items-center justify-center gap-4 bg-[#150a1e] px-6 text-center text-white">
         <p className="text-4xl">🌙</p>
         <h2 className="text-xl font-bold">Iskoristio/la si dnevne runde</h2>
         <p className="text-sm text-white/70">Vrati se sutra, ili postani Premium za više rundi dnevno.</p>
@@ -177,7 +177,7 @@ export function SecretRoomApp({ myId }: { myId: string }) {
 
   if (screen.kind === "error") {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-4 bg-[#150a1e] px-6 text-center text-white">
+      <div className="flex h-dvh safe-top flex-col items-center justify-center gap-4 bg-[#150a1e] px-6 text-center text-white">
         <p className="text-3xl">⚠️</p>
         <p className="text-white/80">{screen.message}</p>
         <button type="button" onClick={() => setScreen({ kind: "intro" })} className="tap-scale rounded-2xl bg-gradient-accent px-6 py-3 font-semibold text-white">
@@ -189,7 +189,7 @@ export function SecretRoomApp({ myId }: { myId: string }) {
 
   if (screen.kind === "incoming") {
     return (
-      <div className="h-full bg-gradient-to-b from-[#1a0f24] to-[#2b0b3f]">
+      <div className="h-dvh safe-top bg-gradient-to-b from-[#1a0f24] to-[#2b0b3f]">
         <IncomingRequestScreen
           request={screen.request}
           onAccepted={async (pairId, fallbackOther) => {
@@ -224,7 +224,7 @@ export function SecretRoomApp({ myId }: { myId: string }) {
 
   if (screen.kind === "paired") {
     return (
-      <div className="h-full bg-gradient-to-b from-[#1a0f24] to-[#2b0b3f]">
+      <div className="h-dvh safe-top bg-gradient-to-b from-[#1a0f24] to-[#2b0b3f]">
         <PairedRoomScreen
           pairId={screen.pairId}
           other={screen.other}
@@ -237,7 +237,7 @@ export function SecretRoomApp({ myId }: { myId: string }) {
 
   if (screen.kind === "result") {
     return (
-      <div className="h-full bg-gradient-to-b from-[#1a0f24] to-[#2b0b3f]">
+      <div className="h-dvh safe-top bg-gradient-to-b from-[#1a0f24] to-[#2b0b3f]">
         <ResultScreen pairId={screen.pairId} other={screen.other} outcome={screen.outcome} onRestart={() => setScreen({ kind: "intro" })} />
       </div>
     );
@@ -247,7 +247,7 @@ export function SecretRoomApp({ myId }: { myId: string }) {
   const current = screen.candidates[0];
 
   return (
-    <div className="flex h-full flex-col bg-gradient-to-b from-[#1a0f24] to-[#2b0b3f] px-4 pb-4 pt-4">
+    <div className="flex h-dvh safe-top flex-col bg-gradient-to-b from-[#1a0f24] to-[#2b0b3f] px-4 pb-4 pt-4">
       <div className="mb-3 flex items-center justify-between text-white">
         <h1 className="text-lg font-extrabold">🔥 Tajna soba</h1>
         <RoundTimerBridge
@@ -306,7 +306,7 @@ function RoundTimerBridge({ expiresAt, onExpire }: { expiresAt: string; onExpire
 function WaitingResponseScreen({ expiresAt, onExpire }: { expiresAt: string; onExpire: () => void }) {
   const remaining = useCountdown(expiresAt, onExpire);
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-5 bg-gradient-to-b from-[#1a0f24] to-[#2b0b3f] px-6 text-center text-white">
+    <div className="flex h-dvh safe-top flex-col items-center justify-center gap-5 bg-gradient-to-b from-[#1a0f24] to-[#2b0b3f] px-6 text-center text-white">
       <div className="animate-pulse text-5xl">🔥</div>
       <h2 className="text-xl font-bold">Čeka te odgovor.</h2>
       <RoundTimer seconds={remaining} />

@@ -14,7 +14,13 @@ const TABS = [
   { href: "/duel", label: "Duel", icon: Swords, secret: false },
 ] as const;
 
-export function BottomNav({ secretRoomLive = false }: { secretRoomLive?: boolean }) {
+export function BottomNav({
+  secretRoomLive = false,
+  secretRoomPending = false,
+}: {
+  secretRoomLive?: boolean;
+  secretRoomPending?: boolean;
+}) {
   const pathname = usePathname();
 
   return (
@@ -26,14 +32,21 @@ export function BottomNav({ secretRoomLive = false }: { secretRoomLive?: boolean
         {TABS.map(({ href, label, icon: Icon, secret }) => {
           const active = pathname === href || pathname.startsWith(href + "/");
           const glow = secret && secretRoomLive;
+          const pending = secret && secretRoomPending;
           return (
             <li key={href} className="flex-1">
               <Link
                 href={href}
                 className="tap-scale relative flex flex-col items-center gap-0.5 py-2.5 text-[10px]"
               >
-                {glow && (
-                  <span className="absolute -top-0.5 right-1/2 h-1.5 w-1.5 translate-x-3 animate-pulse rounded-full bg-red-500" />
+                {pending ? (
+                  <span className="absolute -top-0.5 right-1/2 flex h-4 w-4 translate-x-3 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
+                    !
+                  </span>
+                ) : (
+                  glow && (
+                    <span className="absolute -top-0.5 right-1/2 h-1.5 w-1.5 translate-x-3 animate-pulse rounded-full bg-red-500" />
+                  )
                 )}
                 <Icon
                   size={21}

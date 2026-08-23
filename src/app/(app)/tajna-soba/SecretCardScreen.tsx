@@ -82,7 +82,7 @@ export function SecretCardScreen({
                 disabled={busy}
                 className="tap-scale rounded-2xl bg-gradient-accent px-4 py-3.5 text-base font-extrabold text-white disabled:opacity-50"
               >
-                😈 RIZIKUJ
+                😈 MUVAJ
               </button>
               <button
                 type="button"

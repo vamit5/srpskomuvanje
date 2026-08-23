@@ -10,6 +10,9 @@ const VIBES: { value: HotModeVibe; label: string }[] = [
   { value: "veceras", label: "🌙 Večeras" },
   { value: "pice", label: "🍸 Piće" },
   { value: "izlazak", label: "💃 Izlazak" },
+  { value: "vreo_razgovor", label: "💬 Vreo razgovor" },
+  { value: "masaza", label: "💆 Masaža" },
+  { value: "krevet", label: "😈 Krevet" },
 ];
 
 export function HotModeToggle({

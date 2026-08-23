@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { setTonightStatus, type HotModeVibe } from "../_hotmode/actions";
 
@@ -9,6 +10,9 @@ const OPTIONS: { value: HotModeVibe; label: string }[] = [
   { value: "pice", label: "🍸 Piće" },
   { value: "izlazak", label: "💃 Izlazak" },
   { value: "upoznavanje", label: "❤️ Upoznavanje" },
+  { value: "vreo_razgovor", label: "💬 Vreo razgovor" },
+  { value: "masaza", label: "💆 Masaža" },
+  { value: "krevet", label: "😈 Krevet" },
 ];
 
 export function TonightPicker({ alreadyActive }: { alreadyActive: boolean }) {
@@ -39,8 +43,8 @@ export function TonightPicker({ alreadyActive }: { alreadyActive: boolean }) {
       <p className="font-semibold">🌙 Večeras?</p>
       <p className="mb-3 text-xs text-[var(--color-text-muted)]">
         {done
-          ? "Status je aktivan do 04:00 — vide te drugi u Hot Mode-u."
-          : "Označi šta želiš — traje do 04:00, drugi Hot Mode korisnici te vide."}
+          ? "😏 Hot Mode je aktivan do 04:00 — vide te drugi koji su ga takođe uključili."
+          : "Klikom na bilo koju opciju uključuješ 😏 Hot Mode do 04:00 — vide te samo drugi koji su ga takođe uključili."}
       </p>
       <div className="flex flex-wrap gap-2">
         {OPTIONS.map((o) => (
@@ -61,6 +65,10 @@ export function TonightPicker({ alreadyActive }: { alreadyActive: boolean }) {
         ))}
       </div>
       {error && <p className="mt-2 text-xs text-[var(--color-danger)]">{error}</p>}
+
+      <Link href="/profil" className="mt-3 inline-block text-xs text-[var(--color-text-faint)] underline">
+        Podešavanja Hot Mode-a (uključi bez vremenskog ograničenja) →
+      </Link>
     </section>
   );
 }
