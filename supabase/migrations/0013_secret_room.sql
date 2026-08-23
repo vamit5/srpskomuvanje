@@ -11,13 +11,14 @@
 -- KONFIGURACIJA (isti key/value obrazac kao night_flirting_config)
 -- ---------------------------------------------------------------------
 
-create table secret_room_config (
+create table if not exists secret_room_config (
   key text primary key,
   value text not null,
   description text,
   updated_at timestamptz not null default now()
 );
 
+drop trigger if exists secret_room_config_set_updated_at on secret_room_config;
 create trigger secret_room_config_set_updated_at before update on secret_room_config
   for each row execute function set_updated_at();
 
@@ -37,7 +38,8 @@ insert into secret_room_config (key, value, description) values
     'duel_questions',
     '[{"text":"Veceras bih pre...","options":[{"emoji":"🍸","label":"otisao/la na pice"},{"emoji":"🌙","label":"spontano nestao/la negde"},{"emoji":"🔥","label":"ostao/la u ovom razgovoru"},{"emoji":"😈","label":"s tobom u krevet"}]},{"text":"Prvi potez bi bio...","options":[{"emoji":"💬","label":"dug razgovor do kasno"},{"emoji":"🚗","label":"voznja bez plana"},{"emoji":"🍷","label":"casa vina kod mene ili tebe"},{"emoji":"😏","label":"direktno flertovanje"}]},{"text":"Za tebe je flert...","options":[{"emoji":"😇","label":"suptilan i spor"},{"emoji":"😈","label":"direktan i hrabar"},{"emoji":"🎭","label":"igra i zadirkivanje"},{"emoji":"🔥","label":"sav pritisak odjednom"}]}]',
     'JSON niz pitanja za Duel hemije -- svako: {text, options:[{emoji,label}, ...4]}'
-  );
+  )
+on conflict (key) do nothing;
 
 -- ---------------------------------------------------------------------
 -- SRPSKA PITANJA PRI PRIJAVI (sekcija na kraju spec-a) -- "da li si pravi
@@ -51,7 +53,7 @@ alter table profiles add column if not exists food_favorites text[] not null def
 -- RUNDE (jedna "igra" -- korisnik ulazi, dobija kandidate, ima countdown)
 -- ---------------------------------------------------------------------
 
-create table secret_room_rounds (
+create table if not exists secret_room_rounds (
   id uuid primary key default gen_random_uuid(),
   profile_id uuid not null references profiles(id) on delete cascade,
   status text not null default 'active' check (status in ('active', 'completed', 'expired')),
@@ -63,14 +65,16 @@ create table secret_room_rounds (
 );
 
 -- samo jedna AKTIVNA runda po korisniku u isto vreme
-create unique index secret_room_rounds_one_active_idx on secret_room_rounds (profile_id) where status = 'active';
-create index secret_room_rounds_profile_idx on secret_room_rounds (profile_id, created_at desc);
+create unique index if not exists secret_room_rounds_one_active_idx on secret_room_rounds (profile_id) where status = 'active';
+create index if not exists secret_room_rounds_profile_idx on secret_room_rounds (profile_id, created_at desc);
 
 alter table secret_room_rounds enable row level security;
 
+drop policy if exists "korisnik vidi svoje runde" on secret_room_rounds;
 create policy "korisnik vidi svoje runde"
   on secret_room_rounds for select using (auth.uid() = profile_id);
 
+drop policy if exists "admin vidi sve runde" on secret_room_rounds;
 create policy "admin vidi sve runde"
   on secret_room_rounds for select using (is_admin());
 
@@ -78,7 +82,7 @@ create policy "admin vidi sve runde"
 -- KANDIDATI PO RUNDI (5-7 profila, jedan je "Tajna karta")
 -- ---------------------------------------------------------------------
 
-create table secret_room_candidates (
+create table if not exists secret_room_candidates (
   id uuid primary key default gen_random_uuid(),
   round_id uuid not null references secret_room_rounds(id) on delete cascade,
   candidate_id uuid not null references profiles(id) on delete cascade,
@@ -90,15 +94,17 @@ create table secret_room_candidates (
   unique (round_id, candidate_id)
 );
 
-create index secret_room_candidates_round_idx on secret_room_candidates (round_id, card_position);
+create index if not exists secret_room_candidates_round_idx on secret_room_candidates (round_id, card_position);
 
 alter table secret_room_candidates enable row level security;
 
+drop policy if exists "korisnik vidi kandidate iz svoje runde" on secret_room_candidates;
 create policy "korisnik vidi kandidate iz svoje runde"
   on secret_room_candidates for select using (
     exists (select 1 from secret_room_rounds r where r.id = round_id and r.profile_id = auth.uid())
   );
 
+drop policy if exists "admin vidi sve kandidate" on secret_room_candidates;
 create policy "admin vidi sve kandidate"
   on secret_room_candidates for select using (is_admin());
 
@@ -106,7 +112,7 @@ create policy "admin vidi sve kandidate"
 -- ZAHTEVI (RIZIKUJ -> primalac vidi samo "neko te je izabrao", cekaj OTVORI)
 -- ---------------------------------------------------------------------
 
-create table secret_room_requests (
+create table if not exists secret_room_requests (
   id uuid primary key default gen_random_uuid(),
   round_id uuid not null references secret_room_rounds(id) on delete cascade,
   from_profile_id uuid not null references profiles(id) on delete cascade,
@@ -118,14 +124,16 @@ create table secret_room_requests (
   check (from_profile_id <> to_profile_id)
 );
 
-create index secret_room_requests_to_idx on secret_room_requests (to_profile_id, status);
-create index secret_room_requests_from_idx on secret_room_requests (from_profile_id, status);
+create index if not exists secret_room_requests_to_idx on secret_room_requests (to_profile_id, status);
+create index if not exists secret_room_requests_from_idx on secret_room_requests (from_profile_id, status);
 
 alter table secret_room_requests enable row level security;
 
+drop policy if exists "ucesnici vide svoj zahtev" on secret_room_requests;
 create policy "ucesnici vide svoj zahtev"
   on secret_room_requests for select using (auth.uid() = from_profile_id or auth.uid() = to_profile_id);
 
+drop policy if exists "admin vidi sve zahteve" on secret_room_requests;
 create policy "admin vidi sve zahteve"
   on secret_room_requests for select using (is_admin());
 
@@ -143,7 +151,7 @@ grant select (id, round_id, to_profile_id, status, created_at, expires_at, respo
 -- ZAJEDNICKA SOBA (posle OTVORI -- oboje unutra, Duel hemije)
 -- ---------------------------------------------------------------------
 
-create table secret_room_pairs (
+create table if not exists secret_room_pairs (
   id uuid primary key default gen_random_uuid(),
   request_id uuid not null references secret_room_requests(id) on delete cascade,
   profile_a_id uuid not null references profiles(id) on delete cascade,
@@ -156,15 +164,17 @@ create table secret_room_pairs (
   check (profile_a_id < profile_b_id)
 );
 
-create unique index secret_room_pairs_request_idx on secret_room_pairs (request_id);
-create index secret_room_pairs_a_idx on secret_room_pairs (profile_a_id, status);
-create index secret_room_pairs_b_idx on secret_room_pairs (profile_b_id, status);
+create unique index if not exists secret_room_pairs_request_idx on secret_room_pairs (request_id);
+create index if not exists secret_room_pairs_a_idx on secret_room_pairs (profile_a_id, status);
+create index if not exists secret_room_pairs_b_idx on secret_room_pairs (profile_b_id, status);
 
 alter table secret_room_pairs enable row level security;
 
+drop policy if exists "ucesnici vide svoju sobu" on secret_room_pairs;
 create policy "ucesnici vide svoju sobu"
   on secret_room_pairs for select using (auth.uid() = profile_a_id or auth.uid() = profile_b_id);
 
+drop policy if exists "admin vidi sve sobe" on secret_room_pairs;
 create policy "admin vidi sve sobe"
   on secret_room_pairs for select using (is_admin());
 
@@ -172,7 +182,7 @@ create policy "admin vidi sve sobe"
 -- DUEL HEMIJE ODGOVORI
 -- ---------------------------------------------------------------------
 
-create table secret_room_duel_answers (
+create table if not exists secret_room_duel_answers (
   id uuid primary key default gen_random_uuid(),
   pair_id uuid not null references secret_room_pairs(id) on delete cascade,
   question_index smallint not null,
@@ -184,6 +194,7 @@ create table secret_room_duel_answers (
 
 alter table secret_room_duel_answers enable row level security;
 
+drop policy if exists "ucesnici vide odgovore svoje sobe" on secret_room_duel_answers;
 create policy "ucesnici vide odgovore svoje sobe"
   on secret_room_duel_answers for select using (
     exists (
@@ -192,6 +203,7 @@ create policy "ucesnici vide odgovore svoje sobe"
     )
   );
 
+drop policy if exists "ucesnik upisuje svoj odgovor" on secret_room_duel_answers;
 create policy "ucesnik upisuje svoj odgovor"
   on secret_room_duel_answers for insert with check (
     auth.uid() = profile_id
@@ -201,6 +213,7 @@ create policy "ucesnik upisuje svoj odgovor"
     )
   );
 
+drop policy if exists "admin vidi sve duel hemije odgovore" on secret_room_duel_answers;
 create policy "admin vidi sve duel hemije odgovore"
   on secret_room_duel_answers for select using (is_admin());
 
