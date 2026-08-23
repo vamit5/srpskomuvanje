@@ -1,11 +1,17 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 
 /**
- * Poziva se periodicno preko Vercel Cron-a (vidi vercel.json) -- nalazi
- * PLACENI (ne-green) Nocno muvanje sadrzaj kome je istekao rok (expires_at)
- * a NIJE otkljucan, i TRAJNO brise originalni fajl iz Storage-a (ne samo
- * DB red) -- "disappearing" mehanika stvarno mora da obrise fajl, ne samo
- * da ga sakrije u UI-ju.
+ * Poziva se JEDNOM DNEVNO preko Vercel Cron-a (vidi vercel.json) -- Hobby
+ * (besplatan) Vercel plan dozvoljava samo dnevne cron-ove, cesci raspored
+ * (npr. na 5 min) izazove "deploy_failed" za CEO deploy, ne samo za cron.
+ * Ovo NE utice na to KADA korisnik prakticno gubi pristup -- unlock_night_content
+ * (SQL) vec odbija otkljucavanje cim prodje expires_at, bez obzira da li je
+ * fajl fizicki obrisan -- ovaj cron samo stvarno prazni Storage jednom dnevno.
+ * (Ako se kasnije predje na Vercel Pro, raspored se moze pooštriti.)
+ *
+ * Nalazi PLACENI (ne-green) Nocno muvanje sadrzaj kome je istekao rok
+ * (expires_at) a NIJE otkljucan, i TRAJNO brise originalni fajl iz
+ * Storage-a (ne samo DB red).
  *
  * Zastita: Vercel Cron zahtevi automatski nose
  * "Authorization: Bearer <CRON_SECRET>" (isti env var koji admin podesi u
