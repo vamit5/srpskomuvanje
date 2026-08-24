@@ -1,22 +1,22 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { User } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BottomNav } from "./BottomNav";
 import { cn } from "@/lib/utils";
 
 /**
- * Chat razgovor (/poruke/[matchId]) i 18+ Muvanje su jedine stranice koje
- * treba PUNU visinu ekrana za sebe -- kod chata da polje za kucanje bude
- * odmah iznad tastature/ivice ekrana (kao WhatsApp/Telegram), kod 18+
- * Muvanja da atmosfera bude potpuno uronjena (bez donje navigacije koja
- * razbija tok). U oba slucaja <main> ne sme imati rezervisan razmak
- * (pb-24), inače se sopstvena h-dvh visina "gura" ispod vidljivog dela
- * ekrana. Svaki ekran ovde SAM dodaje "safe-top" (notch/status bar
- * razmak) -- AppShell ga NE dodaje za fullScreen rute.
+ * Chat razgovori (/poruke/[matchId] i /18-plus/chat/[matchId]) su jedine
+ * stranice koje treba PUNU visinu ekrana za sebe -- polje za kucanje mora
+ * biti odmah iznad tastature/ivice ekrana (kao WhatsApp/Telegram). <main>
+ * tu ne sme imati rezervisan razmak (pb-24), inače se sopstvena h-dvh
+ * visina "gura" ispod vidljivog dela ekrana. 18+ Muvanje LISTA (ne chat)
+ * ima donju navigaciju kao svaka druga stranica.
  */
 function isFullScreenRoute(pathname: string | null): boolean {
-  return !!pathname && (/^\/poruke\/[^/]+$/.test(pathname) || pathname.startsWith("/18-plus"));
+  return !!pathname && (/^\/poruke\/[^/]+$/.test(pathname) || /^\/18-plus\/chat\/[^/]+$/.test(pathname));
 }
 
 export function AppShell({
@@ -31,6 +31,18 @@ export function AppShell({
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col">
+      {!fullScreen && pathname !== "/profil" && (
+        // "Moj profil" -- vidljivo na CELOJ app-i (ne samo na Sada), fixed
+        // gore desno, iznad safe-area (notch/status bar).
+        <Link
+          href="/profil"
+          aria-label="Moj profil"
+          className="tap-scale glass fixed right-3 z-40 flex h-10 w-10 items-center justify-center rounded-full text-[var(--color-text-muted)]"
+          style={{ top: "calc(var(--safe-top) + 0.75rem)" }}
+        >
+          <User size={19} />
+        </Link>
+      )}
       <main className={cn("flex-1", fullScreen ? "" : "safe-top pb-24")}>
         {fullScreen ? (
           children

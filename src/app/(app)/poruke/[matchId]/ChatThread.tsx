@@ -43,6 +43,8 @@ export function ChatThread({
   initialMessages,
   isUnmatched,
   foodMatches,
+  hot = false,
+  backHref = "/poruke",
 }: {
   matchId: string;
   currentUserId: string;
@@ -53,6 +55,10 @@ export function ChatThread({
   initialMessages: MessageRow[];
   isUnmatched: boolean;
   foodMatches: string[];
+  /** 18+ Muvanje chat -- malo direktniji predlozi poruka, i dalje bez graficnog sadrzaja. */
+  hot?: boolean;
+  /** Gde vodi "← Nazad" -- /poruke za obican chat, /18-plus za 18+ Muvanje chat. */
+  backHref?: string;
 }) {
   const router = useRouter();
   const [messages, setMessages] = useState<MessageRow[]>(initialMessages);
@@ -142,7 +148,8 @@ export function ChatThread({
   // hydration mismatch (Math.random() bi se drugačije "izmešao" na
   // serveru nego u pregledaču).
   useEffect(() => {
-    Promise.resolve().then(() => setIcebreakers(pickIcebreakers()));
+    Promise.resolve().then(() => setIcebreakers(pickIcebreakers(3, hot)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -191,7 +198,7 @@ export function ChatThread({
     }
     setUnmatched(true);
     setConfirmingUnmatch(false);
-    router.push("/poruke");
+    router.push(backHref);
   }
 
   async function handleBlock() {
@@ -202,7 +209,7 @@ export function ChatThread({
     }
     setBlocked(true);
     setConfirmingBlock(false);
-    router.push("/poruke");
+    router.push(backHref);
   }
 
   async function handleSubmitReport() {
@@ -221,7 +228,7 @@ export function ChatThread({
       <div className="flex h-dvh flex-col items-center justify-center gap-2 px-6 text-center">
         <p className="text-3xl">🚫</p>
         <p className="font-semibold">{otherName} je blokiran/a</p>
-        <Link href="/poruke" className="text-sm text-[var(--color-text-muted)] underline">
+        <Link href={backHref} className="text-sm text-[var(--color-text-muted)] underline">
           Nazad na poruke
         </Link>
       </div>
@@ -231,7 +238,7 @@ export function ChatThread({
   return (
     <div className="flex h-dvh flex-col">
       <header className="safe-top glass flex items-center gap-3 border-b border-[var(--color-border)] px-3 py-3">
-        <Link href="/poruke" className="tap-scale p-1" aria-label="Nazad">
+        <Link href={backHref} className="tap-scale p-1" aria-label="Nazad">
           <ArrowLeft size={22} />
         </Link>
         <Link href={`/profil/${otherId}`} className="tap-scale flex flex-1 items-center gap-3">

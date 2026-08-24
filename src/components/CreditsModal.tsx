@@ -9,7 +9,20 @@ function formatPrice(cents: number, currency: string) {
   return new Intl.NumberFormat("sr-RS", { style: "currency", currency: currency.toUpperCase() }).format(cents / 100);
 }
 
-export function CreditsModal({ onClose }: { onClose: () => void }) {
+const DESCRIPTIONS = {
+  nocno: "Credits otključavaju zaključan sadržaj u Noćnom muvanju. Premium korisnici ne moraju da ih kupuju.",
+  osamnaest: "Credits otključavaju zaključan sadržaj u 18+ Muvanju. Premium korisnici ne moraju da ih kupuju.",
+  profil: "Credits otključavaju kompletan profil (bio, interesovanja, dodatne slike). Premium korisnici ne moraju da ih kupuju.",
+  kotezeli: "Credits otključavaju ko te je lajkovao, osobu po osobu. Premium korisnici vide sve odjednom, bez plaćanja po osobi.",
+} as const;
+
+export function CreditsModal({
+  onClose,
+  context = "nocno",
+}: {
+  onClose: () => void;
+  context?: keyof typeof DESCRIPTIONS;
+}) {
   const [packages, setPackages] = useState<CreditPackage[] | null>(null);
   const [buyingId, setBuyingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -39,9 +52,7 @@ export function CreditsModal({ onClose }: { onClose: () => void }) {
             <X size={20} />
           </button>
         </div>
-        <p className="mb-4 text-sm text-[var(--color-text-muted)]">
-          Credits otključavaju zaključan sadržaj u Noćnom muvanju. Premium korisnici ne moraju da ih kupuju.
-        </p>
+        <p className="mb-4 text-sm text-[var(--color-text-muted)]">{DESCRIPTIONS[context]}</p>
 
         {!packages ? (
           <div className="flex justify-center py-6">

@@ -73,6 +73,14 @@ export default async function ProfilPage({
         </div>
       </header>
 
+      <Link
+        href="/profil/foto"
+        className="tap-scale bg-gradient-serbia flex items-center justify-between rounded-2xl px-4 py-3.5 text-white"
+      >
+        <span className="text-sm font-medium">📸 Ubaci svoje slike/snimke (vidljivo drugima)</span>
+        <span className="text-xs">→</span>
+      </Link>
+
       {premium === "uspesno" && !isPremiumActive && (
         <p className="rounded-2xl border border-[var(--color-border-strong)] bg-[var(--color-bg-card)] px-4 py-3 text-sm text-[var(--color-text-muted)]">
           ⏳ Obrađujemo plaćanje — osveži za par sekundi ako se Premium ne pojavi odmah.
@@ -153,11 +161,6 @@ export default async function ProfilPage({
       <BoostCard boostExpiresAt={profile.boost_expires_at ?? null} />
 
       <div className="flex flex-col gap-2">
-        <Link href="/profil/foto">
-          <Button variant="secondary" className="w-full">
-            Fotografije i video
-          </Button>
-        </Link>
         <form action={signOutAction}>
           <Button variant="ghost" type="submit" className="w-full">
             Odjavi se

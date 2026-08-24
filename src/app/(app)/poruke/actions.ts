@@ -27,6 +27,9 @@ export async function getConversations(): Promise<{ conversations: Conversation[
     .select("id, profile_a_id, profile_b_id, matched_at")
     .or(`profile_a_id.eq.${user.id},profile_b_id.eq.${user.id}`)
     .is("unmatched_at", null)
+    // "Poruke" ostaje iskljucivo za obican chat -- 18+ Muvanje chat-ovi
+    // (source='18plus') imaju svoju sopstvenu listu na /18-plus.
+    .neq("source", "18plus")
     .order("matched_at", { ascending: false });
 
   if (!matches?.length) return { conversations: [], error: null };

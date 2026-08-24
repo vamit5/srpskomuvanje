@@ -41,7 +41,7 @@ export default async function PorukePage() {
             <li key={c.matchId}>
               <Link
                 href={`/poruke/${c.matchId}`}
-                className="tap-scale flex items-center gap-3 rounded-2xl px-3 py-3 hover:bg-[var(--color-bg-elevated)]"
+                className="tap-scale animate-bubble-in flex items-center gap-3 rounded-2xl px-3 py-3 hover:bg-[var(--color-bg-elevated)]"
               >
                 {c.otherPhotoUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element

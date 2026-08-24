@@ -62,7 +62,7 @@ export default async function MatchPage() {
             <li key={matchId}>
               <Link
                 href={`/poruke/${matchId}`}
-                className="glass tap-scale flex items-center gap-3 rounded-2xl px-3 py-3"
+                className="glass tap-scale animate-bubble-in flex items-center gap-3 rounded-2xl px-3 py-3"
               >
                 {photo?.thumbnail_url ? (
                   // eslint-disable-next-line @next/next/no-img-element

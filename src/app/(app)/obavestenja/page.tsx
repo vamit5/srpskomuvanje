@@ -5,6 +5,29 @@ import { NotificationsList } from "./NotificationsList";
 
 export const metadata = { title: "Obaveštenja" };
 
+/** Gde vodi klik na obaveštenje, po tipu -- MORA se azurirati kad god se doda novi tip notifikacije. */
+function notificationHref(type: string, data: { matchId?: string; otherId?: string } | null): string | null {
+  if (data?.matchId) return `/poruke/${data.matchId}`;
+  switch (type) {
+    case "krevet_signal":
+      return "/18-plus";
+    case "like":
+      return "/ko-te-zeli";
+    case "nearby":
+    case "hot_mode":
+    case "event":
+      return "/sada";
+    // Legacy tipovi (Tajna soba, ukinuta) -- stari redovi u bazi i dalje
+    // treba negde da vode umesto da budu mrtvi.
+    case "secret_room_request":
+    case "secret_room_rejected":
+    case "secret_room_pair_ready":
+      return "/18-plus";
+    default:
+      return null;
+  }
+}
+
 export default async function ObavestenjaPage() {
   const supabase = await createClient();
   const {
@@ -39,11 +62,7 @@ export default async function ObavestenjaPage() {
             type: n.type,
             title: n.title,
             body: n.body,
-            href: n.type.startsWith("secret_room_")
-              ? "/tajna-soba"
-              : (n.data as { matchId?: string } | null)?.matchId
-                ? `/poruke/${(n.data as { matchId?: string }).matchId}`
-                : null,
+            href: notificationHref(n.type, n.data as { matchId?: string; otherId?: string } | null),
             isRead: n.is_read,
             createdAt: n.created_at,
           }))}

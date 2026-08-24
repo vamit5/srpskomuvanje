@@ -2740,8 +2740,14 @@ grant execute on function get_muvaj_pending_krevet_count(uuid) to authenticated;
 -- ekran gde korisnik bira koji "misteriozni" signal da otkljuca.
 -- ---------------------------------------------------------------------
 
+-- Menjamo RETURNS TABLE kolone (dodajemo from_photo_url) -- Postgres NE
+-- dozvoljava "create or replace" kad se menja OUT-parametar lista, mora
+-- eksplicitan drop prvo (isti gotcha kao promena parametara, samo za
+-- povratni tip -- vidi migraciju 0012 za prvi primer u ovom projektu).
+drop function if exists get_muvaj_pending_krevet_list(uuid);
+
 create or replace function get_muvaj_pending_krevet_list(viewer_id uuid)
-returns table (signal_id uuid, created_at timestamptz)
+returns table (signal_id uuid, created_at timestamptz, from_photo_url text)
 language plpgsql
 security definer
 set search_path = public
@@ -2751,8 +2757,15 @@ begin
     raise exception 'Nije dozvoljeno.';
   end if;
 
+  -- NAPOMENA: from_photo_url OVDE nije "otkrivanje identiteta" -- to je
+  -- obicna profilna slika (vec javno vidljiva svima drugde u appu, npr.
+  -- u "Pozovi nekoga u krevet" gridu ispod), samo obicnim CSS blur-om
+  -- zamagljena na klijentu dok se veza SLIKA<->OVAJ KONKRETAN SIGNAL ne
+  -- otkljuca -- isti bezbednosni nivo kao "Ko te zeli" tizer (vidi
+  -- UnlockCard/LikerLockedCard komentare). Ime/godine/grad OSTAJU skriveni.
   return query
-  select k.id, k.created_at
+  select k.id, k.created_at,
+    (select pp.url from profile_photos pp where pp.profile_id = k.from_profile_id and pp.is_primary = true and pp.moderation_status = 'approved' limit 1)
   from krevet_signals k
   where k.to_profile_id = viewer_id and k.status = 'pending'
   order by k.created_at desc;
@@ -3155,3 +3168,58 @@ end;
 $$;
 
 grant execute on function unlock_profile_view(uuid, uuid) to authenticated;
+
+-- ---------------------------------------------------------------------
+-- 18+ DIREKTAN CHAT -- klik na nekoga u "Pozovi nekoga u krevet" odmah
+-- otvara privatan chat (BEZ cekanja na obostrani match) -- ponovo
+-- koristi POSTOJECI matches/messages sistem (nov "izvor" matcha), ali je
+-- ruta ODVOJENA od /poruke (poruke ostaju iskljucivo za obican chat,
+-- 18+ chat ide preko /18-plus/chat/[matchId]).
+-- ---------------------------------------------------------------------
+
+alter table matches drop constraint if exists matches_source_check;
+alter table matches add constraint matches_source_check
+  check (source in ('like', 'secret_spark', 'duel', '18plus'));
+
+create or replace function start_18plus_chat(p_viewer_id uuid, p_target_id uuid)
+returns table (match_id uuid, error text)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_a uuid;
+  v_b uuid;
+  v_match_id uuid;
+begin
+  if auth.uid() is distinct from p_viewer_id then
+    return query select null::uuid, 'Nije dozvoljeno.'; return;
+  end if;
+  if p_viewer_id = p_target_id then
+    return query select null::uuid, 'Ne mozes kontaktirati sebe.'; return;
+  end if;
+
+  if exists (
+    select 1 from blocks b
+    where (b.blocker_id = p_viewer_id and b.blocked_id = p_target_id)
+       or (b.blocker_id = p_target_id and b.blocked_id = p_viewer_id)
+  ) then
+    return query select null::uuid, 'Ne mozes kontaktirati ovog korisnika.'; return;
+  end if;
+
+  v_a := least(p_viewer_id, p_target_id);
+  v_b := greatest(p_viewer_id, p_target_id);
+
+  select id into v_match_id from matches where profile_a_id = v_a and profile_b_id = v_b and unmatched_at is null;
+
+  if v_match_id is null then
+    insert into matches (profile_a_id, profile_b_id, source)
+      values (v_a, v_b, '18plus')
+      returning id into v_match_id;
+  end if;
+
+  return query select v_match_id, null::text;
+end;
+$$;
+
+grant execute on function start_18plus_chat(uuid, uuid) to authenticated;

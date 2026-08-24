@@ -13,7 +13,20 @@ export const ICEBREAKERS = [
   "Da probamo nešto ludo — ti pitaš, ja odgovaram, pa obrnuto?",
 ] as const;
 
-export function pickIcebreakers(count = 3): string[] {
-  const shuffled = [...ICEBREAKERS].sort(() => Math.random() - 0.5);
+// Malo direktniji/vatreniji ton za 18+ Muvanje chat -- i dalje BEZ
+// graficnog seksualnog sadrzaja (vidi objasnjenje u razgovoru zasto to
+// namerno ne generisemo).
+export const ICEBREAKERS_HOT = [
+  "Šta te večeras najviše pali? 😈",
+  "Da ne gubimo vreme na fore — šta tražiš večeras?",
+  "Igramo se? Prvo pitanje: šta ti je najveća slabost?",
+  "Delujiš opasno zanimljivo... nastavi 😏",
+  "Piće kod tebe ili kod mene? 🍸",
+  "Reci mi nešto što bi me iznenadilo.",
+] as const;
+
+export function pickIcebreakers(count = 3, hot = false): string[] {
+  const source = hot ? ICEBREAKERS_HOT : ICEBREAKERS;
+  const shuffled = [...source].sort(() => Math.random() - 0.5);
   return shuffled.slice(0, count);
 }

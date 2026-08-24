@@ -4,7 +4,8 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { calculateAge, personCountPhrase } from "@/lib/utils";
 import { isPremium } from "@/lib/premium";
 import { LikerCard } from "./LikerCard";
-import { UnlockCard } from "./UnlockCard";
+import { LikerLockedCard } from "./LikerLockedCard";
+import { PremiumBannerSmall } from "./PremiumBannerSmall";
 
 export const metadata = { title: "Ko te želi" };
 
@@ -49,10 +50,13 @@ export default async function KoTeZeliPage() {
     string,
     { id: string; name: string; birth_date: string; photoUrl: string | null }
   >();
-  let teaserPhotoUrls: string[] = [];
+  let teaserPhotoById = new Map<string, string | null>();
+  let unlockedIds = new Set<string>();
+  let unlockCost = 1;
 
   if (likers.length) {
     const ids = likers.map((l) => l.id);
+
     if (premium) {
       const [{ data: profiles }, { data: photos }] = await Promise.all([
         supabase.from("profiles").select("id, name, birth_date").in("id", ids),
@@ -70,18 +74,31 @@ export default async function KoTeZeliPage() {
         ])
       );
     } else {
-      // Besplatan nalog ne dobija imena/profile, ali PRIKAZ (zamućene)
-      // stvarne slike umesto generičkih katanaca -- to je i poenta teasera.
-      const { data: photos } = await supabase
-        .from("profile_photos")
-        .select("profile_id, thumbnail_url")
-        .in("profile_id", ids.slice(0, 6))
-        .eq("is_primary", true)
-        .eq("moderation_status", "approved");
-      teaserPhotoUrls = ids
-        .slice(0, 6)
-        .map((id) => photos?.find((ph) => ph.profile_id === id)?.thumbnail_url ?? null)
-        .filter((u): u is string => !!u);
+      const [{ data: photos }, { data: unlockRows }, { data: costRow }] = await Promise.all([
+        supabase
+          .from("profile_photos")
+          .select("profile_id, thumbnail_url")
+          .in("profile_id", ids)
+          .eq("is_primary", true)
+          .eq("moderation_status", "approved"),
+        supabase.from("profile_unlocks").select("target_id").eq("viewer_id", user.id).in("target_id", ids),
+        supabase.from("muvaj_config").select("value").eq("key", "profile_unlock_cost_credits").maybeSingle(),
+      ]);
+      teaserPhotoById = new Map(ids.map((id) => [id, photos?.find((ph) => ph.profile_id === id)?.thumbnail_url ?? null]));
+      unlockedIds = new Set((unlockRows ?? []).map((r) => r.target_id));
+      const parsedCost = costRow ? Number(costRow.value) : NaN;
+      unlockCost = Number.isFinite(parsedCost) ? parsedCost : 1;
+
+      // Za individualno vec otkljucane, treba nam i ime/godine (isto kao Premium put).
+      const stillLockedIds = ids.filter((id) => !unlockedIds.has(id));
+      const unlockedNowIds = ids.filter((id) => unlockedIds.has(id));
+      if (unlockedNowIds.length) {
+        const { data: profiles } = await supabase.from("profiles").select("id, name, birth_date").in("id", unlockedNowIds);
+        profilesById = new Map(
+          (profiles ?? []).map((p) => [p.id, { ...p, photoUrl: teaserPhotoById.get(p.id) ?? null }])
+        );
+      }
+      void stillLockedIds;
     }
   }
 
@@ -109,23 +126,18 @@ export default async function KoTeZeliPage() {
           title="Još nema lajkova"
           description="Čim te neko lajkuje, pojaviće se ovde. U međuvremenu, budi aktivan/na na Muvaj da te više ljudi vidi."
         />
-      ) : !premium ? (
-        <UnlockCard count={likers.length} photoUrls={teaserPhotoUrls} />
       ) : (
         <div className="flex flex-col gap-2">
+          {!premium && <PremiumBannerSmall />}
           {likers.map((l) => {
             const p = profilesById.get(l.id);
-            if (!p) return null;
-            return (
-              <LikerCard
-                key={l.id}
-                id={p.id}
-                name={p.name}
-                age={calculateAge(p.birth_date)}
-                photoUrl={p.photoUrl}
-                isSuper={l.isSuper}
-              />
-            );
+            if (p) {
+              return (
+                <LikerCard key={l.id} id={p.id} name={p.name} age={calculateAge(p.birth_date)} photoUrl={p.photoUrl} isSuper={l.isSuper} />
+              );
+            }
+            if (premium) return null; // premium a nema profila -- obrisan nalog, preskoci
+            return <LikerLockedCard key={l.id} id={l.id} photoUrl={teaserPhotoById.get(l.id) ?? null} costCredits={unlockCost} />;
           })}
         </div>
       )}

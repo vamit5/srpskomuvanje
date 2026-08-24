@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { User } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { calculateAge, personCountPhrase } from "@/lib/utils";
 import { belgradeTimeHHMM, isWithinDailyWindow } from "@/lib/time";
 import { LocationCard } from "./LocationCard";
+import { SerbianFlag } from "@/components/SerbianFlag";
 
 export const metadata = { title: "Sada" };
 
@@ -89,35 +89,27 @@ export default async function SadaPage() {
 
   return (
     <div className="flex flex-col gap-3 px-4 pt-4">
-      <header className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">
-            {isNight ? (
-              <>
-                😏 <span className="text-gradient">Ko je još budan?</span>
-              </>
-            ) : (
-              <>
-                🔥 <span className="text-gradient">Sada</span> <span className="align-middle text-base">🇷🇸</span>
-              </>
-            )}
-          </h1>
-          <p className="text-sm text-[var(--color-text-muted)]">
-            {isNight ? "Noćni mod je aktivan" : "Šta se dešava upravo sada"}
-          </p>
-        </div>
-        <Link
-          href="/profil"
-          aria-label="Moj profil"
-          className="tap-scale flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-bg-elevated)] text-[var(--color-text-muted)]"
-        >
-          <User size={20} />
-        </Link>
+      <header>
+        <h1 className="text-2xl font-bold">
+          {isNight ? (
+            <>
+              😏 <span className="text-gradient">Ko je još budan?</span>
+            </>
+          ) : (
+            <>
+              🔥 <span className="text-gradient">Sada</span>{" "}
+              <SerbianFlag className="mb-0.5 inline-block h-4 w-6 rounded-[2px] align-middle" />
+            </>
+          )}
+        </h1>
+        <p className="text-sm text-[var(--color-text-muted)]">
+          {isNight ? "Noćni mod je aktivan" : "Šta se dešava upravo sada"}
+        </p>
       </header>
 
       <Link
         href="/18-plus"
-        className="tap-scale relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#3a0d20] via-[#5b0e2e] to-[#c0195e] px-4 py-4 text-white"
+        className="tap-scale animate-bubble-in relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#3a0d20] via-[#5b0e2e] to-[#c0195e] px-4 py-4 text-white"
       >
         <div className="flex items-center justify-between">
           <div>
@@ -138,7 +130,7 @@ export default async function SadaPage() {
       </Link>
 
       {activeEvents?.map((ev) => (
-        <div key={ev.id} className="rounded-2xl bg-gradient-accent px-4 py-3.5 text-white">
+        <div key={ev.id} className="animate-bubble-in rounded-2xl bg-gradient-accent px-4 py-3.5 text-white">
           <p className="text-sm font-semibold">🔥 {ev.title}</p>
           {ev.description && <p className="mt-0.5 text-xs text-white/90">{ev.description}</p>}
           <p className="mt-1 text-xs text-white/75">
@@ -150,7 +142,7 @@ export default async function SadaPage() {
       {pendingLikesCount > 0 && (
         <Link
           href="/ko-te-zeli"
-          className="glass tap-scale flex items-center justify-between rounded-2xl px-4 py-3.5"
+          className="glass tap-scale animate-bubble-in flex items-center justify-between rounded-2xl px-4 py-3.5"
         >
           <span className="text-sm">
             👀 <strong>{pendingLikesCount}</strong> {personCountPhrase(pendingLikesCount, "lajkova")}
@@ -160,7 +152,7 @@ export default async function SadaPage() {
       )}
 
       {(unreadNotifications ?? 0) > 0 && (
-        <Link href="/obavestenja" className="glass tap-scale flex items-center justify-between rounded-2xl px-4 py-3 text-sm">
+        <Link href="/obavestenja" className="glass tap-scale animate-bubble-in flex items-center justify-between rounded-2xl px-4 py-3 text-sm">
           <span>
             🔔 Imaš <strong>{unreadNotifications}</strong> nepročitanih obaveštenja.
           </span>
@@ -170,8 +162,8 @@ export default async function SadaPage() {
 
       {showFeatured && (
         <Link
-          href="/muvaj"
-          className="glass tap-scale flex items-center gap-3 rounded-2xl px-4 py-3.5"
+          href={`/profil/${featured.id}`}
+          className="glass tap-scale animate-bubble-in flex items-center gap-3 rounded-2xl px-4 py-3.5"
         >
           {featured.primary_photo_url ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -192,7 +184,7 @@ export default async function SadaPage() {
 
       <Link
         href="/duel"
-        className="tap-scale flex items-center justify-between rounded-2xl bg-gradient-accent px-4 py-3.5 text-white"
+        className="tap-scale animate-bubble-in flex items-center justify-between rounded-2xl bg-gradient-accent px-4 py-3.5 text-white"
       >
         <span className="text-sm font-medium">⚔️ Duel — Ko ti je više tvoj tip?</span>
         <span className="text-xs">Igraj →</span>

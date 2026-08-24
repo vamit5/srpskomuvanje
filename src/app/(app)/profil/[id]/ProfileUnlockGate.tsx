@@ -45,7 +45,7 @@ export function ProfileUnlockGate({ profileId, name, costCredits }: { profileId:
         {busy ? "..." : `🔓 OTKLJUČAJ · ${costCredits} Credits`}
       </button>
       {error && <p className="text-xs text-[var(--color-danger)]">{error}</p>}
-      {showCredits && <CreditsModal onClose={() => setShowCredits(false)} />}
+      {showCredits && <CreditsModal context="profil" onClose={() => setShowCredits(false)} />}
     </section>
   );
 }

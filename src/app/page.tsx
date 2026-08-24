@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
+import { SerbianFlag } from "@/components/SerbianFlag";
 
 const FEATURES = [
   {
@@ -48,7 +49,9 @@ export default function LandingPage() {
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="safe-top flex items-center justify-between px-5 py-4">
-        <span className="text-lg font-bold text-gradient">Srpskomuvanje</span>
+        <span className="flex items-center gap-2 text-lg font-bold text-gradient">
+          <SerbianFlag className="h-4 w-6 rounded-[2px]" /> Srpskomuvanje
+        </span>
         <Link href="/prijava" className="text-sm text-[var(--color-text-muted)]">
           Prijava
         </Link>
@@ -56,8 +59,8 @@ export default function LandingPage() {
 
       <main className="flex-1">
         <section className="flex flex-col items-center px-6 pb-10 pt-8 text-center">
-          <span className="bg-gradient-serbia mb-4 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold text-white">
-            🇷🇸 Napravljeno za Srbe, od Srba
+          <span className="bg-gradient-serbia mb-4 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold text-white">
+            <SerbianFlag /> Napravljeno za Srbe, od Srba
           </span>
           <h1 className="text-4xl font-extrabold leading-tight">
             Uđi. <span className="text-gradient">Vidi ko je tu.</span>

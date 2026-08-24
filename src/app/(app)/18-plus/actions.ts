@@ -49,20 +49,44 @@ export async function get18PlusCandidates(limit = 15): Promise<{ candidates: Eig
 export interface PendingKrevetSignal {
   signalId: string;
   createdAt: string;
+  fromPhotoUrl: string | null;
 }
 
-export async function getPendingKrevetSignals(): Promise<{ signals: PendingKrevetSignal[]; error: string | null }> {
+export async function getPendingKrevetSignals(): Promise<{ signals: PendingKrevetSignal[]; error: string | null; costCredits: number }> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { signals: [], error: "Nisi prijavljen/a." };
+  if (!user) return { signals: [], error: "Nisi prijavljen/a.", costCredits: 1 };
 
-  const { data, error } = await supabase.rpc("get_muvaj_pending_krevet_list", { viewer_id: user.id });
-  if (error) return { signals: [], error: "Ne mogu da učitam signale." };
+  const [{ data, error }, { data: costRow }] = await Promise.all([
+    supabase.rpc("get_muvaj_pending_krevet_list", { viewer_id: user.id }),
+    supabase.from("muvaj_config").select("value").eq("key", "krevet_reveal_cost_credits").maybeSingle(),
+  ]);
+  if (error) return { signals: [], error: "Ne mogu da učitam signale.", costCredits: 1 };
 
-  const rows = (data ?? []) as { signal_id: string; created_at: string }[];
-  return { error: null, signals: rows.map((r) => ({ signalId: r.signal_id, createdAt: r.created_at })) };
+  const rows = (data ?? []) as { signal_id: string; created_at: string; from_photo_url: string | null }[];
+  const parsedCost = costRow ? Number(costRow.value) : NaN;
+  return {
+    error: null,
+    costCredits: Number.isFinite(parsedCost) ? parsedCost : 1,
+    signals: rows.map((r) => ({ signalId: r.signal_id, createdAt: r.created_at, fromPhotoUrl: r.from_photo_url })),
+  };
+}
+
+export async function startEighteenPlusChat(targetId: string): Promise<{ matchId: string | null; error: string | null }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { matchId: null, error: "Nisi prijavljen/a." };
+
+  const { data, error } = await supabase.rpc("start_18plus_chat", { p_viewer_id: user.id, p_target_id: targetId }).single();
+  if (error) return { matchId: null, error: "Nešto nije u redu, probaj ponovo." };
+
+  const row = data as { match_id: string | null; error: string | null };
+  if (row.error || !row.match_id) return { matchId: null, error: row.error ?? "Nešto nije u redu." };
+  return { matchId: row.match_id, error: null };
 }
 
 export interface RevealedKrevet {

@@ -178,7 +178,7 @@ export function NightFlirtingBubble({ contentId, isMine }: { contentId: string; 
         </div>
         {error && <p className="bg-[var(--color-danger)]/20 px-3 py-2 text-center text-xs text-white">{error}</p>}
       </div>
-      {showCredits && <CreditsModal onClose={() => setShowCredits(false)} />}
+      {showCredits && <CreditsModal context="nocno" onClose={() => setShowCredits(false)} />}
     </>
   );
 }

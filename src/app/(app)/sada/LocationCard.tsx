@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { updateMyLocation, clearMyLocation } from "../_location/actions";
 
 export function LocationCard({ hasLocation, nearbyCount }: { hasLocation: boolean; nearbyCount: number | null }) {
@@ -69,20 +70,26 @@ export function LocationCard({ hasLocation, nearbyCount }: { hasLocation: boolea
     );
   }
 
+  const countText =
+    nearbyCount === null ? (
+      "Učitavam..."
+    ) : nearbyCount === 0 ? (
+      "Niko u tvojoj blizini trenutno"
+    ) : (
+      <>
+        <strong>{nearbyCount}</strong> {nearbyCount === 1 ? "osoba je" : "ljudi je"} u tvojoj blizini
+      </>
+    );
+
   return (
     <div className="glass flex items-center justify-between rounded-2xl px-4 py-3.5">
-      <span className="text-sm">
-        📍{" "}
-        {nearbyCount === null ? (
-          "Učitavam..."
-        ) : nearbyCount === 0 ? (
-          "Niko u tvojoj blizini trenutno"
-        ) : (
-          <>
-            <strong>{nearbyCount}</strong> {nearbyCount === 1 ? "osoba je" : "ljudi je"} u tvojoj blizini
-          </>
-        )}
-      </span>
+      {nearbyCount ? (
+        <Link href="/muvaj" className="tap-scale text-sm">
+          📍 {countText} <span className="text-[var(--color-text-muted)]">→</span>
+        </Link>
+      ) : (
+        <span className="text-sm">📍 {countText}</span>
+      )}
       <button
         type="button"
         onClick={handleDisable}

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { motion, useMotionValue, useTransform, type PanInfo } from "framer-motion";
+import { motion } from "framer-motion";
 import { X, Heart, ShieldCheck, Drama, Check } from "lucide-react";
 import { calculateAge, cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
@@ -15,8 +15,6 @@ import {
   type DiscoveryCandidate,
   type MuvajChoice,
 } from "./actions";
-
-const SWIPE_THRESHOLD = 120;
 
 interface MatchState {
   candidate: DiscoveryCandidate;
@@ -33,32 +31,19 @@ function ScoreBadge({ score }: { score: number }) {
 
 function SwipeCard({
   candidate,
-  disabled,
-  onChoice,
 }: {
   candidate: DiscoveryCandidate;
   disabled: boolean;
   onChoice: (choice: MuvajChoice) => void;
 }) {
-  const x = useMotionValue(0);
-  const rotate = useTransform(x, [-300, 300], [-18, 18]);
-  const likeOpacity = useTransform(x, [20, 120], [0, 1]);
-  const nopeOpacity = useTransform(x, [-120, -20], [1, 0]);
   const age = calculateAge(candidate.birth_date);
 
-  function handleDragEnd(_: unknown, info: PanInfo) {
-    if (info.offset.x > SWIPE_THRESHOLD) onChoice("upoznavanje");
-    else if (info.offset.x < -SWIPE_THRESHOLD) onChoice("nista");
-  }
-
+  // NAMERNO bez swipe/drag gesta -- korisnik MORA rucno da izabere jedno
+  // od 3 dugmeta ispod (Krevet/Upoznavanje/Nista), da ne bi doslo do
+  // slucajnog "krevet" izbora kroz brzi swipe.
   return (
     <motion.div
       className="absolute inset-0"
-      style={{ x, rotate }}
-      drag={disabled ? false : "x"}
-      dragConstraints={{ left: 0, right: 0 }}
-      dragElastic={1}
-      onDragEnd={handleDragEnd}
       initial={{ scale: 0.96, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       transition={{ duration: 0.15 }}
@@ -97,18 +82,6 @@ function SwipeCard({
           ) : null}
         </div>
 
-        <motion.div
-          style={{ opacity: likeOpacity }}
-          className="absolute left-5 top-8 -rotate-12 rounded-xl border-4 border-[var(--color-success)] px-3 py-1 text-xl font-extrabold text-[var(--color-success)]"
-        >
-          UPOZNAVANJE
-        </motion.div>
-        <motion.div
-          style={{ opacity: nopeOpacity }}
-          className="absolute right-5 top-8 rotate-12 rounded-xl border-4 border-[var(--color-danger)] px-3 py-1 text-xl font-extrabold text-[var(--color-danger)]"
-        >
-          NIŠTA
-        </motion.div>
       </div>
     </motion.div>
   );
