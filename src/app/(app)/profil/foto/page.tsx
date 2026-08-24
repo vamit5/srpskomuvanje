@@ -25,9 +25,10 @@ export default async function FotoPage() {
   return (
     <div className="flex flex-col gap-6 px-4 pt-4">
       <header>
-        <h1 className="text-xl font-bold">Fotografije i video</h1>
+        <h1 className="text-xl font-bold">Fotografija i video</h1>
         <p className="text-sm text-[var(--color-text-muted)]">
-          Prva fotografija je tvoja glavna slika koju drugi prvo vide.
+          Jedna profilna fotografija je dovoljna za upoznavanje — ostale slike i snimke šalješ
+          direktno u chatu, osobi po osobi.
         </p>
       </header>
 

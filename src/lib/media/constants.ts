@@ -1,4 +1,6 @@
-export const MAX_PHOTOS = 6;
+// Namerno 1 -- cilj je da korisnici chatuju i tamo razmenjuju slike/snimke
+// (i placeni "Nocni flert" sadrzaj), ne da gomilaju galeriju na profilu.
+export const MAX_PHOTOS = 1;
 export const MAX_VIDEOS = 1;
 
 // Gornja granica za fajl KOJI KORISNIK BIRA, pre kompresije na klijentu.

@@ -15,6 +15,7 @@ export interface DiscoveryCandidate {
   hot_mode_enabled: boolean;
   primary_photo_url: string | null;
   score: number;
+  distance_km: number | null;
 }
 
 export async function getMoreCandidates(limit = 15): Promise<{ candidates: DiscoveryCandidate[]; error: string | null }> {
@@ -86,6 +87,15 @@ export async function chooseMuvaj(
         body: "Otključaj da vidiš ko je to.",
         url: "/18-plus",
         tag: "krevet_signal",
+      })
+    );
+  } else if (choice === "upoznavanje") {
+    after(() =>
+      sendPushToProfile(targetId, {
+        title: "😍 Neko hoće da te upozna",
+        body: "Otključaj da vidiš ko je to.",
+        url: "/ko-te-zeli",
+        tag: "like",
       })
     );
   }

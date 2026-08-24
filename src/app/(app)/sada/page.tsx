@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { calculateAge, personCountPhrase } from "@/lib/utils";
+import { calculateAge } from "@/lib/utils";
 import { belgradeTimeHHMM, isWithinDailyWindow } from "@/lib/time";
 import { LocationCard } from "./LocationCard";
 import { SerbianFlag } from "@/components/SerbianFlag";
@@ -9,7 +9,7 @@ import { SerbianFlag } from "@/components/SerbianFlag";
 export const metadata = { title: "Sada" };
 
 /** "1 osoba hoće" / "3 osobe hoće" / "5 osoba hoće" -- srpska brojna kongruencija. */
-function krevetSubject(n: number): string {
+function personSubjectPhrase(n: number): string {
   const lastTwo = n % 100;
   const last = n % 10;
   const word = last >= 2 && last <= 4 && !(lastTwo >= 12 && lastTwo <= 14) ? "osobe" : "osoba";
@@ -38,6 +38,7 @@ export default async function SadaPage() {
     { data: nightConfig },
     { data: myProfile },
     { count: krevetPendingCount },
+    { data: unlockCostRow },
   ] = await Promise.all([
     supabase
       .from("notifications")
@@ -58,7 +59,13 @@ export default async function SadaPage() {
       .select("id", { count: "exact", head: true })
       .eq("to_profile_id", user!.id)
       .eq("status", "pending"),
+    supabase.from("muvaj_config").select("value").eq("key", "profile_unlock_cost_credits").maybeSingle(),
   ]);
+
+  const unlockCost = (() => {
+    const parsed = unlockCostRow ? Number(unlockCostRow.value) : NaN;
+    return Number.isFinite(parsed) ? parsed : 1;
+  })();
 
   const matchedIds = new Set(
     (myMatches ?? []).map((m) => (m.profile_a_id === user!.id ? m.profile_b_id : m.profile_a_id))
@@ -131,7 +138,7 @@ export default async function SadaPage() {
             </p>
             <p className="mt-1 text-xs text-white/80">
               {(krevetPendingCount ?? 0) > 0
-                ? `${krevetSubject(krevetPendingCount ?? 0)} u krevet s tobom večeras 😈`
+                ? `${personSubjectPhrase(krevetPendingCount ?? 0)} u krevet s tobom večeras 😈`
                 : "Direktnije. Bez okolišanja."}
             </p>
           </div>
@@ -155,7 +162,10 @@ export default async function SadaPage() {
           className="glass tap-scale animate-bubble-in flex items-center justify-between rounded-2xl px-4 py-3.5"
         >
           <span className="text-sm">
-            👀 <strong>{pendingLikesCount}</strong> {personCountPhrase(pendingLikesCount, "lajkova")}
+            😍 {personSubjectPhrase(pendingLikesCount)} da te upozna
+            <span className="block text-xs text-[var(--color-text-muted)]">
+              Otključaj za {unlockCost} Credit{unlockCost === 1 ? "" : "a"}
+            </span>
           </span>
           <span className="text-xs text-[var(--color-text-muted)]">Vidi →</span>
         </Link>

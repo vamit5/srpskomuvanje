@@ -31,8 +31,19 @@ export function AppShell({
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col">
       {/* Traka srpske trobojke -- vidljiva na SVAKOJ stranici (i chat),
-          "nesto drugo pored zastave" iz zahteva -- konstantan brend dodir. */}
-      <div className="serbia-ribbon" />
+          "nesto drugo pored zastave" iz zahteva -- konstantan brend dodir.
+          margin-top: safe-top je NAMERAN -- bez njega traka pada ispod
+          notch-a/status bara na telefonu i uopste se ne vidi. */}
+      <div className="serbia-ribbon" style={{ marginTop: "var(--safe-top)" }} />
+      {/* Srpskomuvanje brend (logo + ime) -- vidljiv na CELOJ app-i, ne samo
+          na landing stranici (izricit zahtev), fiksirano skroz gore. */}
+      {!fullScreen && (
+        <div className="flex items-center gap-2 px-4 pb-1 pt-2">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt="" className="h-6 w-6 rounded-md" />
+          <span className="text-xs font-bold tracking-wide text-[var(--color-text-muted)]">Srpskomuvanje</span>
+        </div>
+      )}
       {!fullScreen && pathname !== "/profil" && (
         // "Moj profil" -- vidljivo na CELOJ app-i (ne samo na Sada), fixed
         // gore desno, iznad safe-area (notch/status bar).

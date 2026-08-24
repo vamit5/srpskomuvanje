@@ -60,9 +60,12 @@ export function PremiumCard({
   return (
     <section className="rounded-2xl bg-gradient-accent p-4 text-white">
       <p className="text-sm font-semibold">⭐ Postani Premium</p>
-      <ul className="mt-1.5 flex flex-col gap-0.5 text-xs text-white/90">
-        <li>👀 Vidi ko te je sve lajkovao</li>
-        <li>⚔️ Neograničeni Duel</li>
+      <ul className="mt-1.5 flex flex-col gap-1 text-xs text-white/90">
+        <li>👀 Vidi SVE ko te je lajkovao — bez plaćanja po osobi</li>
+        <li>🔓 Pun pristup tuđim profilima (bio, interesovanja, slike) bez trošenja Credits-a</li>
+        <li>😈 Besplatno otključavanje &quot;Ko hoće s tobom u krevet&quot; signala</li>
+        <li>🌙 Besplatno otključavanje plaćenih poruka u Noćnom flertu</li>
+        <li>⚔️ Neograničen Duel (besplatno: 5 dnevno)</li>
       </ul>
       {error && <p className="mt-2 text-xs text-white">{error}</p>}
       <Button

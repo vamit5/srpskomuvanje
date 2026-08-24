@@ -139,7 +139,7 @@ export function EighteenPlusApp({
   }
 
   return (
-    <div className="bg-18plus flex flex-col gap-5 rounded-3xl px-4 py-5 text-white shadow-[0_0_50px_rgba(192,25,94,0.35)]">
+    <div className="bg-18plus-srbija flex flex-col gap-5 rounded-3xl px-4 py-5 text-white shadow-[0_0_50px_rgba(198,54,60,0.35)]">
       <header className="flex items-center gap-2">
         <span className="animate-ember-scale text-3xl">😈</span>
         <div>
@@ -155,7 +155,7 @@ export function EighteenPlusApp({
 
       <section>
         <h2 className="mb-2 flex items-center gap-1.5 text-sm font-bold text-white/90">
-          😈 Neko hoće s tobom u krevet
+          😈 Neko hoće s tobom u krevet ili na 18+ igre
         </h2>
         {signals.length === 0 ? (
           <p className="rounded-2xl border border-white/10 bg-black/20 px-4 py-4 text-center text-xs text-white/60">
@@ -175,7 +175,7 @@ export function EighteenPlusApp({
       </section>
 
       <section>
-        <h2 className="mb-2 text-sm font-bold text-white/90">🔥 Pozovi nekoga u krevet</h2>
+        <h2 className="mb-2 text-sm font-bold text-white/90">🔥 Pozovi nekoga u krevet ili na 18+ igre</h2>
         {error && <p className="mb-2 text-center text-xs text-[var(--color-danger)]">{error}</p>}
         {initialCandidates.length === 0 ? (
           <div className="rounded-2xl border border-white/10 bg-black/20 px-6 py-8 text-center text-white/70">
@@ -212,7 +212,13 @@ export function EighteenPlusApp({
                 )}
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 to-transparent px-2.5 pb-2 pt-8 text-left">
                   <p className="text-sm font-bold">{startingId === c.id ? "Otvaram chat..." : c.name}</p>
-                  {startingId !== c.id && <p className="text-[10px] font-semibold text-white/70">💬 Piši odmah</p>}
+                  {startingId !== c.id && (
+                    <p className="text-[10px] font-semibold text-white/70">
+                      {c.distanceKm != null
+                        ? `📍 ${c.distanceKm < 1 ? "manje od 1 km" : Math.round(c.distanceKm) + " km"} · 💬 Piši odmah`
+                        : "💬 Piši odmah"}
+                    </p>
+                  )}
                 </div>
               </motion.button>
             ))}

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Flame, Compass, Heart, MessageCircle, Swords, Zap } from "lucide-react";
@@ -16,12 +17,18 @@ const TABS = [
 
 export function BottomNav({ eighteenPlusPending = false }: { eighteenPlusPending?: boolean }) {
   const pathname = usePathname();
+  // Bubble efekat u bojama Srbije pri klику na tab -- brojac (ne bool) da
+  // svaki klik, čak i na ISTI tab dva puta zaredom, dobije svoj sveži
+  // "key" i time novi animacioni ciklus (React inače ne bi re-triggerovao
+  // CSS animaciju na nepromenjenom elementu).
+  const [tapped, setTapped] = useState<{ href: string; n: number } | null>(null);
 
   return (
     <nav
       className="glass safe-bottom fixed inset-x-0 bottom-0 z-50 border-t border-[var(--color-border)]"
       aria-label="Glavna navigacija"
     >
+      <div className="serbia-ribbon" />
       <ul className="mx-auto flex max-w-md items-stretch justify-between px-1">
         {TABS.map(({ href, label, icon: Icon, eighteenPlus }) => {
           const active = pathname === href || pathname.startsWith(href + "/");
@@ -30,8 +37,12 @@ export function BottomNav({ eighteenPlusPending = false }: { eighteenPlusPending
             <li key={href} className="flex-1">
               <Link
                 href={href}
+                onClick={() => setTapped((prev) => ({ href, n: (prev?.href === href ? prev.n : 0) + 1 }))}
                 className="tap-scale relative flex flex-col items-center gap-0.5 py-2.5 text-[10px]"
               >
+                {tapped?.href === href && (
+                  <span key={tapped.n} className="nav-bubble animate-nav-bubble" aria-hidden="true" />
+                )}
                 {pending && (
                   <span className="absolute -top-0.5 right-1/2 flex h-4 w-4 translate-x-3 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
                     !
@@ -40,7 +51,7 @@ export function BottomNav({ eighteenPlusPending = false }: { eighteenPlusPending
                 <Icon
                   size={21}
                   strokeWidth={active ? 2.4 : 1.8}
-                  className={cn(active ? "text-gradient" : "text-[var(--color-text-muted)]")}
+                  className={cn("relative", active ? "text-gradient" : "text-[var(--color-text-muted)]")}
                   style={
                     active
                       ? { stroke: "url(#iskra-nav-gradient)" }
@@ -49,7 +60,7 @@ export function BottomNav({ eighteenPlusPending = false }: { eighteenPlusPending
                 />
                 <span
                   className={cn(
-                    "font-medium leading-tight",
+                    "relative font-medium leading-tight",
                     active ? "text-[var(--color-text)]" : "text-[var(--color-text-muted)]"
                   )}
                 >

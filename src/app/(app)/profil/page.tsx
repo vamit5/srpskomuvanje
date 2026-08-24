@@ -8,6 +8,7 @@ import { signOutAction } from "./actions";
 import { BoostCard } from "./BoostCard";
 import { PushToggle } from "./PushToggle";
 import { PremiumCard } from "./PremiumCard";
+import { DeleteAccountSection } from "./_delete/DeleteAccountSection";
 
 export const metadata = { title: "Profil" };
 
@@ -79,6 +80,14 @@ export default async function ProfilPage({
       >
         <span className="text-sm font-medium">📸 Ubaci svoje slike/snimke (vidljivo drugima)</span>
         <span className="text-xs">→</span>
+      </Link>
+
+      <Link
+        href="/profil/uredi"
+        className="glass tap-scale flex items-center justify-between rounded-2xl px-4 py-3.5"
+      >
+        <span className="text-sm font-medium">✏️ Uredi profil (ime, godine, opis, interesovanja...)</span>
+        <span className="text-xs text-[var(--color-text-muted)]">→</span>
       </Link>
 
       {premium === "uspesno" && !isPremiumActive && (
@@ -160,12 +169,13 @@ export default async function ProfilPage({
 
       <BoostCard boostExpiresAt={profile.boost_expires_at ?? null} />
 
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-4">
         <form action={signOutAction}>
           <Button variant="ghost" type="submit" className="w-full">
             Odjavi se
           </Button>
         </form>
+        <DeleteAccountSection />
       </div>
     </div>
   );

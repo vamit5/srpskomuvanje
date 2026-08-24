@@ -69,7 +69,16 @@ function SwipeCard({
             {candidate.name}, {age}
             {candidate.is_verified && <ShieldCheck size={18} className="text-[var(--color-accent-to)]" />}
           </h2>
-          {candidate.city && <p className="text-sm text-white/80">{candidate.city}</p>}
+          {(candidate.city || candidate.distance_km != null) && (
+            <p className="text-sm text-white/80">
+              {candidate.city}
+              {candidate.city && candidate.distance_km != null && " · "}
+              {candidate.distance_km != null &&
+                (candidate.distance_km < 1
+                  ? "📍 manje od 1 km"
+                  : `📍 ${Math.round(candidate.distance_km)} km od tebe`)}
+            </p>
+          )}
           {candidate.bio && <p className="mt-2 line-clamp-2 text-sm text-white/90">{candidate.bio}</p>}
           {candidate.interests?.length ? (
             <div className="mt-3 flex flex-wrap gap-1.5">

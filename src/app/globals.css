@@ -144,10 +144,22 @@ body {
     background-position: 100% 50%;
   }
 }
-.bg-18plus {
-  background: linear-gradient(-45deg, #2b0b18, #5b0e2e, #c0195e, #3a0d20, #1a0710);
-  background-size: 300% 300%;
-  animation: ember-bg 7s ease-in-out infinite;
+/* Pozadina "18+ Muvanje" -- MORA biti najdominantnija/najzivlja u appu
+   (izricit zahtev), sad krece kroz srpsku trobojku (crvena/plava/bela) umesto
+   generickog roze/ljubicastog, da ova sekcija odmah "vristi" srpski identitet. */
+.bg-18plus-srbija {
+  background: linear-gradient(
+    -45deg,
+    #1a0710,
+    #5a1620,
+    #c6363c,
+    #1a0710,
+    #0c4076,
+    #163a5c,
+    #1a0710
+  );
+  background-size: 400% 400%;
+  animation: ember-bg 9s ease-in-out infinite;
 }
 
 @keyframes ember-pulse {
@@ -175,6 +187,33 @@ body {
 .animate-ember-scale {
   display: inline-block;
   animation: ember-scale 1.6s ease-in-out infinite;
+}
+
+/* Bubble efekat u bojama Srbije kad se klikne tab u donjem meniju. */
+.nav-bubble {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin-top: -1.375rem;
+  margin-left: -1.375rem;
+  border-radius: 9999px;
+  background: radial-gradient(circle, var(--color-serbia-red) 0%, var(--color-serbia-blue) 55%, transparent 78%);
+  pointer-events: none;
+}
+@keyframes nav-bubble {
+  0% {
+    transform: scale(0.2);
+    opacity: 0.65;
+  }
+  100% {
+    transform: scale(1.7);
+    opacity: 0;
+  }
+}
+.animate-nav-bubble {
+  animation: nav-bubble 480ms ease-out forwards;
 }
 
 @keyframes flag-wave {

@@ -281,7 +281,7 @@ export function FotoVideoManager({
     <div className="flex flex-col gap-8">
       <section>
         <h2 className="mb-3 text-sm font-semibold text-[var(--color-text-muted)]">
-          Fotografije ({photos.length}/{MAX_PHOTOS})
+          Profilna fotografija {photos.length ? "" : "(nedostaje)"}
         </h2>
         <div className="grid grid-cols-3 gap-2">
           {photos.map((photo, i) => (
@@ -293,7 +293,7 @@ export function FotoVideoManager({
                 className="h-full w-full object-cover"
               />
               <ModerationBadge status={photo.moderation_status} />
-              {i === 0 && (
+              {MAX_PHOTOS > 1 && i === 0 && (
                 <span className="absolute left-1 top-1 rounded-full bg-gradient-accent px-2 py-0.5 text-[10px] font-semibold text-white">
                   GLAVNA
                 </span>
@@ -307,26 +307,28 @@ export function FotoVideoManager({
               >
                 {busyId === photo.id ? <Loader2 size={13} className="animate-spin" /> : <X size={13} />}
               </button>
-              <div className="absolute inset-x-0 bottom-1 flex justify-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => handleMovePhoto(photo.id, "left")}
-                  disabled={i === 0}
-                  className="tap-scale flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white disabled:opacity-30"
-                  aria-label="Pomeri levo"
-                >
-                  <ChevronLeft size={14} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleMovePhoto(photo.id, "right")}
-                  disabled={i === photos.length - 1}
-                  className="tap-scale flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white disabled:opacity-30"
-                  aria-label="Pomeri desno"
-                >
-                  <ChevronRight size={14} />
-                </button>
-              </div>
+              {MAX_PHOTOS > 1 && (
+                <div className="absolute inset-x-0 bottom-1 flex justify-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => handleMovePhoto(photo.id, "left")}
+                    disabled={i === 0}
+                    className="tap-scale flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white disabled:opacity-30"
+                    aria-label="Pomeri levo"
+                  >
+                    <ChevronLeft size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleMovePhoto(photo.id, "right")}
+                    disabled={i === photos.length - 1}
+                    className="tap-scale flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white disabled:opacity-30"
+                    aria-label="Pomeri desno"
+                  >
+                    <ChevronRight size={14} />
+                  </button>
+                </div>
+              )}
             </div>
           ))}
 

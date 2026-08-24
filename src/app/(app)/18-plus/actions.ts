@@ -10,6 +10,7 @@ export interface EighteenPlusCandidate {
   bio: string | null;
   photoUrl: string | null;
   isBoosted: boolean;
+  distanceKm: number | null;
 }
 
 export async function get18PlusCandidates(limit = 15): Promise<{ candidates: EighteenPlusCandidate[]; error: string | null }> {
@@ -30,6 +31,7 @@ export async function get18PlusCandidates(limit = 15): Promise<{ candidates: Eig
     bio: string | null;
     primary_photo_url: string | null;
     is_boosted: boolean;
+    distance_km: number | null;
   }[];
 
   return {
@@ -42,6 +44,7 @@ export async function get18PlusCandidates(limit = 15): Promise<{ candidates: Eig
       bio: r.bio,
       photoUrl: r.primary_photo_url,
       isBoosted: r.is_boosted,
+      distanceKm: r.distance_km,
     })),
   };
 }
