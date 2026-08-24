@@ -41,19 +41,19 @@ export function AppShell({
           na landing stranici (izricit zahtev), fiksirano skroz gore. */}
       {!fullScreen && (
         <div className="flex items-center justify-between gap-2 py-2 pl-4 pr-14">
-          <span className="flex items-center gap-2">
+          <span className="flex min-w-0 items-center gap-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.png" alt="" className="h-6 w-6 rounded-md" />
-            <span className="text-xs font-bold tracking-wide text-[var(--color-text-muted)]">Srpskomuvanje</span>
+            <img src="/logo.png" alt="" className="h-6 w-6 shrink-0 rounded-md" />
+            <span className="truncate text-xs font-bold tracking-wide text-[var(--color-text-muted)]">Srpskomuvanje</span>
           </span>
           {creditsBalance != null && (
             // Uvek vidljiv saldo Credits-a -- korisnik mora u svako doba da
             // zna koliko ima, i klik vodi na /credits (istorija + kupovina).
             <Link
               href="/credits"
-              className="tap-scale glass flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold"
+              className="tap-scale glass flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-bold"
             >
-              🔥 {creditsBalance}
+              🔥 {creditsBalance} <span className="font-normal text-[var(--color-text-muted)]">credits</span>
             </Link>
           )}
         </div>

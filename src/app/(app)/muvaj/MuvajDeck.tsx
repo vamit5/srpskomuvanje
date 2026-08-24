@@ -246,7 +246,7 @@ export function MuvajDeck({ initialCandidates }: { initialCandidates: DiscoveryC
           type="button"
           onClick={() => handleChoice("krevet")}
           disabled={!current || pending}
-          className="tap-scale pulse-glow flex flex-1 items-center justify-center gap-1.5 rounded-full border-2 border-[var(--color-accent-to)] bg-[var(--color-bg-card)] px-3 py-3.5 text-xs font-extrabold tracking-wide disabled:opacity-40"
+          className="tap-scale pulse-glow flex flex-1 items-center justify-center gap-1 whitespace-nowrap rounded-full border-2 border-[var(--color-accent-to)] bg-[var(--color-bg-card)] px-1.5 py-3.5 text-[11px] font-extrabold disabled:opacity-40"
         >
           😈 18+ CHAT
         </button>
@@ -254,17 +254,17 @@ export function MuvajDeck({ initialCandidates }: { initialCandidates: DiscoveryC
           type="button"
           onClick={() => handleChoice("upoznavanje")}
           disabled={!current || pending}
-          className="tap-scale flex flex-1 items-center justify-center gap-1.5 rounded-full bg-gradient-accent px-3 py-3.5 text-xs font-extrabold tracking-wide text-white disabled:opacity-40"
+          className="tap-scale flex flex-1 items-center justify-center gap-1 whitespace-nowrap rounded-full bg-gradient-accent px-1.5 py-3.5 text-[11px] font-extrabold text-white disabled:opacity-40"
         >
-          <Heart size={16} /> UPOZNAVANJE
+          <Heart size={15} /> UPOZNAVANJE
         </button>
         <button
           type="button"
           onClick={() => handleChoice("nista")}
           disabled={!current || pending}
-          className="tap-scale flex flex-1 items-center justify-center gap-1.5 rounded-full border border-[var(--color-border-strong)] bg-[var(--color-bg-card)] px-3 py-3.5 text-xs font-extrabold tracking-wide text-[var(--color-danger)] disabled:opacity-40"
+          className="tap-scale flex flex-1 items-center justify-center gap-1 whitespace-nowrap rounded-full border border-[var(--color-border-strong)] bg-[var(--color-bg-card)] px-1.5 py-3.5 text-[11px] font-extrabold text-[var(--color-danger)] disabled:opacity-40"
         >
-          <X size={16} /> NIŠTA
+          <X size={15} /> NIŠTA
         </button>
       </div>
 
