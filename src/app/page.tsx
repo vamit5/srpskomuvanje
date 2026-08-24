@@ -40,7 +40,8 @@ export default function LandingPage() {
     <div className="flex min-h-dvh flex-col">
       <header className="safe-top flex items-center justify-between px-5 py-4">
         <span className="flex items-center gap-2 text-lg font-bold text-gradient">
-          <SerbianFlag className="h-4 w-6 rounded-[2px]" animated /> Srpskomuvanje
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt="" className="h-7 w-7 rounded-lg" /> Srpskomuvanje
         </span>
         <Link href="/prijava" className="text-sm text-[var(--color-text-muted)]">
           Prijava
@@ -49,6 +50,9 @@ export default function LandingPage() {
 
       <main className="flex-1">
         <section className="flex flex-col items-center px-6 pb-10 pt-8 text-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt="Srpskomuvanje" className="mb-3 h-20 w-20 rounded-2xl" />
+          <p className="mb-4 text-xs font-semibold text-[var(--color-text-muted)]">Srpskomuvanje</p>
           <span className="bg-gradient-serbia mb-4 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold text-white">
             <SerbianFlag /> Napravljeno za Srbe, od Srba
           </span>

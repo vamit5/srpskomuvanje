@@ -2,8 +2,10 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Srpskomuvanje — dating aplikacija",
-    short_name: "Muvanje", // kraće ime za naziv ispod ikonice na Home Screen-u
+    // "name" je tekst koji Android/Chrome unapred upisuje u polje pri
+    // "Instaliraj app" dijalogu -- mora biti tacno "Srpskomuvanje" (zahtev).
+    name: "Srpskomuvanje",
+    short_name: "Srpskomuvanje", // ime ispod ikonice na Home Screen-u
     description: "Uđi. Vidi ko je tu.",
     start_url: "/sada",
     scope: "/",
