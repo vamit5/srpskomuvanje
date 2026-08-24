@@ -254,11 +254,19 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
+/* Univerzalni "click effect" -- .tap-scale se vec koristi na SKORO SVAKOM
+   dugmetu/linku u celoj app-i, pa ovo automatski pokriva "fali animacija
+   nakon klika svuda" bez ijedne dodatne izmene po komponenti. Cist CSS
+   (bez JS-a) -- trenutno, bez ikakvog kasnjenja u ucitavanju. Pritisak
+   odmah upali suptilan glow prsten (transition 0ms na :active), a
+   otpuštanje ga glatko ugasi kroz baznu 380ms tranziciju. */
 .tap-scale {
-  transition: transform 120ms ease;
+  transition: transform 120ms ease, box-shadow 380ms ease;
 }
 .tap-scale:active {
   transform: scale(0.96);
+  box-shadow: 0 0 0 6px rgba(255, 45, 107, 0.22);
+  transition: transform 60ms ease, box-shadow 0ms;
 }
 
 .safe-top {

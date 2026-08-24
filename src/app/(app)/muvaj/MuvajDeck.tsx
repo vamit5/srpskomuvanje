@@ -248,7 +248,7 @@ export function MuvajDeck({ initialCandidates }: { initialCandidates: DiscoveryC
           disabled={!current || pending}
           className="tap-scale pulse-glow flex flex-1 items-center justify-center gap-1.5 rounded-full border-2 border-[var(--color-accent-to)] bg-[var(--color-bg-card)] px-3 py-3.5 text-xs font-extrabold tracking-wide disabled:opacity-40"
         >
-          😈 KREVET
+          😈 18+ CHAT
         </button>
         <button
           type="button"

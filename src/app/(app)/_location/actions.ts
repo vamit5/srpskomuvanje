@@ -1,13 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 
 export async function updateMyLocation(lat: number, lng: number): Promise<{ error: string | null }> {
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
   if (!user) return { error: "Nisi prijavljen/a." };
 
   const { error } = await supabase.rpc("update_my_location", { new_lat: lat, new_lng: lng });
@@ -21,7 +21,7 @@ export async function clearMyLocation(): Promise<{ error: string | null }> {
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
   if (!user) return { error: "Nisi prijavljen/a." };
 
   const { error } = await supabase.rpc("clear_my_location");

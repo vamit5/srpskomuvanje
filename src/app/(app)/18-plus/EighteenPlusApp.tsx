@@ -57,14 +57,23 @@ function PendingSignalCard({
         )}
         <div className="absolute inset-0 flex items-center justify-center text-2xl">🔒</div>
       </div>
-      <p className="text-xs font-semibold text-white/80">Neko hoće s tobom u krevet</p>
+      <p className="text-xs font-semibold text-white/80">Neko hoće s tobom u 18+ chat</p>
       <button
         type="button"
         onClick={reveal}
         disabled={busy}
-        className="tap-scale w-full rounded-xl bg-gradient-accent px-3 py-2 text-xs font-bold disabled:opacity-50"
+        className="tap-scale flex w-full flex-col items-center rounded-xl bg-gradient-accent px-3 py-2 text-xs font-bold disabled:opacity-50"
       >
-        {busy ? "..." : `OTKLJUČAJ za ${costCredits} Credit${costCredits === 1 ? "" : "a"}`}
+        {busy ? (
+          "..."
+        ) : (
+          <>
+            Otključaj da vidiš
+            <span className="text-[10px] font-normal opacity-85">
+              {costCredits} Credit{costCredits === 1 ? "" : "a"}
+            </span>
+          </>
+        )}
       </button>
       {error && <p className="text-[10px] text-[var(--color-danger)]">{error}</p>}
       {showCredits && <CreditsModal context="osamnaest" onClose={() => setShowCredits(false)} />}
@@ -147,19 +156,18 @@ export function EighteenPlusApp({
             18+ Muvanje <SerbianFlag className="h-4 w-6 rounded-[2px]" animated />
           </h1>
           <p className="mt-1 text-xs leading-snug text-white/75">
-            Ovde se pojavljuju samo osobe koje su večeras spremne da ih odvedeš u krevet 😈 Ili da igraš hot igrice sa
-            njima, potpuno diskretno.
+            Ovde se pojavljuju samo osobe koje su večeras spremne za 18+ chat 😈 Direktno, hot i potpuno diskretno.
           </p>
         </div>
       </header>
 
       <section>
         <h2 className="mb-2 flex items-center gap-1.5 text-sm font-bold text-white/90">
-          😈 Neko hoće s tobom u krevet ili na 18+ igre
+          😈 Neko hoće s tobom u 18+ chat
         </h2>
         {signals.length === 0 ? (
           <p className="rounded-2xl border border-white/10 bg-black/20 px-4 py-4 text-center text-xs text-white/60">
-            Još niko — kad neko izabere Krevet na tebe, pojaviće se ovde.
+            Još niko — kad neko izabere 18+ chat na tebe, pojaviće se ovde.
           </p>
         ) : (
           <div className="flex gap-2 overflow-x-auto pb-1">
@@ -175,13 +183,13 @@ export function EighteenPlusApp({
       </section>
 
       <section>
-        <h2 className="mb-2 text-sm font-bold text-white/90">🔥 Pozovi nekoga u krevet ili na 18+ igre</h2>
+        <h2 className="mb-2 text-sm font-bold text-white/90">🔥 Pozovi nekoga na 18+ igre</h2>
         {error && <p className="mb-2 text-center text-xs text-[var(--color-danger)]">{error}</p>}
         {initialCandidates.length === 0 ? (
           <div className="rounded-2xl border border-white/10 bg-black/20 px-6 py-8 text-center text-white/70">
             <p className="text-3xl">🌙</p>
             <p className="mt-2 font-semibold">Nema još nikog ovde</p>
-            <p className="mt-1 text-sm">Svrati kasnije — čim neko izabere 😈 Krevet u Muvaj, pojaviće se ovde.</p>
+            <p className="mt-1 text-sm">Svrati kasnije — čim neko izabere 😈 18+ chat u Muvaj, pojaviće se ovde.</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3">

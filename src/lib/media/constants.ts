@@ -1,6 +1,9 @@
-// Namerno 1 -- cilj je da korisnici chatuju i tamo razmenjuju slike/snimke
-// (i placeni "Nocni flert" sadrzaj), ne da gomilaju galeriju na profilu.
-export const MAX_PHOTOS = 1;
+// Vise slika je opet dozvoljeno (bilo ogranicено na 1 -- korisnici su
+// trazili da mogu da vide vise slika tudjeg profila kao deo Credits/Premium
+// paywall-a, sto zahteva da uopste POSTOJI vise slika za otkljucavanje).
+// Prva (GLAVNA) je uvek besplatno vidljiva svima; ostale su zamucene dok
+// gledalac ne plati -- vidi profil/[id]/page.tsx.
+export const MAX_PHOTOS = 6;
 export const MAX_VIDEOS = 1;
 
 // Gornja granica za fajl KOJI KORISNIK BIRA, pre kompresije na klijentu.

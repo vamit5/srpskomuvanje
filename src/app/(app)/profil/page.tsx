@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/Button";
 import { calculateAge } from "@/lib/utils";
 import { foodFavoriteLabel } from "@/lib/foodFavorites";
@@ -21,7 +21,7 @@ export default async function ProfilPage({
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
 
   const [{ data: profile }, { data: primaryPhoto }, { data: subscription }] = await Promise.all([
     supabase

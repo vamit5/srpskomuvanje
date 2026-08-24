@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { NotificationsList } from "./NotificationsList";
 
@@ -32,7 +32,7 @@ export default async function ObavestenjaPage() {
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
   if (!user) return null;
 
   const { data: notifications } = await supabase

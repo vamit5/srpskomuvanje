@@ -1,7 +1,7 @@
 "use server";
 
 import { after } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { sendPushToProfile } from "@/lib/push/send";
 import { checkContactInfoFilter } from "@/lib/contentFilter";
 
@@ -19,7 +19,7 @@ export async function getConversations(): Promise<{ conversations: Conversation[
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
   if (!user) return { conversations: [], error: "Nisi prijavljen/a." };
 
   const { data: matches } = await supabase
@@ -108,7 +108,7 @@ export async function sendMessage(
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
   if (!user) return { error: "Nisi prijavljen/a.", message: null };
 
   const trimmed = content.trim();
@@ -155,7 +155,7 @@ export async function markAsRead(matchId: string): Promise<void> {
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
   if (!user) return;
 
   await supabase
@@ -170,7 +170,7 @@ export async function unmatchAction(matchId: string): Promise<{ error: string | 
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
   if (!user) return { error: "Nisi prijavljen/a." };
 
   const { error } = await supabase

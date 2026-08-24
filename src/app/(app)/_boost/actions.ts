@@ -1,7 +1,7 @@
 "use server";
 
 import { headers } from "next/headers";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { stripe } from "@/lib/stripe";
 
 async function getBaseUrl(): Promise<string> {
@@ -28,7 +28,7 @@ export async function getBoostInfo(): Promise<{ info: BoostInfo | null; error: s
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
   if (!user) return { info: null, error: "Nisi prijavljen/a." };
 
   const [priceCents, durationMinutes, { data: profile }] = await Promise.all([
@@ -52,10 +52,9 @@ export async function getBoostInfo(): Promise<{ info: BoostInfo | null; error: s
 
 /** Jednokratna Stripe Checkout sesija za Boost -- isti obrazac kao Credits (mode: "payment", price_data). */
 export async function createBoostCheckoutSession(): Promise<{ url: string | null; error: string | null }> {
-  const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
   if (!user) return { url: null, error: "Nisi prijavljen/a." };
 
   const { info } = await getBoostInfo();

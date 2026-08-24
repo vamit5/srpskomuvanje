@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 
 export type ReportReason =
   | "lazan_profil"
@@ -21,7 +21,7 @@ export async function reportUser(
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
   if (!user) return { error: "Nisi prijavljen/a." };
   if (user.id === reportedProfileId) return { error: "Ne možeš prijaviti sebe." };
 
@@ -41,7 +41,7 @@ export async function blockUser(blockedProfileId: string): Promise<{ error: stri
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
   if (!user) return { error: "Nisi prijavljen/a." };
   if (user.id === blockedProfileId) return { error: "Ne možeš blokirati sebe." };
 

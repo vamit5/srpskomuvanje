@@ -1,7 +1,7 @@
 "use server";
 
 import { headers } from "next/headers";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { stripe } from "@/lib/stripe";
 
 async function getBaseUrl(): Promise<string> {
@@ -46,7 +46,7 @@ export async function createCreditsCheckoutSession(
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
   if (!user) return { url: null, error: "Nisi prijavljen/a." };
 
   const { data: pkg } = await supabase

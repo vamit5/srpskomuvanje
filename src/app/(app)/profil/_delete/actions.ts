@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { stripe } from "@/lib/stripe";
 
 /**
@@ -17,7 +17,7 @@ export async function deleteMyAccount(): Promise<{ error: string | null }> {
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
   if (!user) return { error: "Nisi prijavljen/a." };
 
   // Best-effort otkazivanje aktivne Stripe pretplate -- ne sme da obori

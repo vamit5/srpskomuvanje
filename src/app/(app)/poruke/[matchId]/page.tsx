@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { isRecentlyActive } from "@/lib/utils";
 import { ChatThread } from "./ChatThread";
 
@@ -12,7 +12,7 @@ export default async function ChatPage({ params }: { params: Promise<{ matchId: 
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
 
   const { data: match } = await supabase
     .from("matches")

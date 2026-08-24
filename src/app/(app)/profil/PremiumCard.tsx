@@ -63,7 +63,7 @@ export function PremiumCard({
       <ul className="mt-1.5 flex flex-col gap-1 text-xs text-white/90">
         <li>👀 Vidi SVE ko te je lajkovao — bez plaćanja po osobi</li>
         <li>🔓 Pun pristup tuđim profilima (bio, interesovanja, slike) bez trošenja Credits-a</li>
-        <li>😈 Besplatno otključavanje &quot;Ko hoće s tobom u krevet&quot; signala</li>
+        <li>😈 Besplatno otključavanje &quot;Ko hoće s tobom u 18+ chat&quot; signala</li>
         <li>🌙 Besplatno otključavanje plaćenih poruka u Noćnom flertu</li>
         <li>⚔️ Neograničen Duel (besplatno: 5 dnevno)</li>
       </ul>

@@ -1,7 +1,7 @@
 "use server";
 
 import { headers } from "next/headers";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { stripe, getPremiumPriceId } from "@/lib/stripe";
 
 /** Localhost u razvoju, pravi domen posle deploy-a -- čita se iz same requestove adrese. */
@@ -17,7 +17,7 @@ export async function createCheckoutSession(): Promise<{ url: string | null; err
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
   if (!user) return { url: null, error: "Nisi prijavljen/a." };
 
   const { data: existing } = await supabase
@@ -54,7 +54,7 @@ export async function createBillingPortalSession(): Promise<{ url: string | null
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
   if (!user) return { url: null, error: "Nisi prijavljen/a." };
 
   const { data: sub } = await supabase

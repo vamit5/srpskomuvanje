@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { calculateAge, personCountPhrase } from "@/lib/utils";
 import { isPremium } from "@/lib/premium";
@@ -13,7 +13,7 @@ export default async function KoTeZeliPage() {
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
   if (!user) return null;
 
   const [{ data: likes }, { data: superLikes }, { data: myMatches }, { data: myBlocks }, premium] =

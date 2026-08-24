@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { FotoVideoManager } from "./FotoVideoManager";
 
 export const metadata = { title: "Fotografije i video" };
@@ -7,7 +7,7 @@ export default async function FotoPage() {
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
 
   const [{ data: photos }, { data: videos }] = await Promise.all([
     supabase
@@ -25,10 +25,10 @@ export default async function FotoPage() {
   return (
     <div className="flex flex-col gap-6 px-4 pt-4">
       <header>
-        <h1 className="text-xl font-bold">Fotografija i video</h1>
+        <h1 className="text-xl font-bold">Fotografije i video</h1>
         <p className="text-sm text-[var(--color-text-muted)]">
-          Jedna profilna fotografija je dovoljna za upoznavanje — ostale slike i snimke šalješ
-          direktno u chatu, osobi po osobi.
+          Prva fotografija je tvoja glavna slika — vidljiva svima. Ostale slike su zamućene za
+          druge dok ne otključaju tvoj profil (Credits ili Premium).
         </p>
       </header>
 

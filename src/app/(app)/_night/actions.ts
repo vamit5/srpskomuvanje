@@ -2,7 +2,7 @@
 
 import { after } from "next/server";
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isPremium } from "@/lib/premium";
 import { sendPushToProfile } from "@/lib/push/send";
@@ -14,7 +14,7 @@ async function getAuthedUser() {
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
   return { supabase, user };
 }
 

@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { computeProfileCompletionScore } from "@/lib/scoring";
 
 export interface ProfileEditInput {
@@ -34,7 +34,7 @@ export async function updateProfile(input: ProfileEditInput): Promise<{ error: s
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
   if (!user) return { error: "Nisi prijavljen/a." };
 
   const age = calculateAge(input.birthDate);

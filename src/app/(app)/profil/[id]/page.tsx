@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { calculateAge } from "@/lib/utils";
 import { foodFavoriteLabel } from "@/lib/foodFavorites";
 import { ProfileViewActions } from "./ProfileViewActions";
@@ -14,7 +14,7 @@ export default async function OtherProfilePage({ params }: { params: Promise<{ i
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
   if (!user) return null;
   if (id === user.id) return null; // sopstveni profil ide na /profil, ne ovde
 
@@ -35,7 +35,7 @@ export default async function OtherProfilePage({ params }: { params: Promise<{ i
   // slike/video se NE UCITAVAJU sa servera uopste dok korisnik nije
   // otkljucao -- nije CSS-sakrivanje na klijentu (to bi moglo da se
   // zaobidje kroz DevTools), podaci fizicki nikad ne stignu do browsera.
-  const [{ data: primaryPhoto }, fullData] = await Promise.all([
+  const [{ data: primaryPhoto }, { data: lockedTeasers }, fullData] = await Promise.all([
     supabase
       .from("profile_photos")
       .select("url")
@@ -43,6 +43,20 @@ export default async function OtherProfilePage({ params }: { params: Promise<{ i
       .eq("is_primary", true)
       .eq("moderation_status", "approved")
       .maybeSingle(),
+    // Namerno CSS blur, ista bezbednosna klasa kao "Ko te zeli" tizer --
+    // OBICNA profilna slika (ne eksplicitan sadrzaj), samo pravi jasan
+    // nagoveстaj "ima jos slika" da bi paywall imao smisla. Puna URL i
+    // dalje stize samo kad je unlocked -- ovde je namerno preskacemo kad
+    // NIJE otkljucano (fetch-uje se ODMAH ispod samo ako unlocked).
+    unlocked
+      ? Promise.resolve({ data: null })
+      : supabase
+          .from("profile_photos")
+          .select("thumbnail_url")
+          .eq("profile_id", id)
+          .eq("is_primary", false)
+          .eq("moderation_status", "approved")
+          .order("position"),
     unlocked
       ? (async () => {
           const [{ data: profileExtra }, { data: photos }, { data: videos }] = await Promise.all([
@@ -94,6 +108,22 @@ export default async function OtherProfilePage({ params }: { params: Promise<{ i
           {baseProfile.name?.[0]?.toUpperCase() ?? "?"}
         </div>
       )}
+
+      {!unlocked && lockedTeasers?.length ? (
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {lockedTeasers.map((t, i) => (
+            <div key={i} className="relative h-24 w-24 shrink-0 overflow-hidden rounded-2xl">
+              {t.thumbnail_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={t.thumbnail_url} alt="" className="h-full w-full scale-125 object-cover blur-md" />
+              ) : (
+                <div className="h-full w-full bg-[var(--color-bg-elevated)]" />
+              )}
+              <div className="absolute inset-0 flex items-center justify-center bg-black/25 text-lg">🔒</div>
+            </div>
+          ))}
+        </div>
+      ) : null}
 
       <div>
         <h1 className="flex items-center gap-1 text-xl font-bold">

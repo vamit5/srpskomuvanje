@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { calculateAge } from "@/lib/utils";
 import { belgradeTimeHHMM, isWithinDailyWindow } from "@/lib/time";
@@ -28,7 +28,7 @@ export default async function SadaPage() {
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
 
   const [
     { count: unreadNotifications },
@@ -53,7 +53,7 @@ export default async function SadaPage() {
       .or(`profile_a_id.eq.${user!.id},profile_b_id.eq.${user!.id}`)
       .is("unmatched_at", null),
     supabase.from("night_modes").select("starts_at, ends_at, is_enabled").eq("id", 1).maybeSingle(),
-    supabase.from("profiles").select("location_updated_at, city").eq("id", user!.id).single(),
+    supabase.from("profiles").select("location_updated_at, city, name").eq("id", user!.id).single(),
     supabase
       .from("krevet_signals")
       .select("id", { count: "exact", head: true })
@@ -74,7 +74,20 @@ export default async function SadaPage() {
     ...(incomingLikes ?? []).map((l) => l.from_profile_id),
     ...(incomingSuperLikes ?? []).map((l) => l.from_profile_id),
   ]);
-  const pendingLikesCount = [...likerIds].filter((id) => !matchedIds.has(id)).length;
+  const pendingLikerIds = [...likerIds].filter((id) => !matchedIds.has(id));
+  const pendingLikesCount = pendingLikerIds.length;
+
+  const [{ data: likerTeasers }, { data: myPhoto }] = await Promise.all([
+    pendingLikesCount > 0
+      ? supabase
+          .from("profile_photos")
+          .select("thumbnail_url")
+          .in("profile_id", pendingLikerIds.slice(0, 3))
+          .eq("is_primary", true)
+          .eq("moderation_status", "approved")
+      : Promise.resolve({ data: null }),
+    supabase.from("profile_photos").select("thumbnail_url").eq("profile_id", user!.id).eq("is_primary", true).maybeSingle(),
+  ]);
 
   const isNight =
     !!nightConfig?.is_enabled && isWithinDailyWindow(belgradeTimeHHMM(), nightConfig.starts_at, nightConfig.ends_at);
@@ -104,22 +117,32 @@ export default async function SadaPage() {
 
   return (
     <div className="flex flex-col gap-3 px-4 pt-4">
-      <header>
-        <h1 className="text-2xl font-bold">
-          {isNight ? (
-            <>
-              😏 <span className="text-gradient">Ko je još budan?</span>
-            </>
-          ) : (
-            <>
-              🔥 <span className="text-gradient">Sada</span>{" "}
-              <SerbianFlag className="mb-0.5 inline-block h-4 w-6 rounded-[2px] align-middle" animated />
-            </>
-          )}
-        </h1>
-        <p className="text-sm text-[var(--color-text-muted)]">
-          {isNight ? "Noćni mod je aktivan" : "Šta se dešava upravo sada"}
-        </p>
+      <header className="flex items-center gap-3">
+        {myPhoto?.thumbnail_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={myPhoto.thumbnail_url} alt="" className="h-11 w-11 rounded-full object-cover ring-2 ring-[var(--color-accent)]/50" />
+        ) : (
+          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-accent text-sm font-bold text-white">
+            {myProfile?.name?.[0]?.toUpperCase() ?? "?"}
+          </div>
+        )}
+        <div>
+          <h1 className="text-2xl font-bold">
+            {isNight ? (
+              <>
+                😏 <span className="text-gradient">Ko je još budan?</span>
+              </>
+            ) : (
+              <>
+                🔥 <span className="text-gradient">Sada</span>{" "}
+                <SerbianFlag className="mb-0.5 inline-block h-4 w-6 rounded-[2px] align-middle" animated />
+              </>
+            )}
+          </h1>
+          <p className="text-sm text-[var(--color-text-muted)]">
+            {isNight ? "Noćni mod je aktivan" : "Šta se dešava upravo sada"}
+          </p>
+        </div>
       </header>
 
       <Link
@@ -138,7 +161,7 @@ export default async function SadaPage() {
             </p>
             <p className="mt-1 text-xs text-white/80">
               {(krevetPendingCount ?? 0) > 0
-                ? `${personSubjectPhrase(krevetPendingCount ?? 0)} u krevet s tobom večeras 😈`
+                ? `${personSubjectPhrase(krevetPendingCount ?? 0)} u 18+ chat s tobom večeras 😈`
                 : "Direktnije. Bez okolišanja."}
             </p>
           </div>
@@ -161,10 +184,30 @@ export default async function SadaPage() {
           href="/ko-te-zeli"
           className="glass tap-scale animate-bubble-in flex items-center justify-between rounded-2xl px-4 py-3.5"
         >
-          <span className="text-sm">
-            😍 {personSubjectPhrase(pendingLikesCount)} da te upozna
-            <span className="block text-xs text-[var(--color-text-muted)]">
-              Otključaj za {unlockCost} Credit{unlockCost === 1 ? "" : "a"}
+          <span className="flex items-center gap-3">
+            {likerTeasers?.length ? (
+              <span className="flex -space-x-3">
+                {likerTeasers.map((t, i) => (
+                  <span key={i} className="h-10 w-10 shrink-0 overflow-hidden rounded-full border-2 border-[var(--color-bg-card)]">
+                    {t.thumbnail_url ? (
+                      // Namerno CSS blur -- obicna profilna slika, isti nivo
+                      // kao "Ko te zeli" tizer kartice.
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={t.thumbnail_url} alt="" className="h-full w-full scale-125 object-cover blur-sm" />
+                    ) : (
+                      <span className="flex h-full w-full items-center justify-center bg-gradient-accent text-xs">?</span>
+                    )}
+                  </span>
+                ))}
+              </span>
+            ) : (
+              <span className="text-lg">😍</span>
+            )}
+            <span className="text-sm">
+              {personSubjectPhrase(pendingLikesCount)} da te upozna
+              <span className="block text-xs text-[var(--color-text-muted)]">
+                Otključaj za {unlockCost} Credit{unlockCost === 1 ? "" : "a"}
+              </span>
             </span>
           </span>
           <span className="text-xs text-[var(--color-text-muted)]">Vidi →</span>
@@ -187,9 +230,13 @@ export default async function SadaPage() {
         >
           {featured.primary_photo_url ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={featured.primary_photo_url} alt={featured.name} className="h-12 w-12 rounded-full object-cover" />
+            <img
+              src={featured.primary_photo_url}
+              alt={featured.name}
+              className="h-14 w-14 rounded-full object-cover ring-2 ring-[var(--color-accent)]/60"
+            />
           ) : (
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-accent text-sm font-bold text-white">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-accent text-base font-bold text-white">
               {featured.name[0]?.toUpperCase()}
             </div>
           )}

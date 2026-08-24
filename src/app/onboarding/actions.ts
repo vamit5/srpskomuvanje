@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { computeProfileCompletionScore } from "@/lib/scoring";
 
 export interface OnboardingInput {
@@ -28,7 +28,7 @@ export async function completeOnboarding(input: OnboardingInput) {
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
 
   if (!user) {
     redirect("/prijava");
@@ -82,6 +82,11 @@ export async function completeOnboarding(input: OnboardingInput) {
   });
 
   await supabase.from("notification_preferences").upsert({ profile_id: user.id });
+
+  // Dobrodošlica -- 3 besplatna Credits-a, jednom po nalogu (idempotentno
+  // unutar same funkcije). Best-effort: ne sme da obori onboarding ako
+  // ovo iz nekog razloga ne uspe.
+  await supabase.rpc("grant_signup_bonus", { viewer_id: user.id });
 
   redirect("/sada");
 }

@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { computeProfileCompletionScore } from "@/lib/scoring";
 import { MAX_PHOTOS, MAX_VIDEOS } from "@/lib/media/constants";
 import { moderateImage } from "@/lib/moderation";
@@ -11,7 +11,7 @@ async function getAuthedUser() {
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
   return { supabase, user };
 }
 

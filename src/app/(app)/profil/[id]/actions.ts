@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 
 export async function getProfileUnlockCost(): Promise<number> {
   const supabase = await createClient();
@@ -15,7 +15,7 @@ export async function unlockProfile(
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
   if (!user) return { error: "Nisi prijavljen/a.", insufficientCredits: false };
 
   const { data, error } = await supabase

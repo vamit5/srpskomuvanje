@@ -1,14 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { belgradeLocalInputToISO } from "@/lib/time";
 
 async function requireAdmin() {
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
   if (!user) return { supabase, user: null, isAdmin: false };
   const { data: isAdmin } = await supabase.rpc("is_admin");
   return { supabase, user, isAdmin: !!isAdmin };

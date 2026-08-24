@@ -281,7 +281,7 @@ export function FotoVideoManager({
     <div className="flex flex-col gap-8">
       <section>
         <h2 className="mb-3 text-sm font-semibold text-[var(--color-text-muted)]">
-          Profilna fotografija {photos.length ? "" : "(nedostaje)"}
+          Fotografije ({photos.length}/{MAX_PHOTOS})
         </h2>
         <div className="grid grid-cols-3 gap-2">
           {photos.map((photo, i) => (

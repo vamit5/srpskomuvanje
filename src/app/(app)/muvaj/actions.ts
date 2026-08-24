@@ -1,7 +1,7 @@
 "use server";
 
 import { after } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { sendPushToProfile } from "@/lib/push/send";
 
 export interface DiscoveryCandidate {
@@ -22,7 +22,7 @@ export async function getMoreCandidates(limit = 15): Promise<{ candidates: Disco
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
   if (!user) return { candidates: [], error: "Nisi prijavljen/a." };
 
   const { data, error } = await supabase.rpc("discover_profiles", {
@@ -50,7 +50,7 @@ export async function chooseMuvaj(
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
   if (!user) return { error: "Nisi prijavljen/a.", matched: false, matchId: null };
 
   const { data, error } = await supabase
@@ -83,7 +83,7 @@ export async function chooseMuvaj(
   } else if (choice === "krevet") {
     after(() =>
       sendPushToProfile(targetId, {
-        title: "😈 Neko hoće s tobom u krevet",
+        title: "😈 Neko hoće s tobom u 18+ chat",
         body: "Otključaj da vidiš ko je to.",
         url: "/18-plus",
         tag: "krevet_signal",
@@ -114,7 +114,7 @@ export async function sendSecretSpark(
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
   if (!user) return { error: "Nisi prijavljen/a.", mutual: false, matchId: null };
 
   const { data, error } = await supabase
@@ -160,7 +160,7 @@ export async function touchActivity(): Promise<void> {
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
   if (!user) return;
   await supabase.from("profiles").update({ last_active_at: new Date().toISOString() }).eq("id", user.id);
 }

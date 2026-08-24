@@ -63,7 +63,7 @@ export function ChatThread({
   const router = useRouter();
   const [messages, setMessages] = useState<MessageRow[]>(initialMessages);
   const [draft, setDraft] = useState("");
-  const [icebreakers, setIcebreakers] = useState<string[]>([]);
+  const [icebreakerSeed, setIcebreakerSeed] = useState(0);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [otherTyping, setOtherTyping] = useState(false);
@@ -144,13 +144,13 @@ export function ChatThread({
     markAsRead(matchId);
   }, [matchId]);
 
-  // Predlozi poruka -- SAMO na klijentu (posle mount-a), da se izbegne
-  // hydration mismatch (Math.random() bi se drugačije "izmešao" na
-  // serveru nego u pregledaču).
-  useEffect(() => {
-    Promise.resolve().then(() => setIcebreakers(pickIcebreakers(3, hot)));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Predlozi poruka -- FAZA (koliko poruka je vec razmenjeno) bira koji
+  // set predloga se prikazuje (lezerno -> flertujuce -> direktno/foto-poziv),
+  // "icebreakerSeed" bira KOJI konkretni predlozi iz te faze ("🔄 Novi
+  // predlozi" dugme). pickIcebreakers je potpuno deterministicka funkcija
+  // (bez Math.random) -- bezbedno se racuna direktno u renderu, isti
+  // rezultat na serveru i klijentu (bez hydration mismatch-a).
+  const icebreakers = pickIcebreakers(3, hot, messages.length, icebreakerSeed);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -385,18 +385,44 @@ export function ChatThread({
         </div>
       ) : (
         <div className="safe-bottom border-t border-[var(--color-border)] px-3 py-3">
-          {messages.length === 0 && icebreakers.length > 0 && (
-            <div className="mb-2 flex gap-2 overflow-x-auto pb-1">
-              {icebreakers.map((text) => (
+          {icebreakers.length > 0 && !unmatched && (
+            <div
+              className={cn(
+                "mb-2 rounded-2xl border px-2.5 pb-2 pt-1.5",
+                hot
+                  ? "border-[var(--color-accent)]/50 bg-gradient-to-r from-[var(--color-accent)]/15 to-transparent"
+                  : "border-[var(--color-border-strong)] bg-[var(--color-bg-elevated)]"
+              )}
+            >
+              <div className="mb-1 flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase tracking-wide text-[var(--color-text-muted)]">
+                  💡 Predlozi poruke
+                </span>
                 <button
-                  key={text}
                   type="button"
-                  onClick={() => setDraft(text)}
-                  className="tap-scale shrink-0 whitespace-nowrap rounded-full border border-[var(--color-border-strong)] bg-[var(--color-bg-elevated)] px-3 py-1.5 text-xs text-[var(--color-text-muted)]"
+                  onClick={() => setIcebreakerSeed((s) => s + 3)}
+                  className="tap-scale text-[10px] font-semibold text-[var(--color-accent)]"
                 >
-                  {text}
+                  🔄 Novi predlozi
                 </button>
-              ))}
+              </div>
+              <div className="flex gap-2 overflow-x-auto pb-0.5">
+                {icebreakers.map((text) => (
+                  <button
+                    key={text}
+                    type="button"
+                    onClick={() => setDraft(text)}
+                    className={cn(
+                      "tap-scale shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium",
+                      hot
+                        ? "border-transparent bg-gradient-accent text-white"
+                        : "border-[var(--color-border-strong)] bg-[var(--color-bg-card)] text-[var(--color-text-muted)]"
+                    )}
+                  >
+                    {text}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
           <div className="flex items-center gap-2">

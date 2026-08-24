@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { UrediProfilForm } from "./UrediProfilForm";
 
 export const metadata = { title: "Uredi profil" };
@@ -7,7 +7,7 @@ export default async function UrediProfilPage() {
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
 
   const [{ data: profile }, { data: preferences }] = await Promise.all([
     supabase

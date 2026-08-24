@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { calculateAge } from "@/lib/utils";
 
@@ -9,7 +9,7 @@ export default async function MatchPage() {
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
 
   const { data: matches } = await supabase
     .from("matches")

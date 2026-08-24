@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { isRecentlyActive } from "@/lib/utils";
 import { ChatThread } from "../../../poruke/[matchId]/ChatThread";
 
@@ -18,7 +18,7 @@ export default async function EighteenPlusChatPage({ params }: { params: Promise
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
 
   const { data: match } = await supabase
     .from("matches")

@@ -21,9 +21,11 @@ function isFullScreenRoute(pathname: string | null): boolean {
 export function AppShell({
   children,
   eighteenPlusPending = false,
+  creditsBalance,
 }: {
   children: React.ReactNode;
   eighteenPlusPending?: boolean;
+  creditsBalance?: number;
 }) {
   const pathname = usePathname();
   const fullScreen = isFullScreenRoute(pathname);
@@ -38,10 +40,22 @@ export function AppShell({
       {/* Srpskomuvanje brend (logo + ime) -- vidljiv na CELOJ app-i, ne samo
           na landing stranici (izricit zahtev), fiksirano skroz gore. */}
       {!fullScreen && (
-        <div className="flex items-center gap-2 px-4 pb-1 pt-2">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.png" alt="" className="h-6 w-6 rounded-md" />
-          <span className="text-xs font-bold tracking-wide text-[var(--color-text-muted)]">Srpskomuvanje</span>
+        <div className="flex items-center justify-between gap-2 py-2 pl-4 pr-14">
+          <span className="flex items-center gap-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.png" alt="" className="h-6 w-6 rounded-md" />
+            <span className="text-xs font-bold tracking-wide text-[var(--color-text-muted)]">Srpskomuvanje</span>
+          </span>
+          {creditsBalance != null && (
+            // Uvek vidljiv saldo Credits-a -- korisnik mora u svako doba da
+            // zna koliko ima, i klik vodi na /credits (istorija + kupovina).
+            <Link
+              href="/credits"
+              className="tap-scale glass flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold"
+            >
+              🔥 {creditsBalance}
+            </Link>
+          )}
         </div>
       )}
       {!fullScreen && pathname !== "/profil" && (

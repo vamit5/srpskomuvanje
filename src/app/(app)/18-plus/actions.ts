@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 
 export interface EighteenPlusCandidate {
   id: string;
@@ -17,7 +17,7 @@ export async function get18PlusCandidates(limit = 15): Promise<{ candidates: Eig
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
   if (!user) return { candidates: [], error: "Nisi prijavljen/a." };
 
   const { data, error } = await supabase.rpc("get_18plus_candidates", { viewer_id: user.id, result_limit: limit });
@@ -59,7 +59,7 @@ export async function getPendingKrevetSignals(): Promise<{ signals: PendingKreve
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
   if (!user) return { signals: [], error: "Nisi prijavljen/a.", costCredits: 1 };
 
   const [{ data, error }, { data: costRow }] = await Promise.all([
@@ -81,7 +81,7 @@ export async function startEighteenPlusChat(targetId: string): Promise<{ matchId
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
   if (!user) return { matchId: null, error: "Nisi prijavljen/a." };
 
   const { data, error } = await supabase.rpc("start_18plus_chat", { p_viewer_id: user.id, p_target_id: targetId }).single();
@@ -106,7 +106,7 @@ export async function revealKrevetSignal(
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
   if (!user) return { error: "Nisi prijavljen/a.", insufficientCredits: false, from: null };
 
   const { data, error } = await supabase

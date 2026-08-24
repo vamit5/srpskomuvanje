@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 
 export async function savePushSubscription(input: {
   endpoint: string;
@@ -11,7 +11,7 @@ export async function savePushSubscription(input: {
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
   if (!user) return { error: "Nisi prijavljen/a." };
 
   const { error } = await supabase.from("push_subscriptions").upsert(
@@ -33,7 +33,7 @@ export async function removePushSubscription(endpoint: string): Promise<{ error:
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
   if (!user) return { error: "Nisi prijavljen/a." };
 
   await supabase.from("push_subscriptions").delete().eq("profile_id", user.id).eq("endpoint", endpoint);

@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { belgradeStartOfDayISO } from "@/lib/time";
 import { isPremium, FREE_DAILY_DUEL_LIMIT } from "@/lib/premium";
 
@@ -26,7 +26,7 @@ export async function getNextDuel(): Promise<{
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
   if (!user) return { duel: null, error: "Nisi prijavljen/a.", limitReached: false };
 
   // Besplatni korisnici imaju dnevni limit Duela (sekcija 27) -- Premium nema.
@@ -89,7 +89,7 @@ export async function voteDuel(duelId: string, votedForId: string): Promise<{ er
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getAuthUser();
   if (!user) return { error: "Nisi prijavljen/a." };
 
   const { error } = await supabase
