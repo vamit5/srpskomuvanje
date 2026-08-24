@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { User } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import { BottomNav } from "./BottomNav";
 import { cn } from "@/lib/utils";
 
@@ -31,6 +30,9 @@ export function AppShell({
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col">
+      {/* Traka srpske trobojke -- vidljiva na SVAKOJ stranici (i chat),
+          "nesto drugo pored zastave" iz zahteva -- konstantan brend dodir. */}
+      <div className="serbia-ribbon" />
       {!fullScreen && pathname !== "/profil" && (
         // "Moj profil" -- vidljivo na CELOJ app-i (ne samo na Sada), fixed
         // gore desno, iznad safe-area (notch/status bar).
@@ -47,20 +49,16 @@ export function AppShell({
         {fullScreen ? (
           children
         ) : (
-          // "Bubble" prelaz izmedju tabova donjeg menija -- namerno NE za
-          // fullScreen rute (chat/18+ Muvanje) da se ne kosi sa njihovim
-          // sopstvenim animacijama i da ostanu trenutno responzivne.
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={pathname}
-              initial={{ opacity: 0, scale: 0.97, y: 8 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 1.02 }}
-              transition={{ duration: 0.22, ease: [0.34, 1.2, 0.64, 1] }}
-            >
-              {children}
-            </motion.div>
-          </AnimatePresence>
+          // "Bubble" prelaz izmedju tabova donjeg menija -- NAMERNO cist CSS
+          // keyframe (.animate-bubble-in), NE Framer Motion. Framer Motion
+          // ostavlja trajan inline "transform" na ovom omotacu (cak i kad
+          // animira ka scale:1/y:0) -- a SVAKI "position: fixed" potomak
+          // (CreditsModal i sl.) se onda pozicionira u odnosu na TAJ
+          // transformisani div umesto na pravi viewport (CSS spec: transform
+          // na pretku menja containing block za fixed decu) -- zato su se
+          // svi modali pomerali van vidljive zone. Obican CSS keyframe nema
+          // taj problem jer transform postoji SAMO tokom trajanja animacije.
+          <div key={pathname} className="animate-bubble-in">{children}</div>
         )}
       </main>
       {!fullScreen && <BottomNav eighteenPlusPending={eighteenPlusPending} />}

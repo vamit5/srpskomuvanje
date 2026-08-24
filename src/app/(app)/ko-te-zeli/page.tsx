@@ -128,7 +128,6 @@ export default async function KoTeZeliPage() {
         />
       ) : (
         <div className="flex flex-col gap-2">
-          {!premium && <PremiumBannerSmall />}
           {likers.map((l) => {
             const p = profilesById.get(l.id);
             if (p) {
@@ -139,6 +138,8 @@ export default async function KoTeZeliPage() {
             if (premium) return null; // premium a nema profila -- obrisan nalog, preskoci
             return <LikerLockedCard key={l.id} id={l.id} photoUrl={teaserPhotoById.get(l.id) ?? null} costCredits={unlockCost} />;
           })}
+          {/* Sekundarna opcija -- ISPOD pojedinacnih otkljucavanja, ne iznad (glavni put je po osobi za Credits). */}
+          {!premium && <PremiumBannerSmall />}
         </div>
       )}
     </div>

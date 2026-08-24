@@ -19,24 +19,14 @@ const FEATURES = [
     text: "Kad se međusobno lajkujete, otvara se razgovor u trenutku. Bez čekanja, bez nagađanja.",
   },
   {
-    emoji: "🚪",
-    title: "Tajna soba",
-    text: "Večernja igra u realnom vremenu — nekoliko minuta, mali broj pažljivo biranih ljudi, i pravi obostrani signal umesto beskonačnog swipovanja.",
-  },
-  {
-    emoji: "🎭",
-    title: "Tajni Srbin/Srpkinja",
-    text: "Pošalji nekome anoniman signal da ti se sviđa, bez da zna ko si. Ako i ona/on pošalje tebi — otključava se obostrana privlačnost.",
+    emoji: "😈",
+    title: "18+ Muvanje",
+    text: "Za kad si direktan/na i znaš šta hoćeš. Vidiš ko je večeras raspoložen za krevet i pišeš im odmah, potpuno diskretno — odvojeno od običnog chata.",
   },
   {
     emoji: "⚔️",
     title: "Duel",
     text: "Dva profila, jedno pitanje — 'Ko ti je više tvoj tip?' Zabavno, anonimno za obe strane, i uči algoritam tvoj ukus.",
-  },
-  {
-    emoji: "😏",
-    title: "Hot Mode",
-    text: "Opcioni 18+ režim za direktniji flert — Flert, Vrelo, Večeras, Piće, Izlazak. Uvek dobrovoljno.",
   },
   {
     emoji: "🌙",
@@ -50,7 +40,7 @@ export default function LandingPage() {
     <div className="flex min-h-dvh flex-col">
       <header className="safe-top flex items-center justify-between px-5 py-4">
         <span className="flex items-center gap-2 text-lg font-bold text-gradient">
-          <SerbianFlag className="h-4 w-6 rounded-[2px]" /> Srpskomuvanje
+          <SerbianFlag className="h-4 w-6 rounded-[2px]" animated /> Srpskomuvanje
         </span>
         <Link href="/prijava" className="text-sm text-[var(--color-text-muted)]">
           Prijava

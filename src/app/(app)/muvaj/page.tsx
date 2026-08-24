@@ -1,4 +1,5 @@
 import { EmptyState } from "@/components/ui/EmptyState";
+import { SerbianFlag } from "@/components/SerbianFlag";
 import { getMoreCandidates, touchActivity } from "./actions";
 import { MuvajDeck } from "./MuvajDeck";
 
@@ -11,8 +12,9 @@ export default async function MuvajPage() {
   return (
     <div className="flex h-[75vh] flex-col gap-3 px-4 pt-4">
       <header>
-        <h1 className="text-2xl font-bold">
-          🔥 <span className="text-gradient">Muvaj</span>
+        <h1 className="flex items-center gap-1.5 text-2xl font-bold">
+          🔥 <span className="text-gradient">Muvaj</span>{" "}
+          <SerbianFlag className="mb-0.5 h-4 w-6 rounded-[2px]" />
         </h1>
         <p className="text-sm text-[var(--color-text-muted)]">Ljudi koji ti najviše odgovaraju</p>
       </header>

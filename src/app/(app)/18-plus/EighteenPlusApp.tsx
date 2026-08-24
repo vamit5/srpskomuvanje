@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { calculateAge } from "@/lib/utils";
 import { CreditsModal } from "@/components/CreditsModal";
+import { SerbianFlag } from "@/components/SerbianFlag";
 import {
   revealKrevetSignal,
   startEighteenPlusChat,
@@ -43,8 +44,8 @@ function PendingSignalCard({
   }
 
   return (
-    <div className="flex w-36 shrink-0 flex-col items-center gap-2 rounded-2xl border border-[var(--color-accent-to)]/40 bg-black/30 p-3 text-center text-white">
-      <div className="relative h-20 w-20 overflow-hidden rounded-full">
+    <div className="pulse-glow flex w-40 shrink-0 flex-col items-center gap-2 rounded-2xl border-2 border-[var(--color-accent)]/60 bg-black/40 p-3 text-center text-white shadow-[0_0_24px_rgba(255,45,107,0.25)]">
+      <div className="relative h-24 w-24 overflow-hidden rounded-full ring-2 ring-[var(--color-accent)]/70 ring-offset-2 ring-offset-black/40">
         {signal.fromPhotoUrl ? (
           // Namerno CSS blur -- obicna profilna slika (vec javno vidljiva
           // drugde u appu), samo veza sa OVIM signalom je skrivena. Vidi
@@ -54,14 +55,14 @@ function PendingSignalCard({
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-gradient-accent text-2xl">😈</div>
         )}
-        <div className="absolute inset-0 flex items-center justify-center text-xl">🔒</div>
+        <div className="absolute inset-0 flex items-center justify-center text-2xl">🔒</div>
       </div>
-      <p className="text-xs text-white/70">Neko hoće s tobom u krevet</p>
+      <p className="text-xs font-semibold text-white/80">Neko hoće s tobom u krevet</p>
       <button
         type="button"
         onClick={reveal}
         disabled={busy}
-        className="pulse-glow tap-scale w-full rounded-xl bg-gradient-accent px-3 py-2 text-xs font-bold disabled:opacity-50"
+        className="tap-scale w-full rounded-xl bg-gradient-accent px-3 py-2 text-xs font-bold disabled:opacity-50"
       >
         {busy ? "..." : `OTKLJUČAJ za ${costCredits} Credit${costCredits === 1 ? "" : "a"}`}
       </button>
@@ -84,12 +85,12 @@ function RevealedCard({ from }: { from: RevealedKrevet }) {
   }
 
   return (
-    <div className="flex w-36 shrink-0 flex-col items-center gap-2 rounded-2xl border border-white/15 bg-black/30 p-3 text-center text-white">
+    <div className="flex w-40 shrink-0 flex-col items-center gap-2 rounded-2xl border border-white/15 bg-black/30 p-3 text-center text-white">
       {from.photoUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={from.photoUrl} alt={from.name} className="h-20 w-20 rounded-full object-cover" />
+        <img src={from.photoUrl} alt={from.name} className="h-24 w-24 rounded-full object-cover" />
       ) : (
-        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-accent text-xl">👤</div>
+        <div className="flex h-24 w-24 items-center justify-center rounded-full bg-gradient-accent text-xl">👤</div>
       )}
       <p className="text-sm font-bold">
         {from.name}, {age}
@@ -138,17 +139,24 @@ export function EighteenPlusApp({
   }
 
   return (
-    <div className="flex flex-col gap-5 rounded-3xl bg-gradient-to-b from-[#2b0b18] via-[#3a0d20] to-[#1a0710] px-4 py-5 text-white">
-      <header>
-        <h1 className="text-xl font-extrabold">😈 18+ Muvanje</h1>
-        <p className="mt-1 text-xs leading-snug text-white/70">
-          Ovde se pojavljuju samo osobe koje su večeras spremne da ih odvedeš u krevet 😈 Ili da igraš hot igrice sa
-          njima, potpuno diskretno.
-        </p>
+    <div className="bg-18plus flex flex-col gap-5 rounded-3xl px-4 py-5 text-white shadow-[0_0_50px_rgba(192,25,94,0.35)]">
+      <header className="flex items-center gap-2">
+        <span className="animate-ember-scale text-3xl">😈</span>
+        <div>
+          <h1 className="text-ember flex items-center gap-2 text-2xl font-extrabold">
+            18+ Muvanje <SerbianFlag className="h-4 w-6 rounded-[2px]" animated />
+          </h1>
+          <p className="mt-1 text-xs leading-snug text-white/75">
+            Ovde se pojavljuju samo osobe koje su večeras spremne da ih odvedeš u krevet 😈 Ili da igraš hot igrice sa
+            njima, potpuno diskretno.
+          </p>
+        </div>
       </header>
 
       <section>
-        <h2 className="mb-2 text-sm font-bold text-white/90">😈 Neko hoće s tobom u krevet</h2>
+        <h2 className="mb-2 flex items-center gap-1.5 text-sm font-bold text-white/90">
+          😈 Neko hoće s tobom u krevet
+        </h2>
         {signals.length === 0 ? (
           <p className="rounded-2xl border border-white/10 bg-black/20 px-4 py-4 text-center text-xs text-white/60">
             Još niko — kad neko izabere Krevet na tebe, pojaviće se ovde.
@@ -176,17 +184,20 @@ export function EighteenPlusApp({
             <p className="mt-1 text-sm">Svrati kasnije — čim neko izabere 😈 Krevet u Muvaj, pojaviće se ovde.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-3">
             {initialCandidates.map((c, i) => (
               <motion.button
                 key={c.id}
                 type="button"
                 onClick={() => handleCandidateClick(c)}
                 disabled={startingId === c.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.03 }}
-                className="tap-scale relative aspect-square overflow-hidden rounded-2xl bg-black/30 disabled:opacity-60"
+                initial={{ opacity: 0, y: 14, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ delay: i * 0.04, type: "spring", stiffness: 260, damping: 20 }}
+                whileTap={{ scale: 0.95 }}
+                className={`tap-scale relative aspect-[4/5] overflow-hidden rounded-2xl bg-black/30 ring-2 ${
+                  c.isBoosted ? "pulse-glow ring-[var(--color-accent)]" : "ring-white/15"
+                } disabled:opacity-60`}
               >
                 {c.photoUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -195,12 +206,13 @@ export function EighteenPlusApp({
                   <div className="flex h-full w-full items-center justify-center text-3xl">👤</div>
                 )}
                 {c.isBoosted && (
-                  <span className="absolute left-1 top-1 rounded-full bg-gradient-accent px-1.5 py-0.5 text-[9px] font-bold">
-                    🚀
+                  <span className="absolute left-1.5 top-1.5 rounded-full bg-gradient-accent px-2 py-0.5 text-[10px] font-bold shadow-lg">
+                    🚀 Boost
                   </span>
                 )}
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent px-2 pb-1.5 pt-4 text-left text-[11px] font-semibold">
-                  {startingId === c.id ? "..." : c.name}
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 to-transparent px-2.5 pb-2 pt-8 text-left">
+                  <p className="text-sm font-bold">{startingId === c.id ? "Otvaram chat..." : c.name}</p>
+                  {startingId !== c.id && <p className="text-[10px] font-semibold text-white/70">💬 Piši odmah</p>}
                 </div>
               </motion.button>
             ))}

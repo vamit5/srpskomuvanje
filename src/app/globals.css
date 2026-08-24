@@ -114,6 +114,86 @@ body {
   animation: pulse-glow 1.8s ease-in-out infinite;
 }
 
+/* Traka srpske trobojke -- diskretan ali dosledan brend element KROZ CELU
+   app (pored same zastave), uvek na vrhu ekrana. Ovo je namerno "nesto
+   drugo pored zastave" -- konstantan, tih podsetnik na boje bez da se
+   oslanja na emoji zastavicu svuda. */
+.serbia-ribbon {
+  height: 3px;
+  width: 100%;
+  flex-shrink: 0;
+  background: linear-gradient(
+    90deg,
+    var(--color-serbia-red) 0%,
+    var(--color-serbia-red) 33.33%,
+    var(--color-serbia-blue) 33.33%,
+    var(--color-serbia-blue) 66.66%,
+    #ffffff 66.66%,
+    #ffffff 100%
+  );
+}
+
+/* 18+ Muvanje -- ova sekcija MORA biti najdominantnija/najzivlja u appu
+   (izricit zahtev), da drzi paznju vise nego ijedna druga stranica. */
+@keyframes ember-bg {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+.bg-18plus {
+  background: linear-gradient(-45deg, #2b0b18, #5b0e2e, #c0195e, #3a0d20, #1a0710);
+  background-size: 300% 300%;
+  animation: ember-bg 7s ease-in-out infinite;
+}
+
+@keyframes ember-pulse {
+  0%,
+  100% {
+    text-shadow: 0 0 12px rgba(255, 45, 107, 0.6), 0 0 26px rgba(139, 92, 246, 0.35);
+  }
+  50% {
+    text-shadow: 0 0 22px rgba(255, 45, 107, 0.95), 0 0 46px rgba(139, 92, 246, 0.65);
+  }
+}
+.text-ember {
+  animation: ember-pulse 2.1s ease-in-out infinite;
+}
+
+@keyframes ember-scale {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.12);
+  }
+}
+.animate-ember-scale {
+  display: inline-block;
+  animation: ember-scale 1.6s ease-in-out infinite;
+}
+
+@keyframes flag-wave {
+  0%,
+  100% {
+    transform: perspective(60px) rotateY(0deg) skewY(0deg);
+  }
+  25% {
+    transform: perspective(60px) rotateY(8deg) skewY(1deg);
+  }
+  75% {
+    transform: perspective(60px) rotateY(-8deg) skewY(-1deg);
+  }
+}
+.animate-flag-wave {
+  animation: flag-wave 2.4s ease-in-out infinite;
+  transform-style: preserve-3d;
+}
+
 @keyframes bubble-in {
   0% {
     opacity: 0;

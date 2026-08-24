@@ -8,6 +8,14 @@ import { SerbianFlag } from "@/components/SerbianFlag";
 
 export const metadata = { title: "Sada" };
 
+/** "1 osoba hoće" / "3 osobe hoće" / "5 osoba hoće" -- srpska brojna kongruencija. */
+function krevetSubject(n: number): string {
+  const lastTwo = n % 100;
+  const last = n % 10;
+  const word = last >= 2 && last <= 4 && !(lastTwo >= 12 && lastTwo <= 14) ? "osobe" : "osoba";
+  return `${n} ${word} hoće`;
+}
+
 interface FeaturedCandidate {
   id: string;
   name: string;
@@ -98,7 +106,7 @@ export default async function SadaPage() {
           ) : (
             <>
               🔥 <span className="text-gradient">Sada</span>{" "}
-              <SerbianFlag className="mb-0.5 inline-block h-4 w-6 rounded-[2px] align-middle" />
+              <SerbianFlag className="mb-0.5 inline-block h-4 w-6 rounded-[2px] align-middle" animated />
             </>
           )}
         </h1>
@@ -122,7 +130,9 @@ export default async function SadaPage() {
               )}
             </p>
             <p className="mt-1 text-xs text-white/80">
-              {(krevetPendingCount ?? 0) > 0 ? "Neko hoće s tobom u krevet — otključaj da vidiš ko" : "Direktnije. Bez okolišanja."}
+              {(krevetPendingCount ?? 0) > 0
+                ? `${krevetSubject(krevetPendingCount ?? 0)} u krevet s tobom večeras 😈`
+                : "Direktnije. Bez okolišanja."}
             </p>
           </div>
           <span className="text-xs font-semibold">Uđi →</span>
