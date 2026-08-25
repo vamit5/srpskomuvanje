@@ -9,6 +9,7 @@ import { BoostCard } from "./BoostCard";
 import { PushToggle } from "./PushToggle";
 import { PremiumCard } from "./PremiumCard";
 import { DeleteAccountSection } from "./_delete/DeleteAccountSection";
+import { ManageSubscriptionLink } from "@/components/ManageSubscriptionLink";
 
 export const metadata = { title: "Profil" };
 
@@ -97,6 +98,8 @@ export default async function ProfilPage({
       )}
 
       <PremiumCard isPremium={!!isPremiumActive} currentPeriodEnd={subscription?.current_period_end ?? null} />
+
+      <ManageSubscriptionLink />
 
       <Link
         href="/ko-te-zeli"

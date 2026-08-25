@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { createCheckoutSession, createBillingPortalSession } from "../_premium/actions";
+import { createCheckoutSession } from "../_premium/actions";
 
 export function PremiumCard({
   isPremium,
@@ -26,18 +26,6 @@ export function PremiumCard({
     window.location.href = result.url;
   }
 
-  async function handleManage() {
-    setLoading(true);
-    setError(null);
-    const result = await createBillingPortalSession();
-    if (result.error || !result.url) {
-      setError(result.error ?? "Nešto nije u redu.");
-      setLoading(false);
-      return;
-    }
-    window.location.href = result.url;
-  }
-
   if (isPremium) {
     return (
       <section className="glass rounded-2xl p-4">
@@ -49,10 +37,9 @@ export function PremiumCard({
             Važi do {new Date(currentPeriodEnd).toLocaleDateString("sr-RS")}
           </p>
         )}
-        {error && <p className="mt-2 text-xs text-[var(--color-danger)]">{error}</p>}
-        <Button variant="secondary" className="mt-3 w-full" onClick={handleManage} disabled={loading}>
-          {loading ? "Otvaram..." : "Upravljaj pretplatom"}
-        </Button>
+        <p className="mt-2 text-xs text-[var(--color-text-muted)]">
+          Otkazivanje, kartica, računi — u &quot;⚙️ Upravljaj pretplatom&quot; ispod.
+        </p>
       </section>
     );
   }

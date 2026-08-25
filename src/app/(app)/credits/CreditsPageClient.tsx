@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CreditsModal } from "@/components/CreditsModal";
+import { ManageSubscriptionLink } from "@/components/ManageSubscriptionLink";
 
 export function CreditsPageClient({ balance }: { balance: number }) {
   const [showBuy, setShowBuy] = useState(false);
@@ -28,6 +29,8 @@ export function CreditsPageClient({ balance }: { balance: number }) {
           jedini način da dobiješ besplatne Credits-e — svi ostali dolaze kroz kupovinu.
         </p>
       </section>
+
+      <ManageSubscriptionLink />
 
       {showBuy && <CreditsModal context="nocno" onClose={() => setShowBuy(false)} />}
     </>
