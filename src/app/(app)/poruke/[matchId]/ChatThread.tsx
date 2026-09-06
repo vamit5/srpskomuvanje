@@ -468,7 +468,7 @@ export function ChatThread({
       )}
 
       {reportOpen && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 sm:items-center">
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/70 sm:items-center">
           <div className="w-full max-w-sm rounded-t-3xl bg-[var(--color-bg-card)] p-5 sm:rounded-3xl">
             {reportSent ? (
               <div className="flex flex-col items-center gap-2 py-4 text-center">

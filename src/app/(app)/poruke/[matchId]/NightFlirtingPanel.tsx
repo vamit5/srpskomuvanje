@@ -202,7 +202,7 @@ export function NightFlirtingPanel({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-sm sm:items-center">
+    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/80 backdrop-blur-sm sm:items-center">
       <div className="w-full max-w-sm overflow-hidden rounded-t-3xl bg-[var(--color-bg-card)] sm:rounded-3xl">
         <div className="relative overflow-hidden bg-gradient-accent px-5 pb-6 pt-5 text-white">
           <div className="mb-3 flex items-center justify-between">

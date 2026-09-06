@@ -3,22 +3,15 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { X, Heart, ShieldCheck, Drama, Check } from "lucide-react";
-import { calculateAge, cn } from "@/lib/utils";
+import { X, Heart, ShieldCheck } from "lucide-react";
+import { calculateAge } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { MatchCelebration } from "@/components/MatchCelebration";
 import { vibrate } from "@/lib/haptics";
-import {
-  getMoreCandidates,
-  chooseMuvaj,
-  sendSecretSpark,
-  type DiscoveryCandidate,
-  type MuvajChoice,
-} from "./actions";
+import { getMoreCandidates, chooseMuvaj, type DiscoveryCandidate, type MuvajChoice } from "./actions";
 
 interface MatchState {
   candidate: DiscoveryCandidate;
-  viaSpark: boolean;
 }
 
 function ScoreBadge({ score }: { score: number }) {
@@ -101,9 +94,6 @@ export function MuvajDeck({ initialCandidates }: { initialCandidates: DiscoveryC
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [matched, setMatched] = useState<MatchState | null>(null);
-  const [sparkedIds, setSparkedIds] = useState<Set<string>>(new Set());
-  const [sparkSending, setSparkSending] = useState(false);
-  const [sparkToast, setSparkToast] = useState(false);
   const [actionToast, setActionToast] = useState<string | null>(null);
   const fetchingMore = useRef(false);
   const toastTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -140,7 +130,7 @@ export function MuvajDeck({ initialCandidates }: { initialCandidates: DiscoveryC
       return;
     }
     if (result.matched) {
-      setMatched({ candidate: target, viaSpark: false });
+      setMatched({ candidate: target });
     } else if (choice === "krevet" || choice === "upoznavanje") {
       if (choice === "krevet") vibrate(30);
       setActionToast(
@@ -150,30 +140,6 @@ export function MuvajDeck({ initialCandidates }: { initialCandidates: DiscoveryC
       );
       if (toastTimeout.current) clearTimeout(toastTimeout.current);
       toastTimeout.current = setTimeout(() => setActionToast(null), 2500);
-    }
-  }
-
-  async function handleSecretSpark() {
-    if (!current || sparkSending || sparkedIds.has(current.id)) return;
-    setSparkSending(true);
-    setError(null);
-    const target = current;
-    const result = await sendSecretSpark(target.id);
-    setSparkSending(false);
-
-    if (result.error) {
-      setError(result.error);
-      return;
-    }
-
-    setSparkedIds((prev) => new Set(prev).add(target.id));
-
-    if (result.mutual) {
-      setMatched({ candidate: target, viaSpark: true });
-    } else {
-      setSparkToast(true);
-      if (toastTimeout.current) clearTimeout(toastTimeout.current);
-      toastTimeout.current = setTimeout(() => setSparkToast(false), 2500);
     }
   }
 
@@ -196,26 +162,9 @@ export function MuvajDeck({ initialCandidates }: { initialCandidates: DiscoveryC
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current, pending, matched]);
 
-  const currentSparked = current ? sparkedIds.has(current.id) : false;
-
   return (
     <div className="relative flex flex-col gap-2">
       <div className="relative h-[46vh] max-h-[420px] min-h-[300px]">
-        <button
-          type="button"
-          onClick={handleSecretSpark}
-          disabled={!current || sparkSending || currentSparked}
-          className={cn(
-            "tap-scale absolute right-2.5 top-2.5 z-10 flex h-9 w-9 items-center justify-center rounded-full border text-white disabled:opacity-40",
-            currentSparked
-              ? "border-transparent bg-[var(--color-success)]"
-              : "border-white/25 bg-black/40 text-white"
-          )}
-          aria-label="Pošalji tajni signal (Tajni Srbin/Srpkinja)"
-          title="Tajni Srbin/Srpkinja — pošalji anoniman signal"
-        >
-          {currentSparked ? <Check size={14} /> : <Drama size={14} />}
-        </button>
         {current ? (
           <SwipeCard key={current.id} candidate={current} disabled={pending} onChoice={handleChoice} />
         ) : (
@@ -228,11 +177,6 @@ export function MuvajDeck({ initialCandidates }: { initialCandidates: DiscoveryC
           </div>
         )}
 
-        {sparkToast && (
-          <div className="absolute inset-x-0 top-4 z-50 mx-auto w-fit rounded-full bg-black/80 px-4 py-2 text-sm text-white shadow-lg">
-            🤫 Tajni signal poslat — ako ti i on/ona uzvratite, otključava se match
-          </div>
-        )}
         {actionToast && (
           <div className="absolute inset-x-0 top-4 z-50 mx-auto w-fit rounded-full bg-black/80 px-4 py-2 text-sm text-white shadow-lg">
             {actionToast}
@@ -275,10 +219,8 @@ export function MuvajDeck({ initialCandidates }: { initialCandidates: DiscoveryC
       {matched && (
         <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center gap-6 bg-black/92 px-6 text-center text-white">
           <MatchCelebration />
-          <p className="animate-bubble-in text-5xl">{matched.viaSpark ? "🤫🔥" : "🔥"}</p>
-          <h2 className="text-3xl font-extrabold text-gradient">
-            {matched.viaSpark ? "OBOSTRANA PRIVLAČNOST!" : "MATCH!"}
-          </h2>
+          <p className="animate-bubble-in text-5xl">🔥</p>
+          <h2 className="text-3xl font-extrabold text-gradient">MATCH!</h2>
           {matched.candidate.primary_photo_url && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -288,16 +230,7 @@ export function MuvajDeck({ initialCandidates }: { initialCandidates: DiscoveryC
             />
           )}
           <p className="max-w-xs text-white/90">
-            {matched.viaSpark ? (
-              <>
-                Vas dvoje ste jedno drugom poslali tajni signal — <strong>{matched.candidate.name}</strong> se
-                svideo/la i tebi i ti njemu/njoj.
-              </>
-            ) : (
-              <>
-                Ti i <strong>{matched.candidate.name}</strong> ste se svideli jedno drugom.
-              </>
-            )}
+            Ti i <strong>{matched.candidate.name}</strong> ste se svideli jedno drugom.
           </p>
           <div className="flex w-full max-w-xs flex-col gap-2">
             <Link href="/match">

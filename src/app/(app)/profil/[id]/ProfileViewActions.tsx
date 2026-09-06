@@ -58,7 +58,10 @@ export function ProfileViewActions({ profileId, name }: { profileId: string; nam
       {error && <p className="text-sm text-[var(--color-danger)]">{error}</p>}
 
       {confirmingBlock && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 sm:items-center">
+        // z-[60], NE z-50 -- BottomNav je TAKODJE fixed na z-50 na ovoj
+        // (ne-fullscreen) ruti, pa je pri istom z-indexu iscrtavan PREKO
+        // dna modala ("Otkaži" dugme), cineci ga nedostupnim/nevidljivim.
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/70 sm:items-center">
           <div className="w-full max-w-sm rounded-t-3xl bg-[var(--color-bg-card)] p-5 sm:rounded-3xl">
             <p className="mb-3 text-sm">Blokirati {name}? Neće više moći da te vidi ni kontaktira.</p>
             <div className="flex flex-col gap-2">
@@ -74,7 +77,7 @@ export function ProfileViewActions({ profileId, name }: { profileId: string; nam
       )}
 
       {reportOpen && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 sm:items-center">
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/70 sm:items-center">
           <div className="w-full max-w-sm rounded-t-3xl bg-[var(--color-bg-card)] p-5 sm:rounded-3xl">
             {reportSent ? (
               <div className="flex flex-col items-center gap-2 py-4 text-center">
