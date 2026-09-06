@@ -45,43 +45,53 @@ export function CreditsModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 sm:items-center">
-      <div className="w-full max-w-sm rounded-t-3xl bg-[var(--color-bg-card)] p-5 sm:rounded-3xl">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-semibold">🔥 Kupi Credits</h2>
-          <button type="button" onClick={onClose} className="tap-scale text-[var(--color-text-muted)]" aria-label="Zatvori">
-            <X size={20} />
-          </button>
+      {/* max-h + unutrasnji overflow-y-auto na listi paketa -- bez ovoga,
+          5 paketa (5/10/25/50/100) zna da bude vise od visine ekrana na
+          nizim telefonima, pa se poslednji paket i "Zatvori" dugme
+          odseku van vidljive zone. Header/opis/dugme ostaju fiksni,
+          scroluje se SAMO lista paketa u sredini. */}
+      <div className="flex max-h-[85dvh] w-full max-w-sm flex-col rounded-t-3xl bg-[var(--color-bg-card)] sm:rounded-3xl">
+        <div className="p-5 pb-0">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="font-semibold">🔥 Kupi Credits</h2>
+            <button type="button" onClick={onClose} className="tap-scale text-[var(--color-text-muted)]" aria-label="Zatvori">
+              <X size={20} />
+            </button>
+          </div>
+          <p className="mb-4 text-sm text-[var(--color-text-muted)]">{DESCRIPTIONS[context]}</p>
         </div>
-        <p className="mb-4 text-sm text-[var(--color-text-muted)]">{DESCRIPTIONS[context]}</p>
 
-        {!packages ? (
-          <div className="flex justify-center py-6">
-            <Loader2 size={20} className="animate-spin text-[var(--color-text-muted)]" />
-          </div>
-        ) : (
-          <div className="flex flex-col gap-2">
-            {packages.map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => handleBuy(p.id)}
-                disabled={buyingId === p.id}
-                className="tap-scale flex items-center justify-between rounded-2xl border border-[var(--color-border-strong)] px-4 py-3 text-left disabled:opacity-50"
-              >
-                <span className="text-sm font-semibold">🔥 {p.credits} Credits</span>
-                <span className="text-sm text-[var(--color-text-muted)]">
-                  {buyingId === p.id ? "Otvaram..." : formatPrice(p.priceCents, p.currency)}
-                </span>
-              </button>
-            ))}
-          </div>
-        )}
+        <div className="overflow-y-auto px-5">
+          {!packages ? (
+            <div className="flex justify-center py-6">
+              <Loader2 size={20} className="animate-spin text-[var(--color-text-muted)]" />
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2 pb-1">
+              {packages.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => handleBuy(p.id)}
+                  disabled={buyingId === p.id}
+                  className="tap-scale flex items-center justify-between rounded-2xl border border-[var(--color-border-strong)] px-4 py-3 text-left disabled:opacity-50"
+                >
+                  <span className="text-sm font-semibold">🔥 {p.credits} Credits</span>
+                  <span className="text-sm text-[var(--color-text-muted)]">
+                    {buyingId === p.id ? "Otvaram..." : formatPrice(p.priceCents, p.currency)}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
-        {error && <p className="mt-3 text-sm text-[var(--color-danger)]">{error}</p>}
-
-        <Button variant="ghost" className="mt-4 w-full" onClick={onClose}>
-          Zatvori
-        </Button>
+        <div className="p-5 pt-3">
+          {error && <p className="mb-1 text-sm text-[var(--color-danger)]">{error}</p>}
+          <Button variant="ghost" className="w-full" onClick={onClose}>
+            Zatvori
+          </Button>
+        </div>
       </div>
     </div>
   );

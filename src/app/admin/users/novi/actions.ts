@@ -1,10 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { adminProcessAndStorePhoto } from "@/lib/adminPhoto";
 import { computeProfileCompletionScore } from "@/lib/scoring";
+import { sendPushToProfile } from "@/lib/push/send";
 import { MAX_RAW_PHOTO_PICK_BYTES } from "@/lib/media/constants";
 
 async function requireAdmin() {
@@ -128,6 +130,24 @@ export async function createManualUser(formData: FormData): Promise<{ error: str
       isPrimary: true,
     });
     if (photoError) throw new Error(photoError);
+
+    // Isto obaveštenje kao za samostalno registrovane korisnike (izričit
+    // zahtev: "svaki registrovan korisnik mora da dobije notifikaciju").
+    const { data: others } = await admin.from("profiles").select("id").neq("id", newUserId).is("deleted_at", null);
+    if (others?.length) {
+      const notifTitle = "🎉 Novi korisnik/ca na Srpskomuvanju";
+      const notifBody = `${name}${city ? " iz " + city : ""} se upravo pridružio/la.`;
+      await admin.from("notifications").insert(
+        others.map((o) => ({ profile_id: o.id, type: "new_user", title: notifTitle, body: notifBody, data: { newUserId } }))
+      );
+      after(() =>
+        Promise.all(
+          others.map((o) =>
+            sendPushToProfile(o.id, { title: notifTitle, body: notifBody, url: `/profil/${newUserId}`, tag: "new_user" })
+          )
+        )
+      );
+    }
 
     revalidatePath("/admin/users");
     return {
