@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { calculateAge } from "@/lib/utils";
 import { UsersTable } from "./UsersTable";
@@ -61,11 +62,19 @@ export default async function AdminUsersPage() {
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-sm text-[var(--color-text-muted)]">
-        Poslednjih {rows.length} registrovanih (najnoviji prvi). &bdquo;Potrošeno&ldquo; su samo Credits
-        kupovine (jednokratna plaćanja) — za tačan pregled Premium prihoda (mesečna pretplata,
-        obnavljanja) koristi Stripe Dashboard, tamo je taj podatak potpun i tačan.
-      </p>
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm text-[var(--color-text-muted)]">
+          Poslednjih {rows.length} registrovanih (najnoviji prvi). &bdquo;Potrošeno&ldquo; su samo Credits
+          kupovine (jednokratna plaćanja) — za tačan pregled Premium prihoda (mesečna pretplata,
+          obnavljanja) koristi Stripe Dashboard, tamo je taj podatak potpun i tačan.
+        </p>
+        <Link
+          href="/admin/users/novi"
+          className="tap-scale shrink-0 whitespace-nowrap rounded-full bg-gradient-accent px-3 py-2 text-xs font-semibold text-white"
+        >
+          + Dodaj korisnika
+        </Link>
+      </div>
       <UsersTable initialUsers={rows} />
     </div>
   );
