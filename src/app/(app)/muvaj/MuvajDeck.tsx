@@ -199,8 +199,23 @@ export function MuvajDeck({ initialCandidates }: { initialCandidates: DiscoveryC
   const currentSparked = current ? sparkedIds.has(current.id) : false;
 
   return (
-    <div className="relative flex flex-col gap-3">
-      <div className="relative h-[46vh] max-h-[420px] min-h-[300px]">
+    <div className="relative flex flex-col gap-2">
+      <div className="relative h-[38vh] max-h-[340px] min-h-[260px]">
+        <button
+          type="button"
+          onClick={handleSecretSpark}
+          disabled={!current || sparkSending || currentSparked}
+          className={cn(
+            "tap-scale absolute right-2.5 top-2.5 z-10 flex h-9 w-9 items-center justify-center rounded-full border text-white disabled:opacity-40",
+            currentSparked
+              ? "border-transparent bg-[var(--color-success)]"
+              : "border-white/25 bg-black/40 text-white"
+          )}
+          aria-label="Pošalji tajni signal (Tajni Srbin/Srpkinja)"
+          title="Tajni Srbin/Srpkinja — pošalji anoniman signal"
+        >
+          {currentSparked ? <Check size={14} /> : <Drama size={14} />}
+        </button>
         {current ? (
           <SwipeCard key={current.id} candidate={current} disabled={pending} onChoice={handleChoice} />
         ) : (
@@ -227,33 +242,15 @@ export function MuvajDeck({ initialCandidates }: { initialCandidates: DiscoveryC
 
       {error && <p className="text-center text-sm text-[var(--color-danger)]">{error}</p>}
 
-      <div className="flex items-center justify-end pb-1">
-        <button
-          type="button"
-          onClick={handleSecretSpark}
-          disabled={!current || sparkSending || currentSparked}
-          className={cn(
-            "tap-scale flex h-9 w-9 items-center justify-center rounded-full border text-white disabled:opacity-40",
-            currentSparked
-              ? "border-transparent bg-[var(--color-success)]"
-              : "border-[var(--color-border-strong)] bg-[var(--color-bg-card)] text-[var(--color-accent)]"
-          )}
-          aria-label="Pošalji tajni signal (Tajni Srbin/Srpkinja)"
-          title="Tajni Srbin/Srpkinja — pošalji anoniman signal"
-        >
-          {currentSparked ? <Check size={14} /> : <Drama size={14} />}
-        </button>
-      </div>
-
-      <p className="text-center text-xs font-medium uppercase tracking-wide text-[var(--color-text-faint)]">
+      <p className="text-center text-sm font-bold uppercase tracking-wide text-[var(--color-text)]">
         Šta bi sa mnom?
       </p>
-      <div className="flex items-center justify-center gap-2 pb-2">
+      <div className="flex items-center justify-center gap-2">
         <button
           type="button"
           onClick={() => handleChoice("krevet")}
           disabled={!current || pending}
-          className="tap-scale pulse-glow flex flex-1 items-center justify-center gap-1 whitespace-nowrap rounded-full border-2 border-[var(--color-accent-to)] bg-[var(--color-bg-card)] px-1.5 py-3.5 text-[11px] font-extrabold disabled:opacity-40"
+          className="tap-scale pulse-glow flex flex-1 items-center justify-center gap-1 whitespace-nowrap rounded-2xl border-2 border-[var(--color-accent-to)] bg-[var(--color-bg-card)] px-1.5 py-5 text-[13px] font-extrabold disabled:opacity-40"
         >
           😈 18+ CHAT
         </button>
@@ -261,17 +258,17 @@ export function MuvajDeck({ initialCandidates }: { initialCandidates: DiscoveryC
           type="button"
           onClick={() => handleChoice("upoznavanje")}
           disabled={!current || pending}
-          className="tap-scale flex flex-1 items-center justify-center gap-1 whitespace-nowrap rounded-full bg-gradient-accent px-1.5 py-3.5 text-[11px] font-extrabold text-white disabled:opacity-40"
+          className="tap-scale flex flex-1 items-center justify-center gap-1 whitespace-nowrap rounded-2xl bg-gradient-accent px-1.5 py-5 text-[13px] font-extrabold text-white disabled:opacity-40"
         >
-          <Heart size={15} /> UPOZNAVANJE
+          <Heart size={17} /> UPOZNAVANJE
         </button>
         <button
           type="button"
           onClick={() => handleChoice("nista")}
           disabled={!current || pending}
-          className="tap-scale flex flex-1 items-center justify-center gap-1 whitespace-nowrap rounded-full border border-[var(--color-border-strong)] bg-[var(--color-bg-card)] px-1.5 py-3.5 text-[11px] font-extrabold text-[var(--color-danger)] disabled:opacity-40"
+          className="tap-scale flex flex-1 items-center justify-center gap-1 whitespace-nowrap rounded-2xl border border-[var(--color-border-strong)] bg-[var(--color-bg-card)] px-1.5 py-5 text-[13px] font-extrabold text-[var(--color-danger)] disabled:opacity-40"
         >
-          <X size={15} /> NIŠTA
+          <X size={17} /> NIŠTA
         </button>
       </div>
 
