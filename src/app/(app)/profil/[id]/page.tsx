@@ -96,15 +96,15 @@ export default async function OtherProfilePage({ params }: { params: Promise<{ i
               key={p.id}
               src={p.url}
               alt={baseProfile.name}
-              className="h-80 w-64 shrink-0 snap-center rounded-3xl object-cover"
+              className="h-[46vh] max-h-[420px] min-h-[300px] w-64 shrink-0 snap-center rounded-3xl object-cover"
             />
           ))}
         </div>
       ) : primaryPhoto?.url ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={primaryPhoto.url} alt={baseProfile.name} className="h-80 w-full rounded-3xl object-cover" />
+        <img src={primaryPhoto.url} alt={baseProfile.name} className="h-[46vh] max-h-[420px] min-h-[300px] w-full rounded-3xl object-cover" />
       ) : (
-        <div className="flex h-80 w-full items-center justify-center rounded-3xl bg-gradient-accent text-5xl font-bold text-white">
+        <div className="flex h-[46vh] max-h-[420px] min-h-[300px] w-full items-center justify-center rounded-3xl bg-gradient-accent text-5xl font-bold text-white">
           {baseProfile.name?.[0]?.toUpperCase() ?? "?"}
         </div>
       )}

@@ -12,15 +12,12 @@ export default async function MuvajPage() {
   const { candidates, error } = await getMoreCandidates();
 
   return (
-    <div className="flex flex-col gap-3 px-4 pt-4">
+    <div className="flex flex-col gap-2 px-4 pt-2">
       <header className="flex items-center justify-between gap-2">
-        <div>
-          <h1 className="flex items-center gap-1.5 text-2xl font-bold">
-            🔥 <span className="text-gradient">Muvaj</span>{" "}
-            <SerbianFlag className="mb-0.5 h-4 w-6 rounded-[2px]" />
-          </h1>
-          <p className="text-sm text-[var(--color-text-muted)]">Ljudi koji ti najviše odgovaraju</p>
-        </div>
+        <h1 className="flex items-center gap-1.5 text-xl font-bold">
+          🔥 <span className="text-gradient">Muvaj</span>{" "}
+          <SerbianFlag className="mb-0.5 h-4 w-6 rounded-[2px]" />
+        </h1>
         <Link
           href="/muvaj/izbori"
           aria-label="Moji izbori"

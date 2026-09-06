@@ -200,7 +200,7 @@ export function MuvajDeck({ initialCandidates }: { initialCandidates: DiscoveryC
 
   return (
     <div className="relative flex flex-col gap-2">
-      <div className="relative h-[38vh] max-h-[340px] min-h-[260px]">
+      <div className="relative h-[46vh] max-h-[420px] min-h-[300px]">
         <button
           type="button"
           onClick={handleSecretSpark}
