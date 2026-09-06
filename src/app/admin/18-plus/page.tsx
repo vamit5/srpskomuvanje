@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = { title: "Admin — 18+ Muvanje" };
@@ -58,9 +59,9 @@ export default async function Admin18PlusPage() {
         </div>
         <p className="mt-2 text-xs text-[var(--color-text-faint)]">
           Stvaran prihod u € (Credits paketi + Boost kupovine) prati se u Stripe Dashboard-u i na stranici{" "}
-          <a href="/admin/users" className="underline">
+          <Link href="/admin/users" className="underline">
             Korisnici
-          </a>
+          </Link>
           .
         </p>
       </div>

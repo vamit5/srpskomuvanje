@@ -6,13 +6,18 @@ import { NotificationsList } from "./NotificationsList";
 export const metadata = { title: "Obaveštenja" };
 
 /** Gde vodi klik na obaveštenje, po tipu -- MORA se azurirati kad god se doda novi tip notifikacije. */
-function notificationHref(type: string, data: { matchId?: string; otherId?: string } | null): string | null {
+function notificationHref(
+  type: string,
+  data: { matchId?: string; otherId?: string; newUserId?: string } | null
+): string | null {
   if (data?.matchId) return `/poruke/${data.matchId}`;
   switch (type) {
     case "krevet_signal":
       return "/18-plus";
     case "like":
       return "/ko-te-zeli";
+    case "new_user":
+      return data?.newUserId ? `/profil/${data.newUserId}` : "/muvaj";
     case "nearby":
     case "hot_mode":
     case "event":
@@ -62,7 +67,7 @@ export default async function ObavestenjaPage() {
             type: n.type,
             title: n.title,
             body: n.body,
-            href: notificationHref(n.type, n.data as { matchId?: string; otherId?: string } | null),
+            href: notificationHref(n.type, n.data as { matchId?: string; otherId?: string; newUserId?: string } | null),
             isRead: n.is_read,
             createdAt: n.created_at,
           }))}

@@ -1,8 +1,11 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { createClient, getAuthUser } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { computeProfileCompletionScore } from "@/lib/scoring";
+import { sendPushToProfile } from "@/lib/push/send";
 
 export interface OnboardingInput {
   name: string;
@@ -87,6 +90,37 @@ export async function completeOnboarding(input: OnboardingInput) {
   // unutar same funkcije). Best-effort: ne sme da obori onboarding ako
   // ovo iz nekog razloga ne uspe.
   await supabase.rpc("grant_signup_bonus", { viewer_id: user.id });
+
+  // Obavesti SVE postojeće korisnike da se neko nov pridružio (izričit
+  // zahtev). notifications tabela nema INSERT politiku za obične
+  // korisnike (sve ostalo ide preko SECURITY DEFINER funkcija) -- ovde
+  // zato koristimo admin (service-role) klijent, isti obrazac kao za
+  // push slanje drugom korisniku.
+  const admin = createAdminClient();
+  const { data: others } = await admin.from("profiles").select("id").neq("id", user.id).is("deleted_at", null);
+
+  if (others?.length) {
+    const title = "🎉 Novi korisnik/ca na Srpskomuvanju";
+    const body = `${input.name.trim()} se upravo pridružio/la${input.city.trim() ? " iz " + input.city.trim() : ""}.`;
+
+    await admin.from("notifications").insert(
+      others.map((o) => ({
+        profile_id: o.id,
+        type: "new_user",
+        title,
+        body,
+        data: { newUserId: user.id },
+      }))
+    );
+
+    // Push posle redirect-a (after()) -- ne sme da uspori onboarding,
+    // i Next.js garantuje da se izvrši do kraja i na serverless hostingu.
+    after(() =>
+      Promise.all(
+        others.map((o) => sendPushToProfile(o.id, { title, body, url: `/profil/${user.id}`, tag: "new_user" }))
+      )
+    );
+  }
 
   redirect("/sada");
 }

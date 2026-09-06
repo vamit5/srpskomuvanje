@@ -1,18 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import sharp from "sharp";
 import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { moderateImage } from "@/lib/moderation";
+import { adminProcessAndStorePhoto } from "@/lib/adminPhoto";
 import { computeProfileCompletionScore } from "@/lib/scoring";
-import {
-  PHOTO_MAIN_MAX_DIMENSION,
-  PHOTO_THUMB_SIZE,
-  PHOTO_MAIN_QUALITY,
-  PHOTO_THUMB_QUALITY,
-  MAX_RAW_PHOTO_PICK_BYTES,
-} from "@/lib/media/constants";
+import { MAX_RAW_PHOTO_PICK_BYTES } from "@/lib/media/constants";
 
 async function requireAdmin() {
   const supabase = await createClient();
@@ -92,37 +85,8 @@ export async function createManualUser(formData: FormData): Promise<{ error: str
   const newUserId = created.user.id;
 
   try {
-    // 2) Fotografija -- ISTA obrada i ISTA moderacija kao za svaki drugi
-    // upload (bez izuzetka, čak ni za admin-dodate naloge).
-    const rawBuffer = Buffer.from(await photo.arrayBuffer());
-    const mainBuffer = await sharp(rawBuffer)
-      .rotate()
-      .resize({ width: PHOTO_MAIN_MAX_DIMENSION, height: PHOTO_MAIN_MAX_DIMENSION, fit: "inside", withoutEnlargement: true })
-      .webp({ quality: Math.round(PHOTO_MAIN_QUALITY * 100) })
-      .toBuffer({ resolveWithObject: true });
-    const thumbBuffer = await sharp(rawBuffer)
-      .rotate()
-      .resize(PHOTO_THUMB_SIZE, PHOTO_THUMB_SIZE, { fit: "cover" })
-      .webp({ quality: Math.round(PHOTO_THUMB_QUALITY * 100) })
-      .toBuffer();
-
-    const id = crypto.randomUUID();
-    const path = `${newUserId}/${id}.webp`;
-    const thumbPath = `${newUserId}/${id}-thumb.webp`;
-
-    const [{ error: upErr1 }, { error: upErr2 }] = await Promise.all([
-      admin.storage.from("photos").upload(path, mainBuffer.data, { contentType: "image/webp" }),
-      admin.storage.from("photos").upload(thumbPath, thumbBuffer, { contentType: "image/webp" }),
-    ]);
-    if (upErr1 || upErr2) throw new Error("Upload fotografije nije uspeo.");
-
-    const mainUrl = admin.storage.from("photos").getPublicUrl(path).data.publicUrl;
-    const thumbUrl = admin.storage.from("photos").getPublicUrl(thumbPath).data.publicUrl;
-
-    const moderation = await moderateImage(mainUrl);
-
-    // 3) Profil + preferences + fotografija -- isti oblik podataka kao
-    // completeOnboarding, samo upisano preko admin klijenta.
+    // 2) Profil + preferences -- isti oblik podataka kao completeOnboarding,
+    // samo upisano preko admin klijenta.
     const score = computeProfileCompletionScore({
       hasCity: !!city,
       hasBio: bio.length >= 10,
@@ -157,26 +121,20 @@ export async function createManualUser(formData: FormData): Promise<{ error: str
 
     await admin.from("notification_preferences").upsert({ profile_id: newUserId });
 
-    const { error: photoError } = await admin.from("profile_photos").insert({
-      profile_id: newUserId,
-      url: mainUrl,
-      thumbnail_url: thumbUrl,
-      storage_path: path,
-      thumbnail_path: thumbPath,
-      width: mainBuffer.info.width,
-      height: mainBuffer.info.height,
+    // 3) Fotografija -- ISTA obrada i ISTA moderacija kao za svaki drugi
+    // upload (bez izuzetka, čak ni za admin-dodate naloge).
+    const { error: photoError, moderationStatus } = await adminProcessAndStorePhoto(admin, newUserId, photo, {
       position: 0,
-      is_primary: true,
-      moderation_status: moderation.status,
+      isPrimary: true,
     });
-    if (photoError) throw new Error("Ne mogu da sačuvam fotografiju.");
+    if (photoError) throw new Error(photoError);
 
     revalidatePath("/admin/users");
     return {
       error:
-        moderation.status === "rejected"
+        moderationStatus === "rejected"
           ? "Nalog je napravljen, ali fotografija je odbijena (neprikladan sadržaj) — zameni je na /admin/sadrzaj."
-          : moderation.status === "pending"
+          : moderationStatus === "pending"
             ? "Nalog je napravljen — fotografija čeka ručnu proveru na /admin/sadrzaj pre nego što postane vidljiva."
             : null,
     };

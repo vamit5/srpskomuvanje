@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { toggleDiscoverable } from "../actions";
 
 interface UserRow {
@@ -75,7 +76,10 @@ export function UsersTable({ initialUsers }: { initialUsers: UserRow[] }) {
                   <span className="text-[var(--color-danger)]">Sakriven</span>
                 )}
               </td>
-              <td className="px-3 py-2">
+              <td className="flex items-center gap-3 px-3 py-2">
+                <Link href={`/admin/users/${u.id}`} className="tap-scale text-xs text-[var(--color-accent)] underline">
+                  Uredi
+                </Link>
                 <button
                   type="button"
                   disabled={busyId === u.id}

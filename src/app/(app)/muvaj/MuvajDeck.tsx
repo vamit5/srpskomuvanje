@@ -104,7 +104,7 @@ export function MuvajDeck({ initialCandidates }: { initialCandidates: DiscoveryC
   const [sparkedIds, setSparkedIds] = useState<Set<string>>(new Set());
   const [sparkSending, setSparkSending] = useState(false);
   const [sparkToast, setSparkToast] = useState(false);
-  const [krevetToast, setKrevetToast] = useState(false);
+  const [actionToast, setActionToast] = useState<string | null>(null);
   const fetchingMore = useRef(false);
   const toastTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -141,11 +141,15 @@ export function MuvajDeck({ initialCandidates }: { initialCandidates: DiscoveryC
     }
     if (result.matched) {
       setMatched({ candidate: target, viaSpark: false });
-    } else if (choice === "krevet") {
-      vibrate(30);
-      setKrevetToast(true);
+    } else if (choice === "krevet" || choice === "upoznavanje") {
+      if (choice === "krevet") vibrate(30);
+      setActionToast(
+        choice === "krevet"
+          ? "😈 Poslato — sada čekamo da ova osoba odgovori"
+          : "💬 Poslato — sada čekamo da ova osoba odgovori"
+      );
       if (toastTimeout.current) clearTimeout(toastTimeout.current);
-      toastTimeout.current = setTimeout(() => setKrevetToast(false), 2500);
+      toastTimeout.current = setTimeout(() => setActionToast(null), 2500);
     }
   }
 
@@ -195,8 +199,8 @@ export function MuvajDeck({ initialCandidates }: { initialCandidates: DiscoveryC
   const currentSparked = current ? sparkedIds.has(current.id) : false;
 
   return (
-    <div className="relative flex flex-1 flex-col gap-4">
-      <div className="relative flex-1">
+    <div className="relative flex flex-col gap-3">
+      <div className="relative h-[46vh] max-h-[420px] min-h-[300px]">
         {current ? (
           <SwipeCard key={current.id} candidate={current} disabled={pending} onChoice={handleChoice} />
         ) : (
@@ -214,9 +218,9 @@ export function MuvajDeck({ initialCandidates }: { initialCandidates: DiscoveryC
             🤫 Tajni signal poslat — ako ti i on/ona uzvratite, otključava se match
           </div>
         )}
-        {krevetToast && (
+        {actionToast && (
           <div className="absolute inset-x-0 top-4 z-50 mx-auto w-fit rounded-full bg-black/80 px-4 py-2 text-sm text-white shadow-lg">
-            😈 Poslato — ako i ona/on izabere tebe, otključava se match
+            {actionToast}
           </div>
         )}
       </div>
@@ -241,6 +245,9 @@ export function MuvajDeck({ initialCandidates }: { initialCandidates: DiscoveryC
         </button>
       </div>
 
+      <p className="text-center text-xs font-medium uppercase tracking-wide text-[var(--color-text-faint)]">
+        Šta bi sa mnom?
+      </p>
       <div className="flex items-center justify-center gap-2 pb-2">
         <button
           type="button"

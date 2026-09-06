@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SerbianFlag } from "@/components/SerbianFlag";
 import { getMoreCandidates, touchActivity } from "./actions";
@@ -10,13 +11,23 @@ export default async function MuvajPage() {
   const { candidates, error } = await getMoreCandidates();
 
   return (
-    <div className="flex h-[75vh] flex-col gap-3 px-4 pt-4">
-      <header>
-        <h1 className="flex items-center gap-1.5 text-2xl font-bold">
-          🔥 <span className="text-gradient">Muvaj</span>{" "}
-          <SerbianFlag className="mb-0.5 h-4 w-6 rounded-[2px]" />
-        </h1>
-        <p className="text-sm text-[var(--color-text-muted)]">Ljudi koji ti najviše odgovaraju</p>
+    <div className="flex flex-col gap-3 px-4 pt-4">
+      <header className="flex items-center justify-between gap-2">
+        <div>
+          <h1 className="flex items-center gap-1.5 text-2xl font-bold">
+            🔥 <span className="text-gradient">Muvaj</span>{" "}
+            <SerbianFlag className="mb-0.5 h-4 w-6 rounded-[2px]" />
+          </h1>
+          <p className="text-sm text-[var(--color-text-muted)]">Ljudi koji ti najviše odgovaraju</p>
+        </div>
+        <Link
+          href="/muvaj/izbori"
+          aria-label="Moji izbori"
+          className="tap-scale glass flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lg"
+          title="Moji izbori — ljudi koje čekaš da ti odgovore"
+        >
+          📋
+        </Link>
       </header>
 
       {error ? (
