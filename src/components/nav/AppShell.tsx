@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { User } from "lucide-react";
 import { BottomNav } from "./BottomNav";
+import { OnlinePresenceProvider } from "@/components/OnlinePresence";
 import { cn } from "@/lib/utils";
 
 /**
@@ -22,15 +23,18 @@ export function AppShell({
   children,
   eighteenPlusPending = false,
   creditsBalance,
+  userId,
 }: {
   children: React.ReactNode;
   eighteenPlusPending?: boolean;
   creditsBalance?: number;
+  userId: string;
 }) {
   const pathname = usePathname();
   const fullScreen = isFullScreenRoute(pathname);
 
   return (
+    <OnlinePresenceProvider userId={userId}>
     <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col">
       {/* Traka srpske trobojke -- vidljiva na SVAKOJ stranici (i chat),
           "nesto drugo pored zastave" iz zahteva -- konstantan brend dodir.
@@ -88,5 +92,6 @@ export function AppShell({
       </main>
       {!fullScreen && <BottomNav eighteenPlusPending={eighteenPlusPending} />}
     </div>
+    </OnlinePresenceProvider>
   );
 }

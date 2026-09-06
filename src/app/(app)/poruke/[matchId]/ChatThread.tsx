@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Send, Check, CheckCheck, MoreVertical } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { useIsOnline } from "@/components/OnlinePresence";
 import { cn } from "@/lib/utils";
 import { foodFavoriteLabel } from "@/lib/foodFavorites";
 import { pickIcebreakers } from "@/lib/icebreakers";
@@ -39,7 +40,7 @@ export function ChatThread({
   otherId,
   otherName,
   otherPhotoUrl,
-  otherOnline,
+  otherShowsOnlineStatus,
   initialMessages,
   isUnmatched,
   foodMatches,
@@ -51,7 +52,10 @@ export function ChatThread({
   otherId: string;
   otherName: string;
   otherPhotoUrl: string | null;
-  otherOnline: boolean;
+  /** Da li je DRUGA osoba ukljucila prikaz online statusa (privatnost) --
+   * stvaran status se racuna uzivo preko OnlinePresence, ovo samo odlucuje
+   * da li ga uopste smemo prikazati. */
+  otherShowsOnlineStatus: boolean;
   initialMessages: MessageRow[];
   isUnmatched: boolean;
   foodMatches: string[];
@@ -61,6 +65,10 @@ export function ChatThread({
   backHref?: string;
 }) {
   const router = useRouter();
+  // Stvaran, uzivo online status (Supabase Realtime Presence) -- ne
+  // procena po "poslednja aktivnost pre X minuta". Postuje privatnost:
+  // ako druga osoba nije ukljucila prikaz statusa, nikad ne pitamo/prikazujemo.
+  const otherOnline = useIsOnline(otherShowsOnlineStatus ? otherId : null);
   const [messages, setMessages] = useState<MessageRow[]>(initialMessages);
   const [draft, setDraft] = useState("");
   const [icebreakerSeed, setIcebreakerSeed] = useState(0);

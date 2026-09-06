@@ -27,7 +27,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!profile?.onboarding_completed_at) redirect("/onboarding");
 
   return (
-    <AppShell eighteenPlusPending={(krevetPendingCount ?? 0) > 0} creditsBalance={wallet?.balance_credits ?? 0}>
+    <AppShell
+      eighteenPlusPending={(krevetPendingCount ?? 0) > 0}
+      creditsBalance={wallet?.balance_credits ?? 0}
+      userId={user.id}
+    >
       {children}
     </AppShell>
   );

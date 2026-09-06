@@ -12,15 +12,25 @@ export default async function MojiIzboriPage() {
   } = await getAuthUser();
   if (!user) return null;
 
-  const [{ data: likes }, { data: krevetSignals }, { data: myMatches }] = await Promise.all([
+  type KrevetTarget = { to_profile_id: string; created_at: string };
+
+  const [{ data: likes }, { data: krevetSignalsRaw }, { data: myMatches }] = await Promise.all([
     supabase.from("likes").select("to_profile_id, created_at").eq("from_profile_id", user.id),
-    supabase.from("krevet_signals").select("to_profile_id, created_at").eq("from_profile_id", user.id),
+    // NE obican .from("krevet_signals").select(...) -- ta tabela ima
+    // namerno kolonsko REVOKE na from_profile_id za CEO 'authenticated'
+    // role (da primalac ne vidi ko mu je poslao dok ne plati), sto bi
+    // blokiralo i OVAJ upit (posiljalac cita svoje sopstvene redove).
+    // get_my_sent_krevet_targets zaobilazi to (SECURITY DEFINER) i vraca
+    // samo ono sto posiljalac vec zna -- kome je poslao, kad.
+    supabase.rpc("get_my_sent_krevet_targets", { viewer_id: user.id }),
     supabase
       .from("matches")
       .select("profile_a_id, profile_b_id")
       .or(`profile_a_id.eq.${user.id},profile_b_id.eq.${user.id}`)
       .is("unmatched_at", null),
   ]);
+
+  const krevetSignals = (krevetSignalsRaw ?? []) as KrevetTarget[];
 
   // Već spojeni (match) više nisu "čekanje" -- razgovor im je već otvoren
   // (u Porukama ili 18+ chatu), ne treba ih duplirati ovde.
@@ -29,7 +39,7 @@ export default async function MojiIzboriPage() {
   );
 
   const pendingLikes = (likes ?? []).filter((l) => !matchedIds.has(l.to_profile_id));
-  const pendingKrevet = (krevetSignals ?? []).filter((k) => !matchedIds.has(k.to_profile_id));
+  const pendingKrevet = krevetSignals.filter((k) => !matchedIds.has(k.to_profile_id));
 
   const allIds = [...new Set([...pendingLikes.map((l) => l.to_profile_id), ...pendingKrevet.map((k) => k.to_profile_id)])];
 

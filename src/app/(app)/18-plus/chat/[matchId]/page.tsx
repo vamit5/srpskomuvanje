@@ -1,11 +1,8 @@
 import { redirect } from "next/navigation";
 import { createClient, getAuthUser } from "@/lib/supabase/server";
-import { isRecentlyActive } from "@/lib/utils";
 import { ChatThread } from "../../../poruke/[matchId]/ChatThread";
 
 export const metadata = { title: "18+ Muvanje — chat" };
-
-const ONLINE_WINDOW_MS = 5 * 60 * 1000;
 
 /**
  * Namerno ODVOJENA ruta od /poruke/[matchId] -- korisnik je bio eksplicitan:
@@ -33,7 +30,7 @@ export default async function EighteenPlusChatPage({ params }: { params: Promise
   const otherId = match.profile_a_id === user!.id ? match.profile_b_id : match.profile_a_id;
 
   const [{ data: other }, { data: photo }, { data: messages }] = await Promise.all([
-    supabase.from("profiles").select("name, last_active_at, show_online_status").eq("id", otherId).single(),
+    supabase.from("profiles").select("name, show_online_status").eq("id", otherId).single(),
     supabase
       .from("profile_photos")
       .select("thumbnail_url")
@@ -48,8 +45,6 @@ export default async function EighteenPlusChatPage({ params }: { params: Promise
       .order("created_at"),
   ]);
 
-  const isOnline = !!other?.show_online_status && isRecentlyActive(other.last_active_at, ONLINE_WINDOW_MS);
-
   return (
     <ChatThread
       matchId={matchId}
@@ -57,7 +52,7 @@ export default async function EighteenPlusChatPage({ params }: { params: Promise
       otherId={otherId}
       otherName={other?.name ?? "Korisnik"}
       otherPhotoUrl={photo?.thumbnail_url ?? null}
-      otherOnline={isOnline}
+      otherShowsOnlineStatus={!!other?.show_online_status}
       initialMessages={messages ?? []}
       isUnmatched={!!match.unmatched_at}
       foodMatches={[]}

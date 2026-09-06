@@ -44,11 +44,14 @@ export function CreditsModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 sm:items-center">
-      {/* max-h + unutrasnji overflow-y-auto na listi paketa -- bez ovoga,
-          5 paketa (5/10/25/50/100) zna da bude vise od visine ekrana na
-          nizim telefonima, pa se poslednji paket i "Zatvori" dugme
-          odseku van vidljive zone. Header/opis/dugme ostaju fiksni,
+    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/70 sm:items-center">
+      {/* z-[60], NE z-50 -- BottomNav je TAKODJE fixed na z-50, pa je pri
+          istom z-indexu iscrtavan PREKO donjeg dela modala (poslednji
+          paket, "Zatvori" dugme) po redosledu u DOM-u, bez obzira na
+          unutrasnji scroll. max-h + unutrasnji overflow-y-auto na listi
+          paketa -- 5 paketa (5/10/25/50/100) zna da bude vise od visine
+          ekrana na nizim telefonima, pa se poslednji paket i "Zatvori"
+          dugme odseku van vidljive zone. Header/opis/dugme ostaju fiksni,
           scroluje se SAMO lista paketa u sredini. */}
       <div className="flex max-h-[85dvh] w-full max-w-sm flex-col rounded-t-3xl bg-[var(--color-bg-card)] sm:rounded-3xl">
         <div className="p-5 pb-0">
