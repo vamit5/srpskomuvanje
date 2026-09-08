@@ -32,6 +32,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           { href: "/admin/18-plus", label: "18+ Muvanje" },
           { href: "/admin/users", label: "Korisnici" },
           { href: "/admin/events", label: "Događaji" },
+          { href: "/admin/predlozi", label: "Predlozi poruka" },
         ].map((tab) => (
           <Link
             key={tab.href}

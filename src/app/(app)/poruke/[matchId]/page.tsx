@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient, getAuthUser } from "@/lib/supabase/server";
+import { getChatSuggestionPool } from "@/lib/chatSuggestions";
 import { ChatThread } from "./ChatThread";
 
 export const metadata = { title: "Razgovor" };
@@ -23,7 +24,7 @@ export default async function ChatPage({ params }: { params: Promise<{ matchId: 
 
   const otherId = match.profile_a_id === user!.id ? match.profile_b_id : match.profile_a_id;
 
-  const [{ data: other }, { data: photo }, { data: messages }, { data: foodMatchesRaw }] = await Promise.all([
+  const [{ data: other }, { data: photo }, { data: messages }, { data: foodMatchesRaw }, suggestionPool] = await Promise.all([
     supabase.from("profiles").select("name, show_online_status").eq("id", otherId).single(),
     supabase
       .from("profile_photos")
@@ -38,6 +39,7 @@ export default async function ChatPage({ params }: { params: Promise<{ matchId: 
       .eq("match_id", matchId)
       .order("created_at"),
     supabase.rpc("get_secret_room_food_match", { viewer_id: user!.id, other_id: otherId }),
+    getChatSuggestionPool(supabase, "normal"),
   ]);
 
   return (
@@ -51,6 +53,7 @@ export default async function ChatPage({ params }: { params: Promise<{ matchId: 
       initialMessages={messages ?? []}
       isUnmatched={!!match.unmatched_at}
       foodMatches={(foodMatchesRaw as string[] | null) ?? []}
+      suggestionPool={suggestionPool}
     />
   );
 }

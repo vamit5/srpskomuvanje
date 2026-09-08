@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient, getAuthUser } from "@/lib/supabase/server";
+import { getChatSuggestionPool } from "@/lib/chatSuggestions";
 import { ChatThread } from "../../../poruke/[matchId]/ChatThread";
 
 export const metadata = { title: "18+ Muvanje — chat" };
@@ -29,7 +30,7 @@ export default async function EighteenPlusChatPage({ params }: { params: Promise
 
   const otherId = match.profile_a_id === user!.id ? match.profile_b_id : match.profile_a_id;
 
-  const [{ data: other }, { data: photo }, { data: messages }] = await Promise.all([
+  const [{ data: other }, { data: photo }, { data: messages }, suggestionPool] = await Promise.all([
     supabase.from("profiles").select("name, show_online_status").eq("id", otherId).single(),
     supabase
       .from("profile_photos")
@@ -43,6 +44,7 @@ export default async function EighteenPlusChatPage({ params }: { params: Promise
       .select("id, match_id, sender_id, content, image_url, night_content_id, created_at, read_at")
       .eq("match_id", matchId)
       .order("created_at"),
+    getChatSuggestionPool(supabase, "hot"),
   ]);
 
   return (
@@ -56,6 +58,7 @@ export default async function EighteenPlusChatPage({ params }: { params: Promise
       initialMessages={messages ?? []}
       isUnmatched={!!match.unmatched_at}
       foodMatches={[]}
+      suggestionPool={suggestionPool}
       hot
       backHref="/18-plus"
     />

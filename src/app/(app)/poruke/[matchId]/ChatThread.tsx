@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useIsOnline } from "@/components/OnlinePresence";
 import { cn } from "@/lib/utils";
 import { foodFavoriteLabel } from "@/lib/foodFavorites";
-import { pickIcebreakers } from "@/lib/icebreakers";
+import { pickIcebreakers, type SuggestionPool } from "@/lib/icebreakers";
 import { Button } from "@/components/ui/Button";
 import { sendMessage, markAsRead, unmatchAction, type MessageRow } from "../actions";
 import { reportUser, blockUser, type ReportReason } from "../../_safety/actions";
@@ -44,6 +44,7 @@ export function ChatThread({
   initialMessages,
   isUnmatched,
   foodMatches,
+  suggestionPool,
   hot = false,
   backHref = "/poruke",
 }: {
@@ -59,6 +60,9 @@ export function ChatThread({
   initialMessages: MessageRow[];
   isUnmatched: boolean;
   foodMatches: string[];
+  /** Predlozi poruka iz baze (chat_suggestions), vec ucitani server-strane
+   * za pravu kategoriju (normal/hot) -- admin ih menja na /admin/predlozi. */
+  suggestionPool: SuggestionPool;
   /** 18+ Muvanje chat -- malo direktniji predlozi poruka, i dalje bez graficnog sadrzaja. */
   hot?: boolean;
   /** Gde vodi "← Nazad" -- /poruke za obican chat, /18-plus za 18+ Muvanje chat. */
@@ -158,7 +162,7 @@ export function ChatThread({
   // predlozi" dugme). pickIcebreakers je potpuno deterministicka funkcija
   // (bez Math.random) -- bezbedno se racuna direktno u renderu, isti
   // rezultat na serveru i klijentu (bez hydration mismatch-a).
-  const icebreakers = pickIcebreakers(3, hot, messages.length, icebreakerSeed);
+  const icebreakers = pickIcebreakers(suggestionPool, messages.length, icebreakerSeed);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
