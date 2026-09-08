@@ -46,6 +46,7 @@ export async function createManualUser(formData: FormData): Promise<{ error: str
   const birthDate = String(formData.get("birthDate") || "");
   const gender = String(formData.get("gender") || "");
   const interestedIn = formData.getAll("interestedIn").map(String);
+  const lookingFor = String(formData.get("lookingFor") || "");
   const city = String(formData.get("city") || "").trim();
   const bio = String(formData.get("bio") || "").trim();
   const interests = formData.getAll("interests").map(String);
@@ -62,6 +63,9 @@ export async function createManualUser(formData: FormData): Promise<{ error: str
   if (calculateAge(birthDate) < 18) return { error: "Osoba mora imati bar 18 godina." };
   if (!["musko", "zensko", "drugo"].includes(gender)) return { error: "Izaberi pol." };
   if (!interestedIn.length) return { error: "Izaberi koga osoba želi da upozna." };
+  if (!["sex", "buduci_partner", "upoznavanje"].includes(lookingFor)) {
+    return { error: "Izaberi šta osoba traži na aplikaciji." };
+  }
   if (!photo || photo.size === 0) return { error: "Dodaj profilnu fotografiju." };
   if (photo.size > MAX_RAW_PHOTO_PICK_BYTES) return { error: "Fotografija je prevelika (maksimalno 20MB)." };
 
@@ -104,6 +108,7 @@ export async function createManualUser(formData: FormData): Promise<{ error: str
       gender,
       city: city || null,
       bio: bio || null,
+      looking_for: lookingFor,
       interests,
       food_favorites: foodFavorites,
       is_18_confirmed: true,

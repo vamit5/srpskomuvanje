@@ -9,11 +9,18 @@ import { FOOD_FAVORITE_OPTIONS } from "@/lib/foodFavorites";
 import { createManualUser } from "./actions";
 
 type Gender = "musko" | "zensko" | "drugo";
+type LookingFor = "sex" | "buduci_partner" | "upoznavanje";
 
 const GENDERS: { value: Gender; label: string }[] = [
   { value: "musko", label: "Muško" },
   { value: "zensko", label: "Žensko" },
   { value: "drugo", label: "Drugo" },
+];
+
+const LOOKING_FOR_OPTIONS: { value: LookingFor; label: string }[] = [
+  { value: "sex", label: "Sex" },
+  { value: "buduci_partner", label: "Buduću ženu / muža" },
+  { value: "upoznavanje", label: "Upoznavanje" },
 ];
 
 const CITIES = [
@@ -39,6 +46,7 @@ export function NewUserForm() {
   const [birthDate, setBirthDate] = useState("");
   const [gender, setGender] = useState<Gender | "">("");
   const [interestedIn, setInterestedIn] = useState<Gender[]>([]);
+  const [lookingFor, setLookingFor] = useState<LookingFor | "">("");
   const [city, setCity] = useState("");
   const [bio, setBio] = useState("");
   const [interests, setInterests] = useState<string[]>([]);
@@ -67,6 +75,7 @@ export function NewUserForm() {
     if (!birthDate) return setError("Unesi datum rođenja.");
     if (!gender) return setError("Izaberi pol.");
     if (!interestedIn.length) return setError("Izaberi koga osoba želi da upozna.");
+    if (!lookingFor) return setError("Izaberi šta osoba traži na aplikaciji.");
     const photoFile = photoInputRef.current?.files?.[0];
     if (!photoFile) return setError("Dodaj profilnu fotografiju.");
 
@@ -77,6 +86,7 @@ export function NewUserForm() {
     fd.set("birthDate", birthDate);
     fd.set("gender", gender);
     interestedIn.forEach((g) => fd.append("interestedIn", g));
+    fd.set("lookingFor", lookingFor);
     fd.set("city", city);
     fd.set("bio", bio);
     interests.forEach((i) => fd.append("interests", i));
@@ -177,6 +187,25 @@ export function NewUserForm() {
               )}
             >
               {g.label}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <h3 className="text-sm font-semibold text-[var(--color-text-muted)]">Šta traži na aplikaciji?</h3>
+        <div className="flex gap-2">
+          {LOOKING_FOR_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setLookingFor(opt.value)}
+              className={cn(
+                "tap-scale flex-1 rounded-xl border px-3 py-3 text-sm font-medium",
+                lookingFor === opt.value ? "border-transparent bg-gradient-accent text-white" : "border-[var(--color-border-strong)] text-[var(--color-text-muted)]"
+              )}
+            >
+              {opt.label}
             </button>
           ))}
         </div>
