@@ -49,7 +49,6 @@ export async function createManualUser(formData: FormData): Promise<{ error: str
   const lookingFor = String(formData.get("lookingFor") || "");
   const city = String(formData.get("city") || "").trim();
   const bio = String(formData.get("bio") || "").trim();
-  const interests = formData.getAll("interests").map(String);
   const foodFavorites = formData.getAll("foodFavorites").map(String);
   const consentConfirmed = formData.get("consentConfirmed") === "on";
   const photo = formData.get("photo") as File | null;
@@ -96,7 +95,7 @@ export async function createManualUser(formData: FormData): Promise<{ error: str
     const score = computeProfileCompletionScore({
       hasCity: !!city,
       hasBio: bio.length >= 10,
-      interestsCount: interests.length,
+      interestsCount: 0,
       photoCount: 1,
       hasVideo: false,
     });
@@ -109,7 +108,6 @@ export async function createManualUser(formData: FormData): Promise<{ error: str
       city: city || null,
       bio: bio || null,
       looking_for: lookingFor,
-      interests,
       food_favorites: foodFavorites,
       is_18_confirmed: true,
       onboarding_completed_at: new Date().toISOString(),

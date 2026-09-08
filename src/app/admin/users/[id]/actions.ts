@@ -35,9 +35,9 @@ export async function updateManualUser(userId: string, formData: FormData): Prom
   const birthDate = String(formData.get("birthDate") || "");
   const gender = String(formData.get("gender") || "");
   const interestedIn = formData.getAll("interestedIn").map(String);
+  const lookingFor = String(formData.get("lookingFor") || "");
   const city = String(formData.get("city") || "").trim();
   const bio = String(formData.get("bio") || "").trim();
-  const interests = formData.getAll("interests").map(String);
   const foodFavorites = formData.getAll("foodFavorites").map(String);
 
   if (!name || name.trim().length < 2) return { error: "Unesi ime." };
@@ -45,18 +45,22 @@ export async function updateManualUser(userId: string, formData: FormData): Prom
   if (calculateAge(birthDate) < 18) return { error: "Osoba mora imati bar 18 godina." };
   if (!["musko", "zensko", "drugo"].includes(gender)) return { error: "Izaberi pol." };
   if (!interestedIn.length) return { error: "Izaberi koga osoba želi da upozna." };
+  if (!["sex", "buduci_partner", "upoznavanje"].includes(lookingFor)) {
+    return { error: "Izaberi šta osoba traži na aplikaciji." };
+  }
 
   const admin = createAdminClient();
 
-  const [{ count: photoCount }, { count: videoCount }] = await Promise.all([
+  const [{ count: photoCount }, { count: videoCount }, { data: existingProfile }] = await Promise.all([
     admin.from("profile_photos").select("id", { count: "exact", head: true }).eq("profile_id", userId),
     admin.from("profile_videos").select("id", { count: "exact", head: true }).eq("profile_id", userId),
+    admin.from("profiles").select("interests").eq("id", userId).maybeSingle(),
   ]);
 
   const score = computeProfileCompletionScore({
     hasCity: !!city,
     hasBio: bio.length >= 10,
-    interestsCount: interests.length,
+    interestsCount: existingProfile?.interests?.length ?? 0,
     photoCount: photoCount ?? 0,
     hasVideo: (videoCount ?? 0) > 0,
   });
@@ -69,7 +73,7 @@ export async function updateManualUser(userId: string, formData: FormData): Prom
       gender,
       city: city || null,
       bio: bio || null,
-      interests,
+      looking_for: lookingFor,
       food_favorites: foodFavorites,
       profile_completion_score: score,
     })

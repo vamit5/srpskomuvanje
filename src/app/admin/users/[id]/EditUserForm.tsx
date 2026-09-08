@@ -9,6 +9,7 @@ import { FOOD_FAVORITE_OPTIONS } from "@/lib/foodFavorites";
 import { updateManualUser } from "./actions";
 
 type Gender = "musko" | "zensko" | "drugo";
+type LookingFor = "sex" | "buduci_partner" | "upoznavanje";
 
 const GENDERS: { value: Gender; label: string }[] = [
   { value: "musko", label: "Muško" },
@@ -16,16 +17,16 @@ const GENDERS: { value: Gender; label: string }[] = [
   { value: "drugo", label: "Drugo" },
 ];
 
+const LOOKING_FOR_OPTIONS: { value: LookingFor; label: string }[] = [
+  { value: "sex", label: "Sex" },
+  { value: "buduci_partner", label: "Buduću ženu / muža" },
+  { value: "upoznavanje", label: "Upoznavanje" },
+];
+
 const CITIES = [
   "Beograd", "Novi Sad", "Niš", "Kragujevac", "Subotica", "Zrenjanin", "Pančevo",
   "Čačak", "Kraljevo", "Novi Pazar", "Leskovac", "Smederevo", "Valjevo", "Vranje",
   "Šabac", "Sombor", "Požarevac", "Užice", "Kikinda", "Sremska Mitrovica",
-];
-
-const INTERESTS = [
-  "Muzika", "Putovanja", "Fitnes", "Film", "Gejming", "Kuvanje", "Priroda",
-  "Umetnost", "Moda", "Sport", "Knjige", "Fotografija", "Ples", "Kafa",
-  "Noćni život", "Kućni ljubimci", "Joga", "Tehnologija",
 ];
 
 function toggle<T>(list: T[], value: T, setter: (v: T[]) => void) {
@@ -37,9 +38,9 @@ export interface EditUserInitial {
   birthDate: string;
   gender: Gender;
   interestedIn: Gender[];
+  lookingFor: LookingFor | "";
   city: string;
   bio: string;
-  interests: string[];
   foodFavorites: string[];
 }
 
@@ -49,9 +50,9 @@ export function EditUserForm({ userId, initial }: { userId: string; initial: Edi
   const [birthDate, setBirthDate] = useState(initial.birthDate);
   const [gender, setGender] = useState<Gender>(initial.gender);
   const [interestedIn, setInterestedIn] = useState<Gender[]>(initial.interestedIn);
+  const [lookingFor, setLookingFor] = useState<LookingFor | "">(initial.lookingFor);
   const [city, setCity] = useState(initial.city);
   const [bio, setBio] = useState(initial.bio);
-  const [interests, setInterests] = useState(initial.interests);
   const [foodFavorites, setFoodFavorites] = useState(initial.foodFavorites);
 
   const [saving, setSaving] = useState(false);
@@ -64,6 +65,7 @@ export function EditUserForm({ userId, initial }: { userId: string; initial: Edi
     if (name.trim().length < 2) return setError("Unesi ime.");
     if (!birthDate) return setError("Unesi datum rođenja.");
     if (!interestedIn.length) return setError("Izaberi koga osoba želi da upozna.");
+    if (!lookingFor) return setError("Izaberi šta osoba traži na aplikaciji.");
 
     setSaving(true);
     const fd = new FormData();
@@ -71,9 +73,9 @@ export function EditUserForm({ userId, initial }: { userId: string; initial: Edi
     fd.set("birthDate", birthDate);
     fd.set("gender", gender);
     interestedIn.forEach((g) => fd.append("interestedIn", g));
+    fd.set("lookingFor", lookingFor);
     fd.set("city", city);
     fd.set("bio", bio);
-    interests.forEach((i) => fd.append("interests", i));
     foodFavorites.forEach((f) => fd.append("foodFavorites", f));
 
     const result = await updateManualUser(userId, fd);
@@ -131,6 +133,25 @@ export function EditUserForm({ userId, initial }: { userId: string; initial: Edi
       </section>
 
       <section className="flex flex-col gap-3">
+        <h3 className="text-sm font-semibold text-[var(--color-text-muted)]">Šta traži na aplikaciji?</h3>
+        <div className="flex gap-2">
+          {LOOKING_FOR_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setLookingFor(opt.value)}
+              className={cn(
+                "tap-scale flex-1 rounded-xl border px-3 py-3 text-sm font-medium",
+                lookingFor === opt.value ? "border-transparent bg-gradient-accent text-white" : "border-[var(--color-border-strong)] text-[var(--color-text-muted)]"
+              )}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-3">
         <h3 className="text-sm font-semibold text-[var(--color-text-muted)]">Grad</h3>
         <Input list="admin-edit-cities" placeholder="Npr. Beograd" value={city} onChange={(e) => setCity(e.target.value)} />
         <datalist id="admin-edit-cities">
@@ -148,25 +169,6 @@ export function EditUserForm({ userId, initial }: { userId: string; initial: Edi
           value={bio}
           onChange={(e) => setBio(e.target.value)}
         />
-      </section>
-
-      <section className="flex flex-col gap-3">
-        <h3 className="text-sm font-semibold text-[var(--color-text-muted)]">Interesovanja</h3>
-        <div className="flex flex-wrap gap-2">
-          {INTERESTS.map((interest) => (
-            <button
-              key={interest}
-              type="button"
-              onClick={() => toggle(interests, interest, setInterests)}
-              className={cn(
-                "tap-scale rounded-full border px-3.5 py-2 text-sm",
-                interests.includes(interest) ? "border-transparent bg-gradient-accent text-white" : "border-[var(--color-border-strong)] text-[var(--color-text-muted)]"
-              )}
-            >
-              {interest}
-            </button>
-          ))}
-        </div>
       </section>
 
       <section className="flex flex-col gap-3">

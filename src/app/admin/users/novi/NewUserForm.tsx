@@ -29,12 +29,6 @@ const CITIES = [
   "Šabac", "Sombor", "Požarevac", "Užice", "Kikinda", "Sremska Mitrovica",
 ];
 
-const INTERESTS = [
-  "Muzika", "Putovanja", "Fitnes", "Film", "Gejming", "Kuvanje", "Priroda",
-  "Umetnost", "Moda", "Sport", "Knjige", "Fotografija", "Ples", "Kafa",
-  "Noćni život", "Kućni ljubimci", "Joga", "Tehnologija",
-];
-
 function toggle<T>(list: T[], value: T, setter: (v: T[]) => void) {
   setter(list.includes(value) ? list.filter((v) => v !== value) : [...list, value]);
 }
@@ -49,7 +43,6 @@ export function NewUserForm() {
   const [lookingFor, setLookingFor] = useState<LookingFor | "">("");
   const [city, setCity] = useState("");
   const [bio, setBio] = useState("");
-  const [interests, setInterests] = useState<string[]>([]);
   const [foodFavorites, setFoodFavorites] = useState<string[]>([]);
   const [consent, setConsent] = useState(false);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -89,7 +82,6 @@ export function NewUserForm() {
     fd.set("lookingFor", lookingFor);
     fd.set("city", city);
     fd.set("bio", bio);
-    interests.forEach((i) => fd.append("interests", i));
     foodFavorites.forEach((f) => fd.append("foodFavorites", f));
     fd.set("consentConfirmed", "on");
     fd.set("photo", photoFile);
@@ -229,25 +221,6 @@ export function NewUserForm() {
           value={bio}
           onChange={(e) => setBio(e.target.value)}
         />
-      </section>
-
-      <section className="flex flex-col gap-3">
-        <h3 className="text-sm font-semibold text-[var(--color-text-muted)]">Interesovanja</h3>
-        <div className="flex flex-wrap gap-2">
-          {INTERESTS.map((interest) => (
-            <button
-              key={interest}
-              type="button"
-              onClick={() => toggle(interests, interest, setInterests)}
-              className={cn(
-                "tap-scale rounded-full border px-3.5 py-2 text-sm",
-                interests.includes(interest) ? "border-transparent bg-gradient-accent text-white" : "border-[var(--color-border-strong)] text-[var(--color-text-muted)]"
-              )}
-            >
-              {interest}
-            </button>
-          ))}
-        </div>
       </section>
 
       <section className="flex flex-col gap-3">
