@@ -14,7 +14,7 @@ export interface EighteenPlusCandidate {
   lookingForSex: boolean;
 }
 
-export async function get18PlusCandidates(limit = 15): Promise<{ candidates: EighteenPlusCandidate[]; error: string | null }> {
+export async function get18PlusCandidates(limit = 100): Promise<{ candidates: EighteenPlusCandidate[]; error: string | null }> {
   const supabase = await createClient();
   const {
     data: { user },

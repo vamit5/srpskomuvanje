@@ -183,7 +183,7 @@ export function EighteenPlusApp({
       </section>
 
       <section>
-        <h2 className="mb-2 text-sm font-bold text-white/90">🔥 Pozovi nekoga na 18+ igre</h2>
+        <h2 className="mb-2 text-sm font-bold text-white/90">🔥 Ljudi koji žele 18+ igre ili sex</h2>
         {error && <p className="mb-2 text-center text-xs text-[var(--color-danger)]">{error}</p>}
         {initialCandidates.length === 0 ? (
           <div className="rounded-2xl border border-white/10 bg-black/20 px-6 py-8 text-center text-white/70">
@@ -225,14 +225,11 @@ export function EighteenPlusApp({
                       📍 {c.distanceKm < 1 ? "manje od 1 km" : Math.round(c.distanceKm) + " km"}
                     </p>
                   )}
-                  {startingId !== c.id &&
-                    (c.lookingForSex ? (
-                      <p className="mt-0.5 rounded-full bg-gradient-accent px-1.5 py-1 text-center text-[10px] font-extrabold">
-                        Tražim sex - javi mi se 😈
-                      </p>
-                    ) : (
-                      <p className="text-[10px] font-semibold text-white/70">💬 Piši odmah</p>
-                    ))}
+                  {startingId !== c.id && (
+                    <p className="mt-0.5 rounded-full bg-gradient-accent px-1.5 py-1 text-center text-[10px] font-extrabold">
+                      Hoću sex - javi mi se😈
+                    </p>
+                  )}
                 </div>
               </motion.button>
             ))}
