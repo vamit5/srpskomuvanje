@@ -54,7 +54,16 @@ export function EditUserPhotos({ userId, initialPhotos }: { userId: string; init
     setNotice(null);
     const fd = new FormData();
     fd.set("photo", file);
-    const result = await addManualUserPhoto(userId, fd);
+    // try/catch je NAMERAN -- vidi istu napomenu u NewUserForm.tsx (bez
+    // ovoga, neuhvacen izuzetak ostavlja "uploading" zauvek true).
+    let result: { error: string | null };
+    try {
+      result = await addManualUserPhoto(userId, fd);
+    } catch {
+      setUploading(false);
+      setError("Nešto nije u redu na serveru (možda prevelika slika ili prekinuta konekcija). Pokušaj ponovo.");
+      return;
+    }
     setUploading(false);
 
     if (result.error && !result.error.startsWith("Fotografija čeka") && !result.error.startsWith("Fotografija je odbijena")) {

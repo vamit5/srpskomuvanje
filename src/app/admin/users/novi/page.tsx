@@ -3,6 +3,14 @@ import { NewUserForm } from "./NewUserForm";
 
 export const metadata = { title: "Admin — Dodaj korisnika" };
 
+// Default serverless limit (10s) zna da bude tesan za obradu slike +
+// moderaciju + nekoliko upisa u bazu (createManualUser) -- vise vremena,
+// ne manje, da se izbegne "tiho" isteklo vreme koje na klijentu izgleda
+// kao vecno ucitavanje dugmeta. Server Actions NASLEDJUJU maxDuration od
+// stranice na kojoj se koriste -- ne moze da se postavi direktno u
+// "use server" fajlu akcije (Next.js to odbacuje bez jasne greske).
+export const maxDuration = 30;
+
 export default function AdminNewUserPage() {
   return (
     <div className="flex flex-col gap-4">

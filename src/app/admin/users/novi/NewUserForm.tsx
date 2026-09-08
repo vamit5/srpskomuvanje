@@ -84,7 +84,17 @@ export function NewUserForm() {
     fd.set("consentConfirmed", "on");
     fd.set("photo", photoFile);
 
-    const result = await createManualUser(fd);
+    // try/catch je NAMERAN -- bez njega, bilo koji neuhvacen izuzetak
+    // (mrezni prekid, prevelik body, isteklo vreme servera) ostavlja "saving"
+    // zauvek true i dugme deluje kao da "samo ucitava" bez ikakve poruke.
+    let result: { error: string | null };
+    try {
+      result = await createManualUser(fd);
+    } catch {
+      setSaving(false);
+      setError("Nešto nije u redu na serveru (možda prevelika slika ili prekinuta konekcija). Pokušaj ponovo.");
+      return;
+    }
     setSaving(false);
 
     if (result.error && result.error.startsWith("Nalog je napravljen")) {

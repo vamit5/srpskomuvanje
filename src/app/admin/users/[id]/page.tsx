@@ -6,6 +6,9 @@ import { EditUserPhotos } from "./EditUserPhotos";
 
 export const metadata = { title: "Admin — Uredi korisnika" };
 
+// Vidi napomenu u ../novi/page.tsx -- ista obrada slike (addManualUserPhoto).
+export const maxDuration = 30;
+
 export default async function AdminEditUserPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createClient();
