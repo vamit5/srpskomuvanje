@@ -55,6 +55,7 @@ const HOT_STAGE_2 = [
   "Da igramo igru — ja postavim pitanje, ti odgovoriš iskreno, bez okolišanja.",
   "Zvučiš kao neko ko zna šta hoće. Šta hoćeš od večeras?",
   "Ok, dosta uvoda — šta bi prvo uradio/la kad bismo se videli?",
+  "Gde još nisi probao/la nešto novo, a hteo/la bi? 😏",
 ] as const;
 
 const HOT_STAGE_3 = [
@@ -64,6 +65,8 @@ const HOT_STAGE_3 = [
   "Dosta pričanja — pokaži mi nešto posebno 🔥",
   "Kad ćemo prestati da pričamo i preći na nešto zanimljivije? 😏",
   "Radoznao/la sam — imaš nešto da mi pokažeš? 👀",
+  "Koje ti je omiljeno mesto za spontane stvari? 😏",
+  "Hoćemo da igramo sexy izazov skidanja? 😈",
 ] as const;
 
 /**

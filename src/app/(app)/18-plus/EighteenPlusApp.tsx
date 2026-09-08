@@ -220,13 +220,19 @@ export function EighteenPlusApp({
                 )}
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 to-transparent px-2.5 pb-2 pt-8 text-left">
                   <p className="text-sm font-bold">{startingId === c.id ? "Otvaram chat..." : c.name}</p>
-                  {startingId !== c.id && (
+                  {startingId !== c.id && c.distanceKm != null && (
                     <p className="text-[10px] font-semibold text-white/70">
-                      {c.distanceKm != null
-                        ? `📍 ${c.distanceKm < 1 ? "manje od 1 km" : Math.round(c.distanceKm) + " km"} · 💬 Piši odmah`
-                        : "💬 Piši odmah"}
+                      📍 {c.distanceKm < 1 ? "manje od 1 km" : Math.round(c.distanceKm) + " km"}
                     </p>
                   )}
+                  {startingId !== c.id &&
+                    (c.lookingForSex ? (
+                      <p className="mt-0.5 rounded-full bg-gradient-accent px-1.5 py-1 text-center text-[10px] font-extrabold">
+                        Tražim sex - javi mi se 😈
+                      </p>
+                    ) : (
+                      <p className="text-[10px] font-semibold text-white/70">💬 Piši odmah</p>
+                    ))}
                 </div>
               </motion.button>
             ))}

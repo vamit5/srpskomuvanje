@@ -14,7 +14,10 @@ export interface OnboardingInput {
   interestedIn: ("musko" | "zensko" | "drugo")[];
   city: string;
   bio: string;
-  interests: string[];
+  /** "Šta tražiš na Srpskomuvanje aplikaciji?" -- zamenjuje stari "interesi"
+   * korak. Odredjuje da li je neko automatski vidljiv u 18+ Muvanju
+   * ("sex") -- vidi get_18plus_candidates. */
+  lookingFor: "sex" | "buduci_partner" | "upoznavanje";
   foodFavorites: string[];
 }
 
@@ -47,13 +50,19 @@ export async function completeOnboarding(input: OnboardingInput) {
   if (!input.interestedIn.length) {
     return { error: "Izaberi koga želiš da upoznaš." };
   }
+  if (!["sex", "buduci_partner", "upoznavanje"].includes(input.lookingFor)) {
+    return { error: "Izaberi šta tražiš na aplikaciji." };
+  }
 
   // Nema fotografija/videa u ovom trenutku — dodaju se odmah posle onboardinga
   // na /profil/foto, i score se tada automatski preračunava (vidi src/lib/scoring.ts).
+  // interestsCount je uvek 0 -- "interesi" korak je uklonjen iz registracije
+  // (zamenjen "lookingFor" pitanjem), interesovanja se sad podesavaju
+  // naknadno na /profil/uredi ako korisnik hoce.
   const score = computeProfileCompletionScore({
     hasCity: !!input.city.trim(),
     hasBio: input.bio.trim().length >= 10,
-    interestsCount: input.interests.length,
+    interestsCount: 0,
     photoCount: 0,
     hasVideo: false,
   });
@@ -65,7 +74,7 @@ export async function completeOnboarding(input: OnboardingInput) {
     gender: input.gender,
     city: input.city.trim() || null,
     bio: input.bio.trim() || null,
-    interests: input.interests,
+    looking_for: input.lookingFor,
     food_favorites: input.foodFavorites,
     is_18_confirmed: true,
     onboarding_completed_at: new Date().toISOString(),
@@ -86,7 +95,7 @@ export async function completeOnboarding(input: OnboardingInput) {
 
   await supabase.from("notification_preferences").upsert({ profile_id: user.id });
 
-  // Dobrodošlica -- 3 besplatna Credits-a, jednom po nalogu (idempotentno
+  // Dobrodošlica -- 1 besplatan Credit, jednom po nalogu (idempotentno
   // unutar same funkcije). Best-effort: ne sme da obori onboarding ako
   // ovo iz nekog razloga ne uspe.
   await supabase.rpc("grant_signup_bonus", { viewer_id: user.id });

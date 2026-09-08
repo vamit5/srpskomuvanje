@@ -20,13 +20,13 @@ const CITIES = [
   "Šabac", "Sombor", "Požarevac", "Užice", "Kikinda", "Sremska Mitrovica",
 ];
 
-const INTERESTS = [
-  "Muzika", "Putovanja", "Fitnes", "Film", "Gejming", "Kuvanje", "Priroda",
-  "Umetnost", "Moda", "Sport", "Knjige", "Fotografija", "Ples", "Kafa",
-  "Noćni život", "Kućni ljubimci", "Joga", "Tehnologija",
+const LOOKING_FOR_OPTIONS: { value: OnboardingInput["lookingFor"]; label: string }[] = [
+  { value: "sex", label: "Sex" },
+  { value: "buduci_partner", label: "Buduću ženu / muža" },
+  { value: "upoznavanje", label: "Upoznavanje" },
 ];
 
-const STEPS = ["osnovno", "trazim", "grad", "opis", "interesi", "srbin"] as const;
+const STEPS = ["osnovno", "trazim", "grad", "opis", "trazis", "srbin"] as const;
 
 export function OnboardingWizard() {
   const router = useRouter();
@@ -40,7 +40,7 @@ export function OnboardingWizard() {
   const [interestedIn, setInterestedIn] = useState<OnboardingInput["gender"][]>([]);
   const [city, setCity] = useState("");
   const [bio, setBio] = useState("");
-  const [interests, setInterests] = useState<string[]>([]);
+  const [lookingFor, setLookingFor] = useState<OnboardingInput["lookingFor"] | "">("");
   const [foodFavorites, setFoodFavorites] = useState<string[]>([]);
 
   function toggle<T>(list: T[], value: T, setter: (v: T[]) => void) {
@@ -57,8 +57,8 @@ export function OnboardingWizard() {
         return city.trim().length > 1;
       case "opis":
         return true;
-      case "interesi":
-        return true;
+      case "trazis":
+        return !!lookingFor;
       case "srbin":
         return true;
     }
@@ -78,7 +78,7 @@ export function OnboardingWizard() {
       interestedIn,
       city,
       bio,
-      interests,
+      lookingFor: lookingFor as OnboardingInput["lookingFor"],
       foodFavorites,
     });
     // completeOnboarding radi redirect() na uspehu (baca NEXT_REDIRECT),
@@ -196,27 +196,30 @@ export function OnboardingWizard() {
           </div>
         )}
 
-        {STEPS[step] === "interesi" && (
+        {STEPS[step] === "trazis" && (
           <div className="flex flex-col gap-4">
-            <h1 className="text-xl font-bold">Šta te zanima?</h1>
-            <p className="text-sm text-[var(--color-text-muted)]">Izaberi bar 3 — pomaže algoritmu da nađe tvoj tip.</p>
-            <div className="flex flex-wrap gap-2">
-              {INTERESTS.map((interest) => (
+            <h1 className="text-xl font-bold">Šta tražiš na Srpskomuvanje aplikaciji?</h1>
+            <div className="flex flex-col gap-2">
+              {LOOKING_FOR_OPTIONS.map((opt) => (
                 <button
-                  key={interest}
+                  key={opt.value}
                   type="button"
-                  onClick={() => toggle(interests, interest, setInterests)}
+                  onClick={() => setLookingFor(opt.value)}
                   className={cn(
-                    "tap-scale rounded-full border px-3.5 py-2 text-sm",
-                    interests.includes(interest)
+                    "tap-scale rounded-xl border px-4 py-3.5 text-left text-sm font-medium",
+                    lookingFor === opt.value
                       ? "border-transparent bg-gradient-accent text-white"
                       : "border-[var(--color-border-strong)] text-[var(--color-text-muted)]"
                   )}
                 >
-                  {interest}
+                  {opt.label}
                 </button>
               ))}
             </div>
+            <p className="text-xs text-[var(--color-text-muted)]">
+              Na osnovu ovog odgovora, bićeš ubačen/a u odgovarajuću sekciju sa ljudima koji su
+              izabrali isto što i ti.
+            </p>
           </div>
         )}
         {STEPS[step] === "srbin" && (

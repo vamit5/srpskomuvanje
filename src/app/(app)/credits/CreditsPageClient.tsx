@@ -25,7 +25,7 @@ export function CreditsPageClient({ balance }: { balance: number }) {
       <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4 text-sm">
         <p className="font-semibold">🎁 Besplatni Credits</p>
         <p className="mt-1 text-[var(--color-text-muted)]">
-          Dobijaš 3 Credits-a besplatno kad prvi put završiš profil (dobrodošlica). Trenutno je to
+          Dobijaš 1 Credit besplatno kad prvi put završiš profil (dobrodošlica). Trenutno je to
           jedini način da dobiješ besplatne Credits-e — svi ostali dolaze kroz kupovinu.
         </p>
       </section>
