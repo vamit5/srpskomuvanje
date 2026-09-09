@@ -67,8 +67,8 @@ export function RegistracijaForm() {
     setCodeError(null);
     setResendNotice(null);
 
-    if (code.trim().length < 6) {
-      setCodeError("Unesi ceo kod od 6 cifara.");
+    if (code.trim().length < 4) {
+      setCodeError("Unesi ceo kod iz mejla.");
       return;
     }
 
@@ -106,18 +106,18 @@ export function RegistracijaForm() {
         <p className="text-center text-3xl">📩</p>
         <h2 className="text-center text-lg font-semibold">Unesi kod za potvrdu</h2>
         <p className="text-center text-sm text-[var(--color-text-muted)]">
-          Poslali smo 6-cifreni kod na <strong>{email}</strong>. Unesi ga ispod da nastaviš.
+          Poslali smo kod na <strong>{email}</strong>. Unesi ga ispod da nastaviš.
         </p>
 
         <Input
           type="text"
           inputMode="numeric"
           autoComplete="one-time-code"
-          placeholder="123456"
-          maxLength={6}
+          placeholder="12345678"
+          maxLength={10}
           value={code}
           onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-          className="text-center text-xl tracking-[0.5em]"
+          className="text-center text-xl tracking-[0.3em]"
         />
 
         {codeError && <p className="text-center text-sm text-[var(--color-danger)]">{codeError}</p>}

@@ -16,7 +16,7 @@ export default async function AdminEditUserPage({ params }: { params: Promise<{ 
   const [{ data: profile }, { data: preferences }, { data: photos }] = await Promise.all([
     supabase
       .from("profiles")
-      .select("name, birth_date, gender, city, bio, looking_for, food_favorites")
+      .select("name, birth_date, gender, city, bio, looking_for, food_favorites, is_test_account")
       .eq("id", id)
       .maybeSingle(),
     supabase.from("preferences").select("interested_in").eq("profile_id", id).maybeSingle(),
@@ -51,6 +51,7 @@ export default async function AdminEditUserPage({ params }: { params: Promise<{ 
           city: profile.city ?? "",
           bio: profile.bio ?? "",
           foodFavorites: profile.food_favorites ?? [],
+          isTestAccount: profile.is_test_account ?? false,
         }}
       />
     </div>

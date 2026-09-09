@@ -42,6 +42,7 @@ export interface EditUserInitial {
   city: string;
   bio: string;
   foodFavorites: string[];
+  isTestAccount: boolean;
 }
 
 export function EditUserForm({ userId, initial }: { userId: string; initial: EditUserInitial }) {
@@ -54,6 +55,7 @@ export function EditUserForm({ userId, initial }: { userId: string; initial: Edi
   const [city, setCity] = useState(initial.city);
   const [bio, setBio] = useState(initial.bio);
   const [foodFavorites, setFoodFavorites] = useState(initial.foodFavorites);
+  const [isTestAccount, setIsTestAccount] = useState(initial.isTestAccount);
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -77,6 +79,7 @@ export function EditUserForm({ userId, initial }: { userId: string; initial: Edi
     fd.set("city", city);
     fd.set("bio", bio);
     foodFavorites.forEach((f) => fd.append("foodFavorites", f));
+    if (isTestAccount) fd.set("isTestAccount", "on");
 
     const result = await updateManualUser(userId, fd);
     setSaving(false);
@@ -189,6 +192,16 @@ export function EditUserForm({ userId, initial }: { userId: string; initial: Edi
           ))}
         </div>
       </section>
+
+      <label className="flex items-start gap-2 rounded-2xl border border-[var(--color-border-strong)] p-4 text-sm">
+        <input type="checkbox" checked={isTestAccount} onChange={(e) => setIsTestAccount(e.target.checked)} className="mt-0.5" />
+        <span>
+          Ovo je <strong>test nalog</strong> — koristi se samo za tvoje interno testiranje. Uključi ovo
+          SAMO za naloge koje si ti napravio/la radi testiranja (npr. test1@gmail.com), nikad za pravog,
+          samostalno registrovanog korisnika. Omogućava pisanje &bdquo;u ime&ldquo; ovog naloga u
+          &bdquo;Poruke&ldquo;, ali SAMO u razgovoru sa drugim test nalogom.
+        </span>
+      </label>
 
       {error && <p className="text-sm text-[var(--color-danger)]">{error}</p>}
       {saved && !error && <p className="text-sm text-[var(--color-success)]">Sačuvano ✓</p>}

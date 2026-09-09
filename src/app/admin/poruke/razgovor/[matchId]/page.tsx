@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { TestSendForm } from "./TestSendForm";
 
 export const metadata = { title: "Admin — Razgovor" };
 
@@ -8,11 +9,11 @@ export default async function AdminConversationPage({ params }: { params: Promis
   const { matchId } = await params;
   const supabase = await createClient();
 
-  const { data: match } = await supabase.from("matches").select("id, profile_a_id, profile_b_id").eq("id", matchId).maybeSingle();
+  const { data: match } = await supabase.from("matches").select("id, profile_a_id, profile_b_id, unmatched_at").eq("id", matchId).maybeSingle();
   if (!match) notFound();
 
   const [{ data: profiles }, { data: messages }] = await Promise.all([
-    supabase.from("profiles").select("id, name").in("id", [match.profile_a_id, match.profile_b_id]),
+    supabase.from("profiles").select("id, name, is_test_account").in("id", [match.profile_a_id, match.profile_b_id]),
     supabase
       .from("messages")
       .select("id, sender_id, content, image_url, night_content_id, created_at, deleted_at")
@@ -20,6 +21,7 @@ export default async function AdminConversationPage({ params }: { params: Promis
       .order("created_at"),
   ]);
   const nameById = new Map((profiles ?? []).map((p) => [p.id, p.name]));
+  const bothTest = profiles?.length === 2 && profiles.every((p) => p.is_test_account);
 
   return (
     <div className="flex flex-col gap-4">
@@ -28,9 +30,13 @@ export default async function AdminConversationPage({ params }: { params: Promis
       </Link>
       <h2 className="text-lg font-semibold">
         {nameById.get(match.profile_a_id) ?? "?"} ↔ {nameById.get(match.profile_b_id) ?? "?"}
+        {bothTest && <span className="ml-2 rounded-full bg-[var(--color-accent)]/15 px-2 py-0.5 text-xs font-bold text-[var(--color-accent)]">TEST</span>}
       </h2>
       <p className="text-xs text-[var(--color-text-muted)]">
-        Samo za čitanje — za istragu prijava/sporova. Efemerni sadržaj iz Noćnog muvanja se ovde ne prikazuje (pregleda se na{" "}
+        {bothTest
+          ? "Oba naloga su test nalozi -- ispod možeš da pišeš u njihovo ime."
+          : "Samo za čitanje — za istragu prijava/sporova."}{" "}
+        Efemerni sadržaj iz Noćnog muvanja se ovde ne prikazuje (pregleda se na{" "}
         <Link href="/admin/nocno-muvanje" className="underline">
           /admin/nocno-muvanje
         </Link>
@@ -62,6 +68,13 @@ export default async function AdminConversationPage({ params }: { params: Promis
           ))
         )}
       </div>
+
+      {bothTest && !match.unmatched_at && (
+        <TestSendForm
+          matchId={matchId}
+          participants={[match.profile_a_id, match.profile_b_id].map((id) => ({ id, name: nameById.get(id) ?? "?" }))}
+        />
+      )}
     </div>
   );
 }

@@ -44,6 +44,7 @@ export function NewUserForm() {
   const [city, setCity] = useState("");
   const [bio, setBio] = useState("");
   const [foodFavorites, setFoodFavorites] = useState<string[]>([]);
+  const [isTestAccount, setIsTestAccount] = useState(false);
   const [consent, setConsent] = useState(false);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
@@ -84,6 +85,7 @@ export function NewUserForm() {
     fd.set("bio", bio);
     foodFavorites.forEach((f) => fd.append("foodFavorites", f));
     fd.set("consentConfirmed", "on");
+    if (isTestAccount) fd.set("isTestAccount", "on");
     fd.set("photo", photoFile);
 
     // try/catch je NAMERAN -- bez njega, bilo koji neuhvacen izuzetak
@@ -243,10 +245,25 @@ export function NewUserForm() {
       </section>
 
       <label className="flex items-start gap-2 rounded-2xl border border-[var(--color-border-strong)] p-4 text-sm">
+        <input type="checkbox" checked={isTestAccount} onChange={(e) => setIsTestAccount(e.target.checked)} className="mt-0.5" />
+        <span>
+          Ovo je <strong>test nalog</strong> (npr. test1@gmail.com) — koristim ga isključivo za
+          sopstveno testiranje, ne predstavlja pravu osobu. Omogućava mi da kasnije u
+          &bdquo;Poruke&ldquo; pišem u ime ovog naloga, ali SAMO u razgovoru sa drugim test nalogom.
+        </span>
+      </label>
+
+      <label className="flex items-start gap-2 rounded-2xl border border-[var(--color-border-strong)] p-4 text-sm">
         <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5" />
         <span>
-          Potvrđujem da je ova osoba <strong>stvarna</strong>, da je <strong>saglasna</strong> da bude
-          na Srpskomuvanju, i da imam pravo da koristim ovu fotografiju.
+          {isTestAccount ? (
+            "Potvrđujem da ovaj nalog koristim isključivo za interno testiranje aplikacije."
+          ) : (
+            <>
+              Potvrđujem da je ova osoba <strong>stvarna</strong>, da je <strong>saglasna</strong> da bude na
+              Srpskomuvanju, i da imam pravo da koristim ovu fotografiju.
+            </>
+          )}
         </span>
       </label>
 

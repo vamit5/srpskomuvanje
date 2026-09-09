@@ -51,6 +51,7 @@ export async function createManualUser(formData: FormData): Promise<{ error: str
   const bio = String(formData.get("bio") || "").trim();
   const foodFavorites = formData.getAll("foodFavorites").map(String);
   const consentConfirmed = formData.get("consentConfirmed") === "on";
+  const isTestAccount = formData.get("isTestAccount") === "on";
   const photo = formData.get("photo") as File | null;
 
   if (!consentConfirmed) {
@@ -113,6 +114,7 @@ export async function createManualUser(formData: FormData): Promise<{ error: str
       onboarding_completed_at: new Date().toISOString(),
       profile_completion_score: score,
       is_discoverable: true,
+      is_test_account: isTestAccount,
     });
     if (profileError) throw new Error("Ne mogu da sačuvam profil.");
 
@@ -135,8 +137,12 @@ export async function createManualUser(formData: FormData): Promise<{ error: str
     if (photoError) throw new Error(photoError);
 
     // Isto obaveštenje kao za samostalno registrovane korisnike (izričit
-    // zahtev: "svaki registrovan korisnik mora da dobije notifikaciju").
-    const { data: others } = await admin.from("profiles").select("id").neq("id", newUserId).is("deleted_at", null);
+    // zahtev: "svaki registrovan korisnik mora da dobije notifikaciju") --
+    // OSIM za test naloge, da ne spamujemo prave korisnike lažnim "novi
+    // korisnik" obaveštenjima svaki put kad admin napravi test nalog.
+    const { data: others } = isTestAccount
+      ? { data: [] as { id: string }[] }
+      : await admin.from("profiles").select("id").neq("id", newUserId).is("deleted_at", null);
     if (others?.length) {
       const notifTitle = "🎉 Novi korisnik/ca na Srpskomuvanju";
       const notifBody = `${name}${city ? " iz " + city : ""} se upravo pridružio/la.`;

@@ -9,7 +9,7 @@ export default async function AdminMessagesSearchPage({ searchParams }: { search
 
   const query = q?.trim() ?? "";
   const { data: results } = query
-    ? await supabase.from("profiles").select("id, name, city").ilike("name", `%${query}%`).limit(20)
+    ? await supabase.from("profiles").select("id, name, city, is_test_account").ilike("name", `%${query}%`).limit(20)
     : { data: [] };
 
   return (
@@ -45,6 +45,9 @@ export default async function AdminMessagesSearchPage({ searchParams }: { search
               >
                 <span>
                   {p.name} {p.city && <span className="text-[var(--color-text-muted)]">· {p.city}</span>}
+                  {p.is_test_account && (
+                    <span className="ml-2 rounded-full bg-[var(--color-accent)]/15 px-2 py-0.5 text-xs font-bold text-[var(--color-accent)]">TEST</span>
+                  )}
                 </span>
                 <span className="text-[var(--color-text-muted)]">Vidi razgovore →</span>
               </Link>
