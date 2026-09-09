@@ -7,13 +7,17 @@ export interface ModerationResult {
   reason: string | null;
 }
 
-// Iznad ovoga se smatra eksplicitnim sadržajem i odmah se odbija.
-const REJECT_THRESHOLD = 0.5;
+// Iznad ovoga se smatra eksplicitnim sadržajem i odmah se odbija -- namerno
+// visok prag (izričit zahtev da moderacija profilnih slika bude labava):
+// odbija se samo nedvosmisleno pornografski/eksplicitan seksualni sadržaj
+// (stvaran polni čin ili krupni plan genitalija), ne i gola gornja polovina
+// tela, provokativne poze, donji veš i sl. -- to sve prolazi.
+const REJECT_THRESHOLD = 0.85;
 // Između ova dva praga je granični slučaj -- ide na ručni pregled u admin
-// panelu umesto automatske odluke (npr. dvosmislena poza, slika lošeg
-// kvaliteta). Ispod DONJEG praga se automatski odobrava -- ovo NAMERNO
-// dozvoljava kupaće kostime/plažu/bez majice, uobičajeno za dating app.
-const REVIEW_THRESHOLD = 0.2;
+// panelu umesto automatske odluke. Ispod DONJEG praga se automatski
+// odobrava -- namerno širok raspon auto-odobravanja (kupaći kostim, bez
+// majice, donji veš, provokativne poze i sl.), uobičajeno za dating app.
+const REVIEW_THRESHOLD = 0.6;
 
 interface SightengineNudityResponse {
   status?: string;
