@@ -56,3 +56,43 @@ export async function sendAsTestUser(matchId: string, senderId: string, content:
   revalidatePath(`/admin/poruke/razgovor/${matchId}`);
   return { error: null };
 }
+
+/**
+ * Pravi jednokratni link za prijavu KAO odredjeni nalog -- radi SAMO za
+ * naloge oznacene kao test nalog (profiles.is_test_account). Otvaranjem
+ * linka, admin-ov browser se ODJAVLJUJE iz sopstvene sesije i PRIJAVLJUJE
+ * kao taj test nalog (prava sesija, ne "poruka u ime nekog" -- otud sme
+ * da se koristi i za razgovor sa stvarnim korisnicima: to je isto kao da
+ * je admin sam ulogovan na taj nalog preko "Zaboravljena lozinka", samo
+ * bez tog koraka). Namerno NE radi za stvaran, samostalno registrovan
+ * korisnik -- to bi bilo preuzimanje tudjeg naloga bez njihovog znanja.
+ */
+export async function loginAsTestAccount(profileId: string): Promise<{ url: string | null; error: string | null }> {
+  const { isAdmin } = await requireAdmin();
+  if (!isAdmin) return { url: null, error: "Nemaš admin pristup." };
+
+  const admin = createAdminClient();
+
+  const { data: profile } = await admin.from("profiles").select("is_test_account").eq("id", profileId).maybeSingle();
+  if (!profile?.is_test_account) {
+    return { url: null, error: "Moguće je samo za naloge označene kao test nalog." };
+  }
+
+  const { data: authUser, error: getUserError } = await admin.auth.admin.getUserById(profileId);
+  if (getUserError || !authUser?.user?.email) {
+    return { url: null, error: "Ne mogu da pronađem email ovog naloga." };
+  }
+
+  const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({
+    type: "magiclink",
+    email: authUser.user.email,
+  });
+  if (linkError || !linkData?.properties?.hashed_token) {
+    return { url: null, error: "Ne mogu da napravim link za prijavu." };
+  }
+
+  return {
+    url: `/auth/confirm?token_hash=${linkData.properties.hashed_token}&type=magiclink&next=/sada`,
+    error: null,
+  };
+}

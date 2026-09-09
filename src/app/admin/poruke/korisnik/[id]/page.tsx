@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { LoginAsButton } from "../../LoginAsButton";
 
 export const metadata = { title: "Admin — Razgovori korisnika" };
 
@@ -8,7 +9,7 @@ export default async function AdminUserMatchesPage({ params }: { params: Promise
   const { id } = await params;
   const supabase = await createClient();
 
-  const { data: profile } = await supabase.from("profiles").select("name").eq("id", id).maybeSingle();
+  const { data: profile } = await supabase.from("profiles").select("name, is_test_account").eq("id", id).maybeSingle();
   if (!profile) notFound();
 
   const { data: matches } = await supabase
@@ -28,7 +29,10 @@ export default async function AdminUserMatchesPage({ params }: { params: Promise
           ← Pretraga
         </Link>
       </div>
-      <h2 className="text-lg font-semibold">Razgovori — {profile.name}</h2>
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-lg font-semibold">Razgovori — {profile.name}</h2>
+        {profile.is_test_account && <LoginAsButton profileId={id} name={profile.name} />}
+      </div>
 
       {!matches?.length ? (
         <p className="text-sm text-[var(--color-text-muted)]">Ovaj korisnik nema matcheva.</p>

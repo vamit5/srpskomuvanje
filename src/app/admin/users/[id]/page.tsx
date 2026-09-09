@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { EditUserForm } from "./EditUserForm";
 import { EditUserPhotos } from "./EditUserPhotos";
+import { LoginAsButton } from "../../poruke/LoginAsButton";
 
 export const metadata = { title: "Admin — Uredi korisnika" };
 
@@ -36,7 +37,10 @@ export default async function AdminEditUserPage({ params }: { params: Promise<{ 
           ← Korisnici
         </Link>
       </div>
-      <h2 className="text-lg font-semibold">Uredi korisnika — {profile.name}</h2>
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-lg font-semibold">Uredi korisnika — {profile.name}</h2>
+        {profile.is_test_account && <LoginAsButton profileId={id} name={profile.name} />}
+      </div>
 
       <EditUserPhotos userId={id} initialPhotos={photos ?? []} />
 
