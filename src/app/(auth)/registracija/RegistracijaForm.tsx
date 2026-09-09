@@ -14,7 +14,12 @@ export function RegistracijaForm() {
   const [is18, setIs18] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [confirmSent, setConfirmSent] = useState(false);
+  const [awaitingCode, setAwaitingCode] = useState(false);
+  const [code, setCode] = useState("");
+  const [verifying, setVerifying] = useState(false);
+  const [codeError, setCodeError] = useState<string | null>(null);
+  const [resending, setResending] = useState(false);
+  const [resendNotice, setResendNotice] = useState<string | null>(null);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -50,21 +55,87 @@ export function RegistracijaForm() {
       router.push("/onboarding");
       router.refresh();
     } else {
-      // Email confirmation je uključena u Supabase projektu.
-      setConfirmSent(true);
+      // Email confirmation je uključena u Supabase projektu -- korisnik unosi
+      // 6-cifreni kod iz mejla (Supabase "Confirm signup" sablon mora da
+      // prikazuje {{ .Token }}), umesto da klikne na link.
+      setAwaitingCode(true);
     }
   }
 
-  if (confirmSent) {
+  async function handleVerifyCode(e: FormEvent) {
+    e.preventDefault();
+    setCodeError(null);
+    setResendNotice(null);
+
+    if (code.trim().length < 6) {
+      setCodeError("Unesi ceo kod od 6 cifara.");
+      return;
+    }
+
+    setVerifying(true);
+    const supabase = createClient();
+    const { data, error: verifyError } = await supabase.auth.verifyOtp({
+      email,
+      token: code.trim(),
+      type: "signup",
+    });
+    setVerifying(false);
+
+    if (verifyError || !data.session) {
+      setCodeError("Pogrešan ili istekao kod. Proveri kod ili pošalji novi.");
+      return;
+    }
+
+    router.push("/onboarding");
+    router.refresh();
+  }
+
+  async function handleResendCode() {
+    setResending(true);
+    setCodeError(null);
+    setResendNotice(null);
+    const supabase = createClient();
+    const { error: resendError } = await supabase.auth.resend({ type: "signup", email });
+    setResending(false);
+    setResendNotice(resendError ? "Ne mogu trenutno da pošaljem novi kod. Pokušaj malo kasnije." : "Poslali smo ti novi kod.");
+  }
+
+  if (awaitingCode) {
     return (
-      <div className="glass rounded-2xl p-6 text-center">
-        <p className="text-3xl">📩</p>
-        <h2 className="mt-2 text-lg font-semibold">Proveri email</h2>
-        <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-          Poslali smo ti link za potvrdu naloga na <strong>{email}</strong>. Klikni na njega da
-          nastaviš.
+      <form onSubmit={handleVerifyCode} className="glass flex flex-col gap-4 rounded-2xl p-6">
+        <p className="text-center text-3xl">📩</p>
+        <h2 className="text-center text-lg font-semibold">Unesi kod za potvrdu</h2>
+        <p className="text-center text-sm text-[var(--color-text-muted)]">
+          Poslali smo 6-cifreni kod na <strong>{email}</strong>. Unesi ga ispod da nastaviš.
         </p>
-      </div>
+
+        <Input
+          type="text"
+          inputMode="numeric"
+          autoComplete="one-time-code"
+          placeholder="123456"
+          maxLength={6}
+          value={code}
+          onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+          className="text-center text-xl tracking-[0.5em]"
+        />
+
+        {codeError && <p className="text-center text-sm text-[var(--color-danger)]">{codeError}</p>}
+        {resendNotice && !codeError && <p className="text-center text-sm text-[var(--color-text-muted)]">{resendNotice}</p>}
+
+        <Button type="submit" size="lg" disabled={verifying}>
+          {verifying ? "Proveravam..." : "Potvrdi"}
+        </Button>
+
+        <button
+          type="button"
+          onClick={handleResendCode}
+          disabled={resending}
+          className="text-center text-sm text-[var(--color-text)] underline disabled:opacity-50"
+        >
+          {resending ? "Šaljem..." : "Pošalji kod ponovo"}
+        </button>
+      </form>
     );
   }
 
