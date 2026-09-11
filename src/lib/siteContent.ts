@@ -41,6 +41,12 @@ export const SITE_CONTENT_DEFAULTS = {
   bottom_cta_button: "Uđi besplatno",
   footer_age_note: "Srpskomuvanje je namenjeno isključivo punoletnim osobama (18+).",
   footer_contact_label: "Prijava zloupotrebe / kontakt:",
+
+  // Bedž za profile koje admin rucno oznaci kao "istaknute" (is_featured na
+  // profiles) -- prikazuje se u Muvaj i 18+ Muvanju. Namerno NE tvrdi nista
+  // o sadrzaju slika te osobe -- samo da je profil istaknut, sto je istina
+  // (stvarno se gura napred u rezultatima).
+  featured_badge_label: "✨ Izdvojen profil",
 } as const;
 
 export type SiteContentKey = keyof typeof SITE_CONTENT_DEFAULTS;
@@ -85,6 +91,8 @@ export const SITE_CONTENT_FIELDS: { key: SiteContentKey; label: string; section:
 
   { key: "footer_age_note", label: "Napomena o godinama", section: "Footer" },
   { key: "footer_contact_label", label: "Oznaka kontakta (pre email adrese)", section: "Footer" },
+
+  { key: "featured_badge_label", label: "Tekst bedža (prikazuje se u Muvaj i 18+ Muvanju)", section: "Izdvojen profil (bedž)" },
 ];
 
 export function mergeSiteContent(rows: { key: string; value: string }[] | null | undefined): SiteContent {

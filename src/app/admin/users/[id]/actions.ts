@@ -40,6 +40,7 @@ export async function updateManualUser(userId: string, formData: FormData): Prom
   const bio = String(formData.get("bio") || "").trim();
   const foodFavorites = formData.getAll("foodFavorites").map(String);
   const isTestAccount = formData.get("isTestAccount") === "on";
+  const isFeatured = formData.get("isFeatured") === "on";
 
   if (!name || name.trim().length < 2) return { error: "Unesi ime." };
   if (!birthDate) return { error: "Unesi datum rođenja." };
@@ -78,6 +79,7 @@ export async function updateManualUser(userId: string, formData: FormData): Prom
       food_favorites: foodFavorites,
       profile_completion_score: score,
       is_test_account: isTestAccount,
+      is_featured: isFeatured,
     })
     .eq("id", userId);
   if (profileError) return { error: "Ne mogu da sačuvam profil." };

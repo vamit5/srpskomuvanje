@@ -45,6 +45,7 @@ export function NewUserForm() {
   const [bio, setBio] = useState("");
   const [foodFavorites, setFoodFavorites] = useState<string[]>([]);
   const [isTestAccount, setIsTestAccount] = useState(false);
+  const [isFeatured, setIsFeatured] = useState(false);
   const [consent, setConsent] = useState(false);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
@@ -86,6 +87,7 @@ export function NewUserForm() {
     foodFavorites.forEach((f) => fd.append("foodFavorites", f));
     fd.set("consentConfirmed", "on");
     if (isTestAccount) fd.set("isTestAccount", "on");
+    if (isFeatured) fd.set("isFeatured", "on");
     fd.set("photo", photoFile);
 
     // try/catch je NAMERAN -- bez njega, bilo koji neuhvacen izuzetak
@@ -250,6 +252,14 @@ export function NewUserForm() {
           Ovo je <strong>test nalog</strong> (npr. test1@gmail.com) — koristim ga isključivo za
           sopstveno testiranje, ne predstavlja pravu osobu. Omogućava mi da kasnije u
           &bdquo;Poruke&ldquo; pišem u ime ovog naloga, ali SAMO u razgovoru sa drugim test nalogom.
+        </span>
+      </label>
+
+      <label className="flex items-start gap-2 rounded-2xl border border-[var(--color-border-strong)] p-4 text-sm">
+        <input type="checkbox" checked={isFeatured} onChange={(e) => setIsFeatured(e.target.checked)} className="mt-0.5" />
+        <span>
+          Prikaži kao <strong>istaknut profil</strong> — dobija bedž (tekst se menja na /admin/pocetna) i
+          gura se napred u Muvaj i 18+ Muvanju. Ne tvrdi ništa o sadržaju slika.
         </span>
       </label>
 

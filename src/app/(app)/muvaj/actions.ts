@@ -16,6 +16,7 @@ export interface DiscoveryCandidate {
   primary_photo_url: string | null;
   score: number;
   distance_km: number | null;
+  is_featured: boolean;
 }
 
 export async function getMoreCandidates(limit = 15): Promise<{ candidates: DiscoveryCandidate[]; error: string | null }> {

@@ -2,6 +2,8 @@ import Link from "next/link";
 import { ListChecks } from "lucide-react";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SerbianFlag } from "@/components/SerbianFlag";
+import { createClient } from "@/lib/supabase/server";
+import { mergeSiteContent } from "@/lib/siteContent";
 import { getMoreCandidates, touchActivity } from "./actions";
 import { MuvajDeck } from "./MuvajDeck";
 
@@ -9,7 +11,12 @@ export const metadata = { title: "Muvaj" };
 
 export default async function MuvajPage() {
   await touchActivity(); // "aktivan upravo sada" signal za Discovery algoritam (sekcija 26)
-  const { candidates, error } = await getMoreCandidates();
+  const supabase = await createClient();
+  const [{ candidates, error }, { data: contentRows }] = await Promise.all([
+    getMoreCandidates(),
+    supabase.from("site_content").select("key, value").eq("key", "featured_badge_label"),
+  ]);
+  const featuredBadgeLabel = mergeSiteContent(contentRows).featured_badge_label;
 
   return (
     <div className="flex flex-col gap-2 px-4 pt-2">
@@ -38,7 +45,7 @@ export default async function MuvajPage() {
           description="Ili si prošao/la sve dostupne profile za sada, ili još nema dovoljno korisnika u tvom gradu i uzrastu koji traže tebe. Svrati kasnije — Sada obaveštava kad se pojavi neko nov."
         />
       ) : (
-        <MuvajDeck initialCandidates={candidates} />
+        <MuvajDeck initialCandidates={candidates} featuredBadgeLabel={featuredBadgeLabel} />
       )}
     </div>
   );

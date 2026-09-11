@@ -43,6 +43,7 @@ export interface EditUserInitial {
   bio: string;
   foodFavorites: string[];
   isTestAccount: boolean;
+  isFeatured: boolean;
 }
 
 export function EditUserForm({ userId, initial }: { userId: string; initial: EditUserInitial }) {
@@ -56,6 +57,7 @@ export function EditUserForm({ userId, initial }: { userId: string; initial: Edi
   const [bio, setBio] = useState(initial.bio);
   const [foodFavorites, setFoodFavorites] = useState(initial.foodFavorites);
   const [isTestAccount, setIsTestAccount] = useState(initial.isTestAccount);
+  const [isFeatured, setIsFeatured] = useState(initial.isFeatured);
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -80,6 +82,7 @@ export function EditUserForm({ userId, initial }: { userId: string; initial: Edi
     fd.set("bio", bio);
     foodFavorites.forEach((f) => fd.append("foodFavorites", f));
     if (isTestAccount) fd.set("isTestAccount", "on");
+    if (isFeatured) fd.set("isFeatured", "on");
 
     const result = await updateManualUser(userId, fd);
     setSaving(false);
@@ -200,6 +203,17 @@ export function EditUserForm({ userId, initial }: { userId: string; initial: Edi
           SAMO za naloge koje si ti napravio/la radi testiranja (npr. test1@gmail.com), nikad za pravog,
           samostalno registrovanog korisnika. Omogućava pisanje &bdquo;u ime&ldquo; ovog naloga u
           &bdquo;Poruke&ldquo;, ali SAMO u razgovoru sa drugim test nalogom.
+        </span>
+      </label>
+
+      <label className="flex items-start gap-2 rounded-2xl border border-[var(--color-border-strong)] p-4 text-sm">
+        <input type="checkbox" checked={isFeatured} onChange={(e) => setIsFeatured(e.target.checked)} className="mt-0.5" />
+        <span>
+          Prikaži kao <strong>istaknut profil</strong> — dobija bedž (tekst se menja na{" "}
+          <a href="/admin/pocetna" className="underline">
+            /admin/pocetna
+          </a>
+          ) i gura se napred u Muvaj i 18+ Muvanju. Ne tvrdi ništa o sadržaju slika.
         </span>
       </label>
 

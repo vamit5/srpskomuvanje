@@ -120,10 +120,12 @@ export function EighteenPlusApp({
   initialSignals,
   initialCandidates,
   costCredits,
+  featuredBadgeLabel,
 }: {
   initialSignals: PendingKrevetSignal[];
   initialCandidates: EighteenPlusCandidate[];
   costCredits: number;
+  featuredBadgeLabel: string;
 }) {
   const router = useRouter();
   const signals = initialSignals;
@@ -216,6 +218,11 @@ export function EighteenPlusApp({
                 {c.isBoosted && (
                   <span className="absolute left-1.5 top-1.5 rounded-full bg-gradient-accent px-2 py-0.5 text-[10px] font-bold shadow-lg">
                     🚀 Boost
+                  </span>
+                )}
+                {c.isFeatured && (
+                  <span className="absolute right-1.5 top-1.5 rounded-full bg-gradient-accent px-2 py-0.5 text-[10px] font-bold shadow-lg">
+                    {featuredBadgeLabel}
                   </span>
                 )}
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 to-transparent px-2.5 pb-2 pt-8 text-left">

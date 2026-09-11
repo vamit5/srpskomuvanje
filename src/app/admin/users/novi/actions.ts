@@ -52,6 +52,7 @@ export async function createManualUser(formData: FormData): Promise<{ error: str
   const foodFavorites = formData.getAll("foodFavorites").map(String);
   const consentConfirmed = formData.get("consentConfirmed") === "on";
   const isTestAccount = formData.get("isTestAccount") === "on";
+  const isFeatured = formData.get("isFeatured") === "on";
   const photo = formData.get("photo") as File | null;
 
   if (!consentConfirmed) {
@@ -115,6 +116,7 @@ export async function createManualUser(formData: FormData): Promise<{ error: str
       profile_completion_score: score,
       is_discoverable: true,
       is_test_account: isTestAccount,
+      is_featured: isFeatured,
     });
     if (profileError) throw new Error("Ne mogu da sačuvam profil.");
 

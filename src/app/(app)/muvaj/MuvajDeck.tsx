@@ -24,10 +24,12 @@ function ScoreBadge({ score }: { score: number }) {
 
 function SwipeCard({
   candidate,
+  featuredBadgeLabel,
 }: {
   candidate: DiscoveryCandidate;
   disabled: boolean;
   onChoice: (choice: MuvajChoice) => void;
+  featuredBadgeLabel: string;
 }) {
   const age = calculateAge(candidate.birth_date);
 
@@ -52,6 +54,12 @@ function SwipeCard({
           />
         ) : (
           <div className="flex h-full items-center justify-center text-7xl">👤</div>
+        )}
+
+        {candidate.is_featured && (
+          <span className="absolute left-3 top-3 rounded-full bg-gradient-accent px-2.5 py-1 text-xs font-bold text-white shadow-lg">
+            {featuredBadgeLabel}
+          </span>
         )}
 
         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent px-5 pb-5 pt-24 text-white">
@@ -89,7 +97,13 @@ function SwipeCard({
   );
 }
 
-export function MuvajDeck({ initialCandidates }: { initialCandidates: DiscoveryCandidate[] }) {
+export function MuvajDeck({
+  initialCandidates,
+  featuredBadgeLabel,
+}: {
+  initialCandidates: DiscoveryCandidate[];
+  featuredBadgeLabel: string;
+}) {
   const [stack, setStack] = useState(initialCandidates);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -166,7 +180,7 @@ export function MuvajDeck({ initialCandidates }: { initialCandidates: DiscoveryC
     <div className="relative flex flex-col gap-2">
       <div className="relative h-[46vh] max-h-[420px] min-h-[300px]">
         {current ? (
-          <SwipeCard key={current.id} candidate={current} disabled={pending} onChoice={handleChoice} />
+          <SwipeCard key={current.id} candidate={current} disabled={pending} onChoice={handleChoice} featuredBadgeLabel={featuredBadgeLabel} />
         ) : (
           <div className="flex h-full flex-col items-center justify-center gap-3 rounded-3xl border border-[var(--color-border)] bg-[var(--color-bg-card)] px-6 text-center">
             <span className="text-4xl">🎉</span>
