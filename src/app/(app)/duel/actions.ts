@@ -7,8 +7,8 @@ import { isPremium, FREE_DAILY_DUEL_LIMIT } from "@/lib/premium";
 export interface DuelPair {
   duelId: string;
   prompt: string;
-  a: { id: string; name: string; birthDate: string; photoUrl: string | null };
-  b: { id: string; name: string; birthDate: string; photoUrl: string | null };
+  a: { id: string; name: string; birthDate: string; photoUrl: string | null; isFeatured: boolean };
+  b: { id: string; name: string; birthDate: string; photoUrl: string | null; isFeatured: boolean };
 }
 
 const PROMPTS = [
@@ -58,10 +58,12 @@ export async function getNextDuel(): Promise<{
     a_name: string | null;
     a_birth_date: string | null;
     a_photo_url: string | null;
+    a_is_featured: boolean | null;
     b_id: string | null;
     b_name: string | null;
     b_birth_date: string | null;
     b_photo_url: string | null;
+    b_is_featured: boolean | null;
   }[];
 
   const row = rows?.[0];
@@ -79,8 +81,20 @@ export async function getNextDuel(): Promise<{
     duel: {
       duelId: row.duel_id,
       prompt,
-      a: { id: row.a_id, name: row.a_name ?? "?", birthDate: row.a_birth_date ?? "", photoUrl: row.a_photo_url },
-      b: { id: row.b_id, name: row.b_name ?? "?", birthDate: row.b_birth_date ?? "", photoUrl: row.b_photo_url },
+      a: {
+        id: row.a_id,
+        name: row.a_name ?? "?",
+        birthDate: row.a_birth_date ?? "",
+        photoUrl: row.a_photo_url,
+        isFeatured: !!row.a_is_featured,
+      },
+      b: {
+        id: row.b_id,
+        name: row.b_name ?? "?",
+        birthDate: row.b_birth_date ?? "",
+        photoUrl: row.b_photo_url,
+        isFeatured: !!row.b_is_featured,
+      },
     },
   };
 }

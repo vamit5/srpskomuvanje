@@ -3,6 +3,8 @@ import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { calculateAge } from "@/lib/utils";
 import { belgradeTimeHHMM, isWithinDailyWindow } from "@/lib/time";
+import { getFeaturedBadgeLabel } from "@/lib/featured";
+import { FeaturedBadge } from "@/components/FeaturedBadge";
 import { LocationCard } from "./LocationCard";
 import { SerbianFlag } from "@/components/SerbianFlag";
 
@@ -16,12 +18,13 @@ function personSubjectPhrase(n: number): string {
   return `${n} ${word} hoće`;
 }
 
-interface FeaturedCandidate {
+interface TopMatchCandidate {
   id: string;
   name: string;
   birth_date: string;
   primary_photo_url: string | null;
   score: number;
+  is_featured: boolean;
 }
 
 export default async function SadaPage() {
@@ -94,7 +97,7 @@ export default async function SadaPage() {
 
   const hasLocation = !!myProfile?.location_updated_at;
 
-  const [{ data: nearbyCount }, { data: featuredRaw }, { data: activeEvents }] = await Promise.all([
+  const [{ data: nearbyCount }, { data: topMatchRaw }, { data: activeEvents }, featuredBadgeLabel] = await Promise.all([
     hasLocation
       ? supabase.rpc("nearby_count", { viewer_id: user!.id, radius_km: 25 })
       : Promise.resolve({ data: null }),
@@ -107,13 +110,14 @@ export default async function SadaPage() {
       .gte("ends_at", new Date().toISOString())
       .or(`city.is.null,city.eq.${myProfile?.city ?? ""}`)
       .limit(3),
+    getFeaturedBadgeLabel(supabase),
   ]);
 
-  const featured = ((featuredRaw as FeaturedCandidate[] | null) ?? [])[0];
-  const showFeatured = featured && featured.score >= 70;
+  const topMatch = ((topMatchRaw as TopMatchCandidate[] | null) ?? [])[0];
+  const showTopMatch = topMatch && topMatch.score >= 70;
 
   const hasSignals =
-    pendingLikesCount > 0 || (unreadNotifications ?? 0) > 0 || !!showFeatured || (activeEvents?.length ?? 0) > 0;
+    pendingLikesCount > 0 || (unreadNotifications ?? 0) > 0 || !!showTopMatch || (activeEvents?.length ?? 0) > 0;
 
   return (
     <div className="flex flex-col gap-3 px-4 pt-4">
@@ -223,26 +227,27 @@ export default async function SadaPage() {
         </Link>
       )}
 
-      {showFeatured && (
+      {showTopMatch && (
         <Link
-          href={`/profil/${featured.id}`}
+          href={`/profil/${topMatch.id}`}
           className="glass tap-scale animate-bubble-in flex items-center gap-3 rounded-2xl px-4 py-3.5"
         >
-          {featured.primary_photo_url ? (
+          {topMatch.primary_photo_url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={featured.primary_photo_url}
-              alt={featured.name}
+              src={topMatch.primary_photo_url}
+              alt={topMatch.name}
               className="h-14 w-14 rounded-full object-cover ring-2 ring-[var(--color-accent)]/60"
             />
           ) : (
             <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-accent text-base font-bold text-white">
-              {featured.name[0]?.toUpperCase()}
+              {topMatch.name[0]?.toUpperCase()}
             </div>
           )}
           <span className="text-sm">
-            💫 <strong>{featured.name}</strong>, {calculateAge(featured.birth_date)} se veoma uklapa sa tobom —{" "}
-            {Math.round(featured.score)}% tvoj tip
+            💫 <strong>{topMatch.name}</strong>
+            {topMatch.is_featured && <FeaturedBadge label={featuredBadgeLabel} className="ml-1.5" />}, {calculateAge(topMatch.birth_date)} se veoma
+            uklapa sa tobom — {Math.round(topMatch.score)}% tvoj tip
           </span>
         </Link>
       )}

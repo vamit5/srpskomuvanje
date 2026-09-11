@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Send, Check, CheckCheck, MoreVertical } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useIsOnline } from "@/components/OnlinePresence";
+import { FeaturedBadge } from "@/components/FeaturedBadge";
 import { cn } from "@/lib/utils";
 import { foodFavoriteLabel } from "@/lib/foodFavorites";
 import { pickIcebreakers, type SuggestionPool } from "@/lib/icebreakers";
@@ -41,6 +42,8 @@ export function ChatThread({
   otherName,
   otherPhotoUrl,
   otherShowsOnlineStatus,
+  otherIsFeatured,
+  featuredBadgeLabel,
   initialMessages,
   isUnmatched,
   foodMatches,
@@ -57,6 +60,8 @@ export function ChatThread({
    * stvaran status se racuna uzivo preko OnlinePresence, ovo samo odlucuje
    * da li ga uopste smemo prikazati. */
   otherShowsOnlineStatus: boolean;
+  otherIsFeatured: boolean;
+  featuredBadgeLabel: string;
   initialMessages: MessageRow[];
   isUnmatched: boolean;
   foodMatches: string[];
@@ -263,7 +268,10 @@ export function ChatThread({
             </div>
           )}
           <div className="flex-1">
-            <p className="font-semibold leading-tight">{otherName}</p>
+            <p className="flex items-center gap-1.5 font-semibold leading-tight">
+              {otherName}
+              {otherIsFeatured && <FeaturedBadge label={featuredBadgeLabel} />}
+            </p>
             <p className="text-xs text-[var(--color-text-muted)]">
               {otherTyping ? "kuca..." : otherOnline ? "🟢 Online" : ""}
             </p>

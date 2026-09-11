@@ -2,6 +2,8 @@ import Link from "next/link";
 import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { calculateAge } from "@/lib/utils";
+import { getFeaturedBadgeLabel } from "@/lib/featured";
+import { FeaturedBadge } from "@/components/FeaturedBadge";
 
 export const metadata = { title: "Match" };
 
@@ -20,17 +22,18 @@ export default async function MatchPage() {
 
   const otherIds = (matches ?? []).map((m) => (m.profile_a_id === user!.id ? m.profile_b_id : m.profile_a_id));
 
-  const [{ data: others }, { data: photos }] = otherIds.length
+  const [{ data: others }, { data: photos }, featuredBadgeLabel] = otherIds.length
     ? await Promise.all([
-        supabase.from("profiles").select("id, name, birth_date").in("id", otherIds),
+        supabase.from("profiles").select("id, name, birth_date, is_featured").in("id", otherIds),
         supabase
           .from("profile_photos")
           .select("profile_id, thumbnail_url")
           .in("profile_id", otherIds)
           .eq("is_primary", true)
           .eq("moderation_status", "approved"),
+        getFeaturedBadgeLabel(supabase),
       ])
-    : [{ data: [] }, { data: [] }];
+    : [{ data: [] }, { data: [] }, "✨ Izdvojen profil"];
 
   const rows = (matches ?? []).map((m) => {
     const otherId = m.profile_a_id === user!.id ? m.profile_b_id : m.profile_a_id;
@@ -80,6 +83,7 @@ export default async function MatchPage() {
                   <p className="flex items-center gap-1.5 font-semibold">
                     {other?.name ?? "Korisnik"}
                     {other?.birth_date ? `, ${calculateAge(other.birth_date)}` : ""}
+                    {other?.is_featured && <FeaturedBadge label={featuredBadgeLabel} />}
                     {source === "secret_spark" && (
                       <span className="rounded-full bg-[var(--color-bg-elevated)] px-2 py-0.5 text-[10px] font-normal text-[var(--color-text-muted)]">
                         🤫 tajni signal

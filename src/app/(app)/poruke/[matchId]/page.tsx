@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { getChatSuggestionPool } from "@/lib/chatSuggestions";
+import { getFeaturedBadgeLabel } from "@/lib/featured";
 import { ChatThread } from "./ChatThread";
 
 export const metadata = { title: "Razgovor" };
@@ -24,23 +25,25 @@ export default async function ChatPage({ params }: { params: Promise<{ matchId: 
 
   const otherId = match.profile_a_id === user!.id ? match.profile_b_id : match.profile_a_id;
 
-  const [{ data: other }, { data: photo }, { data: messages }, { data: foodMatchesRaw }, suggestionPool] = await Promise.all([
-    supabase.from("profiles").select("name, show_online_status").eq("id", otherId).single(),
-    supabase
-      .from("profile_photos")
-      .select("thumbnail_url")
-      .eq("profile_id", otherId)
-      .eq("is_primary", true)
-      .eq("moderation_status", "approved")
-      .maybeSingle(),
-    supabase
-      .from("messages")
-      .select("id, match_id, sender_id, content, image_url, night_content_id, created_at, read_at")
-      .eq("match_id", matchId)
-      .order("created_at"),
-    supabase.rpc("get_secret_room_food_match", { viewer_id: user!.id, other_id: otherId }),
-    getChatSuggestionPool(supabase, "normal"),
-  ]);
+  const [{ data: other }, { data: photo }, { data: messages }, { data: foodMatchesRaw }, suggestionPool, featuredBadgeLabel] =
+    await Promise.all([
+      supabase.from("profiles").select("name, show_online_status, is_featured").eq("id", otherId).single(),
+      supabase
+        .from("profile_photos")
+        .select("thumbnail_url")
+        .eq("profile_id", otherId)
+        .eq("is_primary", true)
+        .eq("moderation_status", "approved")
+        .maybeSingle(),
+      supabase
+        .from("messages")
+        .select("id, match_id, sender_id, content, image_url, night_content_id, created_at, read_at")
+        .eq("match_id", matchId)
+        .order("created_at"),
+      supabase.rpc("get_secret_room_food_match", { viewer_id: user!.id, other_id: otherId }),
+      getChatSuggestionPool(supabase, "normal"),
+      getFeaturedBadgeLabel(supabase),
+    ]);
 
   return (
     <ChatThread
@@ -50,6 +53,8 @@ export default async function ChatPage({ params }: { params: Promise<{ matchId: 
       otherName={other?.name ?? "Korisnik"}
       otherPhotoUrl={photo?.thumbnail_url ?? null}
       otherShowsOnlineStatus={!!other?.show_online_status}
+      otherIsFeatured={!!other?.is_featured}
+      featuredBadgeLabel={featuredBadgeLabel}
       initialMessages={messages ?? []}
       isUnmatched={!!match.unmatched_at}
       foodMatches={(foodMatchesRaw as string[] | null) ?? []}

@@ -11,6 +11,7 @@ export interface Conversation {
   otherName: string;
   otherPhotoUrl: string | null;
   otherShowsOnlineStatus: boolean;
+  otherIsFeatured: boolean;
   lastMessage: { content: string | null; createdAt: string; isMine: boolean } | null;
   unreadCount: number;
   matchedAt: string;
@@ -39,7 +40,7 @@ export async function getConversations(): Promise<{ conversations: Conversation[
   const matchIds = matches.map((m) => m.id);
 
   const [{ data: others }, { data: photos }, { data: recentMessages }, { data: unread }] = await Promise.all([
-    supabase.from("profiles").select("id, name, show_online_status").in("id", otherIds),
+    supabase.from("profiles").select("id, name, show_online_status, is_featured").in("id", otherIds),
     supabase
       .from("profile_photos")
       .select("profile_id, thumbnail_url")
@@ -82,6 +83,7 @@ export async function getConversations(): Promise<{ conversations: Conversation[
       otherName: other?.name ?? "Korisnik",
       otherPhotoUrl: photo?.thumbnail_url ?? null,
       otherShowsOnlineStatus: !!other?.show_online_status,
+      otherIsFeatured: !!other?.is_featured,
       lastMessage: last
         ? {
             content: last.night_content_id ? "🌙 Noćno muvanje" : last.content,

@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { calculateAge } from "@/lib/utils";
 import { foodFavoriteLabel } from "@/lib/foodFavorites";
+import { getFeaturedBadgeLabel } from "@/lib/featured";
+import { FeaturedBadge } from "@/components/FeaturedBadge";
 import { ProfileViewActions } from "./ProfileViewActions";
 import { ProfileUnlockGate } from "./ProfileUnlockGate";
 import { getProfileUnlockCost } from "./actions";
@@ -18,10 +20,11 @@ export default async function OtherProfilePage({ params }: { params: Promise<{ i
   if (!user) return null;
   if (id === user.id) return null; // sopstveni profil ide na /profil, ne ovde
 
-  const [{ data: baseProfile }, { data: unlockRow }, { data: subscription }] = await Promise.all([
-    supabase.from("profiles").select("id, name, birth_date, city, is_verified, deleted_at").eq("id", id).maybeSingle(),
+  const [{ data: baseProfile }, { data: unlockRow }, { data: subscription }, featuredBadgeLabel] = await Promise.all([
+    supabase.from("profiles").select("id, name, birth_date, city, is_verified, is_featured, deleted_at").eq("id", id).maybeSingle(),
     supabase.from("profile_unlocks").select("id").eq("viewer_id", user.id).eq("target_id", id).maybeSingle(),
     supabase.from("subscriptions").select("status, current_period_end").eq("profile_id", user.id).maybeSingle(),
+    getFeaturedBadgeLabel(supabase),
   ]);
 
   if (!baseProfile || baseProfile.deleted_at) notFound();
@@ -126,9 +129,10 @@ export default async function OtherProfilePage({ params }: { params: Promise<{ i
       ) : null}
 
       <div>
-        <h1 className="flex items-center gap-1 text-xl font-bold">
+        <h1 className="flex items-center gap-1.5 text-xl font-bold">
           {baseProfile.name}, {age}
           {baseProfile.is_verified && <span title="Verifikovan profil">✓</span>}
+          {baseProfile.is_featured && <FeaturedBadge label={featuredBadgeLabel} />}
         </h1>
         <p className="text-sm text-[var(--color-text-muted)]">{baseProfile.city || "Grad nije podešen"}</p>
       </div>

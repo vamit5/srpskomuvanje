@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { calculateAge } from "@/lib/utils";
+import { getFeaturedBadgeLabel } from "@/lib/featured";
 import { IzboriList } from "./IzboriList";
 
 export const metadata = { title: "Moji izbori" };
@@ -43,9 +44,9 @@ export default async function MojiIzboriPage() {
 
   const allIds = [...new Set([...pendingLikes.map((l) => l.to_profile_id), ...pendingKrevet.map((k) => k.to_profile_id)])];
 
-  const [{ data: profiles }, { data: photos }] = await Promise.all([
+  const [{ data: profiles }, { data: photos }, featuredBadgeLabel] = await Promise.all([
     allIds.length
-      ? supabase.from("profiles").select("id, name, birth_date, city").in("id", allIds)
+      ? supabase.from("profiles").select("id, name, birth_date, city, is_featured").in("id", allIds)
       : Promise.resolve({ data: [] }),
     allIds.length
       ? supabase
@@ -55,6 +56,7 @@ export default async function MojiIzboriPage() {
           .eq("is_primary", true)
           .eq("moderation_status", "approved")
       : Promise.resolve({ data: [] }),
+    getFeaturedBadgeLabel(supabase),
   ]);
 
   const profileById = new Map((profiles ?? []).map((p) => [p.id, p]));
@@ -69,6 +71,7 @@ export default async function MojiIzboriPage() {
       age: calculateAge(p.birth_date),
       city: p.city,
       photoUrl: photoById.get(id) ?? null,
+      isFeatured: p.is_featured,
       createdAt,
     };
   }
@@ -90,7 +93,7 @@ export default async function MojiIzboriPage() {
         </div>
       </header>
 
-      <IzboriList upoznavanje={upoznavanje} chat18={chat18} />
+      <IzboriList upoznavanje={upoznavanje} chat18={chat18} featuredBadgeLabel={featuredBadgeLabel} />
     </div>
   );
 }

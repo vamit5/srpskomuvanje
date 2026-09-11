@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { FeaturedBadge } from "@/components/FeaturedBadge";
 import { calculateAge, cn } from "@/lib/utils";
 import { getNextDuel, voteDuel, type DuelPair } from "./actions";
 
@@ -13,12 +14,14 @@ function DuelCard({
   chosen,
   disabled,
   onPick,
+  featuredBadgeLabel,
 }: {
   person: DuelPair["a"];
   side: "left" | "right";
   chosen: boolean | null; // null = niko jos nije izabran, true = ovaj je izabran, false = izabran je drugi
   disabled: boolean;
   onPick: () => void;
+  featuredBadgeLabel: string;
 }) {
   const age = person.birthDate ? calculateAge(person.birthDate) : null;
 
@@ -40,9 +43,10 @@ function DuelCard({
         <div className="flex h-full items-center justify-center text-6xl">👤</div>
       )}
       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 to-transparent px-3 pb-3 pt-10 text-left text-white">
-        <p className="font-semibold">
+        <p className="flex items-center gap-1.5 font-semibold">
           {person.name}
           {age ? `, ${age}` : ""}
+          {person.isFeatured && <FeaturedBadge label={featuredBadgeLabel} />}
         </p>
       </div>
       <span className="absolute left-2 top-2 rounded-full bg-black/50 px-2 py-0.5 text-xs font-bold text-white">
@@ -52,7 +56,7 @@ function DuelCard({
   );
 }
 
-export function DuelGame({ initialDuel }: { initialDuel: DuelPair }) {
+export function DuelGame({ initialDuel, featuredBadgeLabel }: { initialDuel: DuelPair; featuredBadgeLabel: string }) {
   const [duel, setDuel] = useState<DuelPair | null>(initialDuel);
   const [chosenId, setChosenId] = useState<string | null>(null);
   const [loadingNext, setLoadingNext] = useState(false);
@@ -115,6 +119,7 @@ export function DuelGame({ initialDuel }: { initialDuel: DuelPair }) {
           chosen={chosenId ? chosenId === duel.a.id : null}
           disabled={!!chosenId || loadingNext}
           onPick={() => handlePick(duel.a.id)}
+          featuredBadgeLabel={featuredBadgeLabel}
         />
         <DuelCard
           person={duel.b}
@@ -122,6 +127,7 @@ export function DuelGame({ initialDuel }: { initialDuel: DuelPair }) {
           chosen={chosenId ? chosenId === duel.b.id : null}
           disabled={!!chosenId || loadingNext}
           onPick={() => handlePick(duel.b.id)}
+          featuredBadgeLabel={featuredBadgeLabel}
         />
       </div>
 

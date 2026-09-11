@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { FeaturedBadge } from "@/components/FeaturedBadge";
 
 export interface IzborItem {
   id: string;
@@ -11,13 +12,14 @@ export interface IzborItem {
   age: number;
   city: string | null;
   photoUrl: string | null;
+  isFeatured: boolean;
   createdAt: string;
 }
 
 type Tab = "upoznavanje" | "chat18";
 type SortBy = "novo" | "ime";
 
-function ItemRow({ item }: { item: IzborItem }) {
+function ItemRow({ item, featuredBadgeLabel }: { item: IzborItem; featuredBadgeLabel: string }) {
   return (
     <Link href={`/profil/${item.id}`} className="glass tap-scale flex items-center gap-3 rounded-2xl px-4 py-3">
       {item.photoUrl ? (
@@ -29,8 +31,9 @@ function ItemRow({ item }: { item: IzborItem }) {
         </div>
       )}
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold">
+        <p className="flex items-center gap-1.5 truncate text-sm font-semibold">
           {item.name}, {item.age}
+          {item.isFeatured && <FeaturedBadge label={featuredBadgeLabel} />}
         </p>
         <p className="truncate text-xs text-[var(--color-text-muted)]">{item.city ?? "Grad nije podešen"}</p>
       </div>
@@ -41,7 +44,15 @@ function ItemRow({ item }: { item: IzborItem }) {
   );
 }
 
-export function IzboriList({ upoznavanje, chat18 }: { upoznavanje: IzborItem[]; chat18: IzborItem[] }) {
+export function IzboriList({
+  upoznavanje,
+  chat18,
+  featuredBadgeLabel,
+}: {
+  upoznavanje: IzborItem[];
+  chat18: IzborItem[];
+  featuredBadgeLabel: string;
+}) {
   const [tab, setTab] = useState<Tab>("upoznavanje");
   const [sortBy, setSortBy] = useState<SortBy>("novo");
 
@@ -112,7 +123,7 @@ export function IzboriList({ upoznavanje, chat18 }: { upoznavanje: IzborItem[]; 
       ) : (
         <div className="flex flex-col gap-2">
           {sorted.map((item) => (
-            <ItemRow key={item.id} item={item} />
+            <ItemRow key={item.id} item={item} featuredBadgeLabel={featuredBadgeLabel} />
           ))}
         </div>
       )}

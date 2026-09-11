@@ -1,13 +1,19 @@
 import Link from "next/link";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/Button";
+import { createClient } from "@/lib/supabase/server";
+import { getFeaturedBadgeLabel } from "@/lib/featured";
 import { getNextDuel } from "./actions";
 import { DuelGame } from "./DuelGame";
 
 export const metadata = { title: "Duel" };
 
 export default async function DuelPage() {
-  const { duel, error, limitReached } = await getNextDuel();
+  const supabase = await createClient();
+  const [{ duel, error, limitReached }, featuredBadgeLabel] = await Promise.all([
+    getNextDuel(),
+    getFeaturedBadgeLabel(supabase),
+  ]);
 
   return (
     <div className="flex flex-col gap-4 px-4 pt-4">
@@ -38,7 +44,7 @@ export default async function DuelPage() {
           description="Treba nam bar dvoje ljudi tvog tipa sa profilnom fotografijom. Svrati kasnije kad nas bude više."
         />
       ) : (
-        <DuelGame initialDuel={duel} />
+        <DuelGame initialDuel={duel} featuredBadgeLabel={featuredBadgeLabel} />
       )}
     </div>
   );

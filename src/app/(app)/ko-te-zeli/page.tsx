@@ -3,6 +3,7 @@ import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { calculateAge, personCountPhrase } from "@/lib/utils";
 import { isPremium } from "@/lib/premium";
+import { getFeaturedBadgeLabel } from "@/lib/featured";
 import { LikerCard } from "./LikerCard";
 import { LikerLockedCard } from "./LikerLockedCard";
 import { PremiumBannerSmall } from "./PremiumBannerSmall";
@@ -16,7 +17,7 @@ export default async function KoTeZeliPage() {
   } = await getAuthUser();
   if (!user) return null;
 
-  const [{ data: likes }, { data: superLikes }, { data: myMatches }, { data: myBlocks }, premium] =
+  const [{ data: likes }, { data: superLikes }, { data: myMatches }, { data: myBlocks }, premium, featuredBadgeLabel] =
     await Promise.all([
       supabase.from("likes").select("from_profile_id, created_at").eq("to_profile_id", user.id),
       supabase.from("super_likes").select("from_profile_id, created_at").eq("to_profile_id", user.id),
@@ -27,6 +28,7 @@ export default async function KoTeZeliPage() {
         .is("unmatched_at", null),
       supabase.from("blocks").select("blocked_id").eq("blocker_id", user.id),
       isPremium(user.id),
+      getFeaturedBadgeLabel(supabase),
     ]);
 
   const matchedIds = new Set(
@@ -48,7 +50,7 @@ export default async function KoTeZeliPage() {
 
   let profilesById = new Map<
     string,
-    { id: string; name: string; birth_date: string; photoUrl: string | null }
+    { id: string; name: string; birth_date: string; is_featured: boolean; photoUrl: string | null }
   >();
   let teaserPhotoById = new Map<string, string | null>();
   let unlockedIds = new Set<string>();
@@ -59,7 +61,7 @@ export default async function KoTeZeliPage() {
 
     if (premium) {
       const [{ data: profiles }, { data: photos }] = await Promise.all([
-        supabase.from("profiles").select("id, name, birth_date").in("id", ids),
+        supabase.from("profiles").select("id, name, birth_date, is_featured").in("id", ids),
         supabase
           .from("profile_photos")
           .select("profile_id, thumbnail_url")
@@ -93,7 +95,10 @@ export default async function KoTeZeliPage() {
       const stillLockedIds = ids.filter((id) => !unlockedIds.has(id));
       const unlockedNowIds = ids.filter((id) => unlockedIds.has(id));
       if (unlockedNowIds.length) {
-        const { data: profiles } = await supabase.from("profiles").select("id, name, birth_date").in("id", unlockedNowIds);
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("id, name, birth_date, is_featured")
+          .in("id", unlockedNowIds);
         profilesById = new Map(
           (profiles ?? []).map((p) => [p.id, { ...p, photoUrl: teaserPhotoById.get(p.id) ?? null }])
         );
@@ -132,7 +137,16 @@ export default async function KoTeZeliPage() {
             const p = profilesById.get(l.id);
             if (p) {
               return (
-                <LikerCard key={l.id} id={p.id} name={p.name} age={calculateAge(p.birth_date)} photoUrl={p.photoUrl} isSuper={l.isSuper} />
+                <LikerCard
+                  key={l.id}
+                  id={p.id}
+                  name={p.name}
+                  age={calculateAge(p.birth_date)}
+                  photoUrl={p.photoUrl}
+                  isSuper={l.isSuper}
+                  isFeatured={p.is_featured}
+                  featuredBadgeLabel={featuredBadgeLabel}
+                />
               );
             }
             if (premium) return null; // premium a nema profila -- obrisan nalog, preskoci

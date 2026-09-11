@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useIsOnline } from "@/components/OnlinePresence";
+import { FeaturedBadge } from "@/components/FeaturedBadge";
 import type { Conversation } from "./actions";
 
 function timeAgo(iso: string) {
@@ -15,7 +16,7 @@ function timeAgo(iso: string) {
   return `pre ${days}d`;
 }
 
-export function ConversationRow({ c }: { c: Conversation }) {
+export function ConversationRow({ c, featuredBadgeLabel }: { c: Conversation; featuredBadgeLabel: string }) {
   // Stvaran, uzivo online status -- ne procena po vremenu poslednje aktivnosti.
   const online = useIsOnline(c.otherShowsOnlineStatus ? c.otherId : null);
 
@@ -38,7 +39,10 @@ export function ConversationRow({ c }: { c: Conversation }) {
         )}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="font-semibold">{c.otherName}</p>
+        <p className="flex items-center gap-1.5 font-semibold">
+          {c.otherName}
+          {c.otherIsFeatured && <FeaturedBadge label={featuredBadgeLabel} />}
+        </p>
         <p className="truncate text-sm text-[var(--color-text-muted)]">
           {c.lastMessage
             ? `${c.lastMessage.isMine ? "Ti: " : ""}${c.lastMessage.content ?? "📷 Slika"}`

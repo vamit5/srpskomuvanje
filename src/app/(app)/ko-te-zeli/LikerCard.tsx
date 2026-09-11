@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { FeaturedBadge } from "@/components/FeaturedBadge";
 import { likeProfile } from "../muvaj/actions";
 
 export function LikerCard({
@@ -10,12 +11,16 @@ export function LikerCard({
   age,
   photoUrl,
   isSuper,
+  isFeatured,
+  featuredBadgeLabel,
 }: {
   id: string;
   name: string;
   age: number;
   photoUrl: string | null;
   isSuper: boolean;
+  isFeatured: boolean;
+  featuredBadgeLabel: string;
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -48,8 +53,9 @@ export function LikerCard({
         </div>
       )}
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold">
+        <p className="flex items-center gap-1.5 truncate text-sm font-semibold">
           {name}, {age} {isSuper && <span title="Super lajk">⭐</span>}
+          {isFeatured && <FeaturedBadge label={featuredBadgeLabel} />}
         </p>
         {error && <p className="text-xs text-[var(--color-danger)]">{error}</p>}
       </div>
