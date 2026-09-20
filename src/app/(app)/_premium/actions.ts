@@ -2,7 +2,7 @@
 
 import { headers } from "next/headers";
 import { createClient, getAuthUser } from "@/lib/supabase/server";
-import { stripe, getPremiumPriceId } from "@/lib/stripe";
+import { stripe, getPremiumPriceId, logStripeError } from "@/lib/stripe";
 
 /** Localhost u razvoju, pravi domen posle deploy-a -- čita se iz same requestove adrese. */
 async function getBaseUrl(): Promise<string> {
@@ -50,7 +50,7 @@ export async function createCheckoutSession(): Promise<{ url: string | null; err
     if (!session.url) return { url: null, error: "Stripe nije vratio link za plaćanje." };
     return { url: session.url, error: null };
   } catch (err) {
-    console.error("Stripe checkout error:", err);
+    await logStripeError("premium_checkout", err);
     return { url: null, error: "Ne mogu trenutno da pokrenem plaćanje. Pokušaj ponovo." };
   }
 }
@@ -80,7 +80,7 @@ export async function createBillingPortalSession(): Promise<{ url: string | null
     });
     return { url: portalSession.url, error: null };
   } catch (err) {
-    console.error("Stripe billing portal error:", err);
+    await logStripeError("billing_portal", err);
     return { url: null, error: "Ne mogu trenutno da otvorim upravljanje pretplatom." };
   }
 }

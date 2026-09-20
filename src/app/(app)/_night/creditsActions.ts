@@ -2,7 +2,7 @@
 
 import { headers } from "next/headers";
 import { createClient, getAuthUser } from "@/lib/supabase/server";
-import { stripe } from "@/lib/stripe";
+import { stripe, logStripeError } from "@/lib/stripe";
 
 async function getBaseUrl(): Promise<string> {
   const h = await headers();
@@ -87,7 +87,7 @@ export async function createCreditsCheckoutSession(
     if (!session.url) return { url: null, error: "Stripe nije vratio link za plaćanje." };
     return { url: session.url, error: null };
   } catch (err) {
-    console.error("Stripe credits checkout error:", err);
+    await logStripeError("credits_checkout", err);
     return { url: null, error: "Ne mogu trenutno da pokrenem plaćanje. Pokušaj ponovo." };
   }
 }
