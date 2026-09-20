@@ -3,6 +3,7 @@
 import { after } from "next/server";
 import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { sendPushToProfile } from "@/lib/push/send";
+import { sendEmailFallback } from "@/lib/notify";
 
 export interface DiscoveryCandidate {
   id: string;
@@ -73,12 +74,13 @@ export async function chooseMuvaj(
     // izvrši do kraja i na serverless hostingu (Vercel) -- obično
     // "ispali-pa-zaboravi" async poziv bi mogao da se prekine pre nego što
     // stigne da pošalje.
+    const matchBody = `Ti i ${me?.name ?? "neko"} ste se svideli jedno drugom.`;
+    after(() => sendPushToProfile(targetId, { title: "🔥 MATCH!", body: matchBody, url: "/match", tag: "match" }));
     after(() =>
-      sendPushToProfile(targetId, {
-        title: "🔥 MATCH!",
-        body: `Ti i ${me?.name ?? "neko"} ste se svideli jedno drugom.`,
-        url: "/match",
-        tag: "match",
+      sendEmailFallback(targetId, {
+        subject: "🔥 Imaš novi match na Srpskomuvanju!",
+        bodyHtml: `<p>${matchBody}</p>`,
+        path: "/match",
       })
     );
   } else if (choice === "krevet") {
@@ -90,6 +92,15 @@ export async function chooseMuvaj(
         tag: "krevet_signal",
       })
     );
+    // Namerno BEZ imena posiljaoca -- isti nivo anonimnosti kao push (krevet
+    // signal ostaje "slep" dok primalac ne otkljuca ko je poslao).
+    after(() =>
+      sendEmailFallback(targetId, {
+        subject: "😈 Neko hoće s tobom u 18+ chat na Srpskomuvanju",
+        bodyHtml: "<p>Neko je izabrao 18+ chat s tobom u Muvaj-u. Otključaj da vidiš ko je to.</p>",
+        path: "/18-plus",
+      })
+    );
   } else if (choice === "upoznavanje") {
     after(() =>
       sendPushToProfile(targetId, {
@@ -97,6 +108,13 @@ export async function chooseMuvaj(
         body: "Otključaj da vidiš ko je to.",
         url: "/ko-te-zeli",
         tag: "like",
+      })
+    );
+    after(() =>
+      sendEmailFallback(targetId, {
+        subject: "😍 Neko hoće da te upozna na Srpskomuvanju",
+        bodyHtml: "<p>Neko je izabrao Upoznavanje s tobom u Muvaj-u. Otključaj da vidiš ko je to.</p>",
+        path: "/ko-te-zeli",
       })
     );
   }
