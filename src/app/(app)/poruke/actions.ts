@@ -157,9 +157,8 @@ export async function sendMessage(
 
   // Mejl fallback -- SAMO za primaoce koji nemaju nijednu push pretplatu
   // (najcesce iPhone bez instalirane PWA ikonice, gde push uopste ne moze da
-  // radi -- Apple ogranicenje). I samo za PRVU nepricitanu poruku u ovom
-  // razgovoru (ne za svaku pojedinacno) da ne zatrpa inbox tokom brzog
-  // dopisivanja -- korisnik je vec "obavesten" prvim mejlom.
+  // radi -- Apple ogranicenje). Salje se za SVAKU poruku (izricit zahtev --
+  // ranije ogranicenje "samo prva neprocitana" je uklonjeno).
   after(async () => {
     const admin = createAdminClient();
 
@@ -168,15 +167,6 @@ export async function sendMessage(
       .select("id", { count: "exact", head: true })
       .eq("profile_id", otherId);
     if ((pushSubCount ?? 0) > 0) return;
-
-    const { count: otherUnreadCount } = await admin
-      .from("messages")
-      .select("id", { count: "exact", head: true })
-      .eq("match_id", matchId)
-      .eq("sender_id", user.id)
-      .is("read_at", null)
-      .neq("id", data.id);
-    if ((otherUnreadCount ?? 0) > 0) return; // vec je obavesten ranijom nepricitanom porukom
 
     const { data: authUser } = await admin.auth.admin.getUserById(otherId);
     const email = authUser?.user?.email;

@@ -1,12 +1,16 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { User } from "lucide-react";
 import { BottomNav } from "./BottomNav";
 import { PushPrompt } from "./PushPrompt";
 import { OnlinePresenceProvider } from "@/components/OnlinePresence";
+import { getNavCounts } from "@/app/(app)/_nav/actions";
 import { cn } from "@/lib/utils";
+
+const NAV_COUNTS_POLL_MS = 20000;
 
 /**
  * Chat razgovori (/poruke/[matchId] i /18-plus/chat/[matchId]) su jedine
@@ -22,8 +26,8 @@ function isFullScreenRoute(pathname: string | null): boolean {
 
 export function AppShell({
   children,
-  eighteenPlusPending = false,
-  unreadMessagesCount = 0,
+  eighteenPlusPending: initialEighteenPlusPending = false,
+  unreadMessagesCount: initialUnreadMessagesCount = 0,
   creditsBalance,
   userId,
 }: {
@@ -35,6 +39,32 @@ export function AppShell({
 }) {
   const pathname = usePathname();
   const fullScreen = isFullScreenRoute(pathname);
+
+  // Next.js NE osvežava layout (gde se ovi brojevi prvobitno računaju) pri
+  // klijentskoj navigaciji izmedju stranica iste sekcije -- samo pri punom
+  // osvežavanju stranice. Bez ovoga, bedž na "Poruke"/18+ ostaje "zaleđen"
+  // na vrednosti sa PRVOG učitavanja app-e, koliko god se korisnik kretao
+  // po njoj. Zato se ovde ponovo učitava pri SVAKOJ promeni putanje, plus
+  // povremeno dok korisnik miruje na jednoj stranici.
+  const [eighteenPlusPending, setEighteenPlusPending] = useState(initialEighteenPlusPending);
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(initialUnreadMessagesCount);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function refresh() {
+      const counts = await getNavCounts();
+      if (!cancelled) {
+        setEighteenPlusPending(counts.eighteenPlusPending);
+        setUnreadMessagesCount(counts.unreadMessagesCount);
+      }
+    }
+    refresh();
+    const interval = setInterval(refresh, NAV_COUNTS_POLL_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [pathname]);
 
   return (
     <OnlinePresenceProvider userId={userId}>
