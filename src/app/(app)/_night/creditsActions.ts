@@ -62,6 +62,9 @@ export async function createCreditsCheckoutSession(
   try {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
+      // Vidi napomenu u _premium/actions.ts -- eksplicitno samo kartice,
+      // da pauzirana alternativna metoda plaćanja ne obori celu sesiju.
+      payment_method_types: ["card"],
       line_items: [
         {
           price_data: {

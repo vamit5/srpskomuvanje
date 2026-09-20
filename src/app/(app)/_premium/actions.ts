@@ -31,6 +31,12 @@ export async function createCheckoutSession(): Promise<{ url: string | null; err
   try {
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
+      // Eksplicitno SAMO kartice -- Stripe automatski nudi i lokalne
+      // alternativne metode (Bancontact, BLIK, Link, itd.) preko dashboard
+      // podesavanja, ali ako je bilo koja od njih PAUZIRANA (npr. dok Stripe
+      // pregleda podatke o nalogu), cela sesija ne moze da se napravi.
+      // Kartice ostaju najsiroko dostupne i retko se pauziraju same.
+      payment_method_types: ["card"],
       line_items: [{ price: getPremiumPriceId(), quantity: 1 }],
       // client_reference_id je kako webhook zna KOM profilu da upiše
       // pretplatu -- webhook nema pristup ulogovanoj sesiji korisnika.
