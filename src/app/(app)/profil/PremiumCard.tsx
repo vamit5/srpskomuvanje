@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { createCheckoutSession } from "../_premium/actions";
 import { ManualPaymentModal } from "@/components/ManualPaymentModal";
 
 export function PremiumCard({
@@ -12,21 +11,7 @@ export function PremiumCard({
   isPremium: boolean;
   currentPeriodEnd: string | null;
 }) {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [showManual, setShowManual] = useState(false);
-
-  async function handleSubscribe() {
-    setLoading(true);
-    setError(null);
-    const result = await createCheckoutSession();
-    if (result.error || !result.url) {
-      setError(result.error ?? "Nešto nije u redu.");
-      setLoading(false);
-      return;
-    }
-    window.location.href = result.url;
-  }
 
   if (isPremium) {
     return (
@@ -56,22 +41,13 @@ export function PremiumCard({
         <li>🌙 Besplatno otključavanje plaćenih poruka u Noćnom flertu</li>
         <li>⚔️ Neograničen Duel (besplatno: 5 dnevno)</li>
       </ul>
-      {error && <p className="mt-2 text-xs text-white">{error}</p>}
       <Button
         variant="secondary"
         className="mt-3 w-full !bg-white !text-[var(--color-accent)]"
-        onClick={handleSubscribe}
-        disabled={loading}
-      >
-        {loading ? "Otvaram..." : "Postani Premium"}
-      </Button>
-      <button
-        type="button"
         onClick={() => setShowManual(true)}
-        className="tap-scale mt-2 w-full text-center text-xs text-white/80 underline"
       >
-        Ne mogu karticom? Plati uplatom na račun
-      </button>
+        Postani Premium
+      </Button>
       {showManual && <ManualPaymentModal type="premium" onClose={() => setShowManual(false)} />}
     </section>
   );

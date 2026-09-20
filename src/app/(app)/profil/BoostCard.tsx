@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getBoostInfo, createBoostCheckoutSession, type BoostInfo } from "../_boost/actions";
+import { getBoostInfo, type BoostInfo } from "../_boost/actions";
 import { ManualPaymentModal } from "@/components/ManualPaymentModal";
 
 function formatPrice(cents: number, currency: string) {
@@ -16,8 +16,6 @@ function formatRemaining(iso: string): string {
 
 export function BoostCard({ boostExpiresAt }: { boostExpiresAt: string | null }) {
   const [info, setInfo] = useState<BoostInfo | null>(null);
-  const [buying, setBuying] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [showManual, setShowManual] = useState(false);
 
   useEffect(() => {
@@ -26,18 +24,6 @@ export function BoostCard({ boostExpiresAt }: { boostExpiresAt: string | null })
 
   const activeUntil = info?.activeUntil ?? boostExpiresAt;
   const isActive = !!activeUntil && new Date(activeUntil) > new Date();
-
-  async function handleBuy() {
-    setBuying(true);
-    setError(null);
-    const result = await createBoostCheckoutSession();
-    if (result.error || !result.url) {
-      setError(result.error ?? "Nešto nije u redu.");
-      setBuying(false);
-      return;
-    }
-    window.location.assign(result.url);
-  }
 
   return (
     <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
@@ -53,24 +39,14 @@ export function BoostCard({ boostExpiresAt }: { boostExpiresAt: string | null })
         {!isActive && (
           <button
             type="button"
-            onClick={handleBuy}
-            disabled={buying || !info}
+            onClick={() => setShowManual(true)}
+            disabled={!info}
             className="tap-scale shrink-0 rounded-xl bg-gradient-accent px-3 py-2 text-xs font-bold text-white disabled:opacity-50"
           >
-            {buying ? "..." : info ? formatPrice(info.priceCents, info.currency) : "..."}
+            {info ? formatPrice(info.priceCents, info.currency) : "..."}
           </button>
         )}
       </div>
-      {error && <p className="mt-2 text-xs text-[var(--color-danger)]">{error}</p>}
-      {!isActive && (
-        <button
-          type="button"
-          onClick={() => setShowManual(true)}
-          className="tap-scale mt-2 w-full text-center text-xs text-[var(--color-text-muted)] underline"
-        >
-          Ne mogu karticom? Plati uplatom na račun
-        </button>
-      )}
       {showManual && <ManualPaymentModal type="boost" onClose={() => setShowManual(false)} />}
     </section>
   );
