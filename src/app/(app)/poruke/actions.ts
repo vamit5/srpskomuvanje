@@ -2,7 +2,9 @@
 
 import { after } from "next/server";
 import { createClient, getAuthUser } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { sendPushToProfile } from "@/lib/push/send";
+import { sendEmail } from "@/lib/email/resend";
 import { checkContactInfoFilter } from "@/lib/contentFilter";
 
 export interface Conversation {
@@ -143,14 +145,53 @@ export async function sendMessage(
 
   const otherId = match.profile_a_id === user.id ? match.profile_b_id : match.profile_a_id;
   const { data: me } = await supabase.from("profiles").select("name").eq("id", user.id).single();
+  const senderName = me?.name ?? "Nova poruka";
   after(() =>
     sendPushToProfile(otherId, {
-      title: `💬 ${me?.name ?? "Nova poruka"}`,
+      title: `💬 ${senderName}`,
       body: trimmed.length > 100 ? trimmed.slice(0, 97) + "..." : trimmed,
       url: `/poruke/${matchId}`,
       tag: `chat-${matchId}`,
     })
   );
+
+  // Mejl fallback -- SAMO za primaoce koji nemaju nijednu push pretplatu
+  // (najcesce iPhone bez instalirane PWA ikonice, gde push uopste ne moze da
+  // radi -- Apple ogranicenje). I samo za PRVU nepricitanu poruku u ovom
+  // razgovoru (ne za svaku pojedinacno) da ne zatrpa inbox tokom brzog
+  // dopisivanja -- korisnik je vec "obavesten" prvim mejlom.
+  after(async () => {
+    const admin = createAdminClient();
+
+    const { count: pushSubCount } = await admin
+      .from("push_subscriptions")
+      .select("id", { count: "exact", head: true })
+      .eq("profile_id", otherId);
+    if ((pushSubCount ?? 0) > 0) return;
+
+    const { count: otherUnreadCount } = await admin
+      .from("messages")
+      .select("id", { count: "exact", head: true })
+      .eq("match_id", matchId)
+      .eq("sender_id", user.id)
+      .is("read_at", null)
+      .neq("id", data.id);
+    if ((otherUnreadCount ?? 0) > 0) return; // vec je obavesten ranijom nepricitanom porukom
+
+    const { data: authUser } = await admin.auth.admin.getUserById(otherId);
+    const email = authUser?.user?.email;
+    if (!email) return;
+
+    await sendEmail({
+      to: email,
+      subject: `💬 ${senderName} ti je poslao/la poruku na Srpskomuvanje`,
+      html: `
+        <p><strong>${senderName}</strong> ti je poslao/la poruku na Srpskomuvanje:</p>
+        <p style="padding:12px;background:#f5f5f5;border-radius:8px;">${trimmed.length > 200 ? trimmed.slice(0, 197) + "..." : trimmed}</p>
+        <p><a href="https://srpskomuvanje.vercel.app/poruke/${matchId}">Otvori razgovor →</a></p>
+      `,
+    });
+  });
 
   return { error: null, message: data };
 }
