@@ -40,7 +40,6 @@ export default async function SadaPage() {
     { data: myMatches },
     { data: nightConfig },
     { data: myProfile },
-    { count: krevetPendingCount },
     { data: unlockCostRow },
   ] = await Promise.all([
     supabase
@@ -57,11 +56,6 @@ export default async function SadaPage() {
       .is("unmatched_at", null),
     supabase.from("night_modes").select("starts_at, ends_at, is_enabled").eq("id", 1).maybeSingle(),
     supabase.from("profiles").select("location_updated_at, city, name").eq("id", user!.id).single(),
-    supabase
-      .from("krevet_signals")
-      .select("id", { count: "exact", head: true })
-      .eq("to_profile_id", user!.id)
-      .eq("status", "pending"),
     supabase.from("muvaj_config").select("value").eq("key", "profile_unlock_cost_credits").maybeSingle(),
   ]);
 
@@ -148,30 +142,6 @@ export default async function SadaPage() {
           </p>
         </div>
       </header>
-
-      <Link
-        href="/18-plus"
-        className="tap-scale animate-bubble-in relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#3a0d20] via-[#5b0e2e] to-[#c0195e] px-4 py-4 text-white"
-      >
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="flex items-center gap-1.5 text-base font-extrabold">
-              😈 18+ Muvanje
-              {(krevetPendingCount ?? 0) > 0 && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-bold">
-                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-400" /> {krevetPendingCount} ČEKA
-                </span>
-              )}
-            </p>
-            <p className="mt-1 text-xs text-white/80">
-              {(krevetPendingCount ?? 0) > 0
-                ? `${personSubjectPhrase(krevetPendingCount ?? 0)} u 18+ chat s tobom večeras 😈`
-                : "Direktnije. Bez okolišanja."}
-            </p>
-          </div>
-          <span className="text-xs font-semibold">Uđi →</span>
-        </div>
-      </Link>
 
       {activeEvents?.map((ev) => (
         <div key={ev.id} className="animate-bubble-in rounded-2xl bg-gradient-accent px-4 py-3.5 text-white">

@@ -32,7 +32,7 @@ export function CreditsPageClient({ balance }: { balance: number }) {
 
       <ManageSubscriptionLink />
 
-      {showBuy && <CreditsModal context="nocno" onClose={() => setShowBuy(false)} />}
+      {showBuy && <CreditsModal context="opste" onClose={() => setShowBuy(false)} />}
     </>
   );
 }

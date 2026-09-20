@@ -16,7 +16,6 @@ export interface IzborItem {
   createdAt: string;
 }
 
-type Tab = "upoznavanje" | "chat18";
 type SortBy = "novo" | "ime";
 
 function ItemRow({ item, featuredBadgeLabel }: { item: IzborItem; featuredBadgeLabel: string }) {
@@ -46,50 +45,22 @@ function ItemRow({ item, featuredBadgeLabel }: { item: IzborItem; featuredBadgeL
 
 export function IzboriList({
   upoznavanje,
-  chat18,
   featuredBadgeLabel,
 }: {
   upoznavanje: IzborItem[];
-  chat18: IzborItem[];
   featuredBadgeLabel: string;
 }) {
-  const [tab, setTab] = useState<Tab>("upoznavanje");
   const [sortBy, setSortBy] = useState<SortBy>("novo");
 
-  const items = tab === "upoznavanje" ? upoznavanje : chat18;
-
   const sorted = useMemo(() => {
-    const copy = [...items];
+    const copy = [...upoznavanje];
     if (sortBy === "ime") copy.sort((a, b) => a.name.localeCompare(b.name, "sr"));
     else copy.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
     return copy;
-  }, [items, sortBy]);
+  }, [upoznavanje, sortBy]);
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={() => setTab("upoznavanje")}
-          className={cn(
-            "tap-scale flex-1 rounded-full border px-3 py-2 text-sm font-semibold",
-            tab === "upoznavanje" ? "border-transparent bg-gradient-accent text-white" : "border-[var(--color-border-strong)] text-[var(--color-text-muted)]"
-          )}
-        >
-          💬 Upoznavanje ({upoznavanje.length})
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab("chat18")}
-          className={cn(
-            "tap-scale flex-1 rounded-full border px-3 py-2 text-sm font-semibold",
-            tab === "chat18" ? "border-transparent bg-gradient-accent text-white" : "border-[var(--color-border-strong)] text-[var(--color-text-muted)]"
-          )}
-        >
-          😈 18+ chat ({chat18.length})
-        </button>
-      </div>
-
       {sorted.length > 0 && (
         <div className="flex items-center justify-end gap-2 text-xs text-[var(--color-text-muted)]">
           <span>Sortiraj:</span>
@@ -114,11 +85,7 @@ export function IzboriList({
         <EmptyState
           emoji="📋"
           title="Još nikog nema ovde"
-          description={
-            tab === "upoznavanje"
-              ? "Kad izabereš 'Upoznavanje' na nekom profilu u Muvaj, pojaviće se ovde dok čekaš odgovor."
-              : "Kad izabereš '18+ chat' na nekom profilu u Muvaj, pojaviće se ovde dok čekaš odgovor."
-          }
+          description="Kad izabereš 'Upoznavanje' na nekom profilu u Muvaj, pojaviće se ovde dok čekaš odgovor."
         />
       ) : (
         <div className="flex flex-col gap-2">

@@ -13,9 +13,7 @@ import { pickIcebreakers, type SuggestionPool } from "@/lib/icebreakers";
 import { Button } from "@/components/ui/Button";
 import { sendMessage, markAsRead, unmatchAction, type MessageRow } from "../actions";
 import { reportUser, blockUser, type ReportReason } from "../../_safety/actions";
-import { getNightFlirtingContext, logNightEvent } from "../../_night/actions";
 import { NightFlirtingBubble } from "./NightFlirtingBubble";
-import { NightFlirtingPanel } from "./NightFlirtingPanel";
 
 const TYPING_CLEAR_MS = 3000;
 const TYPING_THROTTLE_MS = 2000;
@@ -94,8 +92,6 @@ export function ChatThread({
   const [reportSending, setReportSending] = useState(false);
   const [reportSent, setReportSent] = useState(false);
   const [blocked, setBlocked] = useState(false);
-  const [nightPanelOpen, setNightPanelOpen] = useState(false);
-  const [nightContext, setNightContext] = useState<{ sentToday: number; dailyLimit: number } | null>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -180,13 +176,6 @@ export function ChatThread({
       lastTypingSentRef.current = now;
       channelRef.current?.send({ type: "broadcast", event: "typing", payload: { userId: currentUserId } });
     }
-  }
-
-  async function openNightPanel() {
-    logNightEvent("night_flirting_opened");
-    const ctx = await getNightFlirtingContext();
-    setNightContext({ sentToday: ctx.sentToday, dailyLimit: ctx.dailyLimit });
-    setNightPanelOpen(true);
   }
 
   async function handleSend() {
@@ -446,16 +435,6 @@ export function ChatThread({
             </div>
           )}
           <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={openNightPanel}
-            aria-label="Noćno muvanje — pošalji provokativnu fotografiju ili video"
-            className="tap-scale relative flex h-11 shrink-0 items-center gap-1 rounded-full bg-gradient-accent px-3 text-white shadow-[0_4px_16px_-4px_rgba(255,45,107,0.55)]"
-          >
-            <span className="text-base leading-none">🌙😈</span>
-            <span className="text-xs font-bold leading-none">Zagolicaj</span>
-            <span className="absolute -inset-0.5 -z-10 animate-pulse rounded-full bg-gradient-accent opacity-40 blur-md" />
-          </button>
           <input
             type="text"
             value={draft}
@@ -536,15 +515,6 @@ export function ChatThread({
         </div>
       )}
 
-      {nightPanelOpen && nightContext && (
-        <NightFlirtingPanel
-          matchId={matchId}
-          sentToday={nightContext.sentToday}
-          dailyLimit={nightContext.dailyLimit}
-          onClose={() => setNightPanelOpen(false)}
-          onSent={() => setNightContext((c) => (c ? { ...c, sentToday: c.sentToday + 1 } : c))}
-        />
-      )}
     </div>
   );
 }

@@ -11,6 +11,7 @@ function formatPrice(cents: number, currency: string) {
 }
 
 const DESCRIPTIONS = {
+  opste: "Credits otključavaju zaključan sadržaj u aplikaciji. Premium korisnici ne moraju da ih kupuju.",
   nocno: "Credits otključavaju zaključan sadržaj u Noćnom muvanju. Premium korisnici ne moraju da ih kupuju.",
   osamnaest: "Credits otključavaju zaključan sadržaj u 18+ Muvanju. Premium korisnici ne moraju da ih kupuju.",
   profil: "Credits otključavaju kompletan profil (bio, interesovanja, dodatne slike). Premium korisnici ne moraju da ih kupuju.",
@@ -19,7 +20,7 @@ const DESCRIPTIONS = {
 
 export function CreditsModal({
   onClose,
-  context = "nocno",
+  context = "opste",
 }: {
   onClose: () => void;
   context?: keyof typeof DESCRIPTIONS;

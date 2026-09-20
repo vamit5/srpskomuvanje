@@ -7,7 +7,6 @@ import { X, Heart, ShieldCheck } from "lucide-react";
 import { calculateAge } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { MatchCelebration } from "@/components/MatchCelebration";
-import { vibrate } from "@/lib/haptics";
 import { getMoreCandidates, chooseMuvaj, type DiscoveryCandidate, type MuvajChoice } from "./actions";
 
 interface MatchState {
@@ -145,13 +144,8 @@ export function MuvajDeck({
     }
     if (result.matched) {
       setMatched({ candidate: target });
-    } else if (choice === "krevet" || choice === "upoznavanje") {
-      if (choice === "krevet") vibrate(30);
-      setActionToast(
-        choice === "krevet"
-          ? "😈 Poslato — sada čekamo da ova osoba odgovori"
-          : "💬 Poslato — sada čekamo da ova osoba odgovori"
-      );
+    } else if (choice === "upoznavanje") {
+      setActionToast("💬 Poslato — sada čekamo da ova osoba odgovori");
       if (toastTimeout.current) clearTimeout(toastTimeout.current);
       toastTimeout.current = setTimeout(() => setActionToast(null), 2500);
     }
@@ -169,7 +163,6 @@ export function MuvajDeck({
       if (matched) return;
       if (e.key === "ArrowLeft") handleChoice("nista");
       else if (e.key === "ArrowRight") handleChoice("upoznavanje");
-      else if (e.key === "ArrowUp") handleChoice("krevet");
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
@@ -204,14 +197,6 @@ export function MuvajDeck({
         Šta bi sa mnom?
       </p>
       <div className="flex items-center justify-center gap-2">
-        <button
-          type="button"
-          onClick={() => handleChoice("krevet")}
-          disabled={!current || pending}
-          className="tap-scale pulse-glow flex flex-1 items-center justify-center gap-1 whitespace-nowrap rounded-2xl border-2 border-[var(--color-accent-to)] bg-[var(--color-bg-card)] px-1.5 py-5 text-[13px] font-extrabold disabled:opacity-40"
-        >
-          😈 18+ CHAT
-        </button>
         <button
           type="button"
           onClick={() => handleChoice("upoznavanje")}

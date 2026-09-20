@@ -21,7 +21,6 @@ const CITIES = [
 ];
 
 const LOOKING_FOR_OPTIONS: { value: OnboardingInput["lookingFor"]; label: string }[] = [
-  { value: "sex", label: "Sex" },
   { value: "buduci_partner", label: "Buduću ženu / muža" },
   { value: "upoznavanje", label: "Upoznavanje" },
 ];

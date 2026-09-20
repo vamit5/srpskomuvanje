@@ -3,14 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Flame, Compass, Heart, MessageCircle, User, Zap } from "lucide-react";
+import { Flame, Compass, Heart, MessageCircle, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const TABS = [
   { href: "/sada", label: "Home", icon: Flame, eighteenPlus: false },
   { href: "/muvaj", label: "Muvaj", icon: Compass, eighteenPlus: false },
   { href: "/match", label: "Match", icon: Heart, eighteenPlus: false },
-  { href: "/18-plus", label: "18+", icon: Zap, eighteenPlus: true },
   { href: "/poruke", label: "Poruke", icon: MessageCircle, eighteenPlus: false },
   { href: "/profil", label: "Profil", icon: User, eighteenPlus: false },
 ] as const;

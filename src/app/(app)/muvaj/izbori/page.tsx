@@ -13,17 +13,8 @@ export default async function MojiIzboriPage() {
   } = await getAuthUser();
   if (!user) return null;
 
-  type KrevetTarget = { to_profile_id: string; created_at: string };
-
-  const [{ data: likes }, { data: krevetSignalsRaw }, { data: myMatches }] = await Promise.all([
+  const [{ data: likes }, { data: myMatches }] = await Promise.all([
     supabase.from("likes").select("to_profile_id, created_at").eq("from_profile_id", user.id),
-    // NE obican .from("krevet_signals").select(...) -- ta tabela ima
-    // namerno kolonsko REVOKE na from_profile_id za CEO 'authenticated'
-    // role (da primalac ne vidi ko mu je poslao dok ne plati), sto bi
-    // blokiralo i OVAJ upit (posiljalac cita svoje sopstvene redove).
-    // get_my_sent_krevet_targets zaobilazi to (SECURITY DEFINER) i vraca
-    // samo ono sto posiljalac vec zna -- kome je poslao, kad.
-    supabase.rpc("get_my_sent_krevet_targets", { viewer_id: user.id }),
     supabase
       .from("matches")
       .select("profile_a_id, profile_b_id")
@@ -31,18 +22,15 @@ export default async function MojiIzboriPage() {
       .is("unmatched_at", null),
   ]);
 
-  const krevetSignals = (krevetSignalsRaw ?? []) as KrevetTarget[];
-
   // Već spojeni (match) više nisu "čekanje" -- razgovor im je već otvoren
-  // (u Porukama ili 18+ chatu), ne treba ih duplirati ovde.
+  // (u Porukama), ne treba ih duplirati ovde.
   const matchedIds = new Set(
     (myMatches ?? []).map((m) => (m.profile_a_id === user.id ? m.profile_b_id : m.profile_a_id))
   );
 
   const pendingLikes = (likes ?? []).filter((l) => !matchedIds.has(l.to_profile_id));
-  const pendingKrevet = krevetSignals.filter((k) => !matchedIds.has(k.to_profile_id));
 
-  const allIds = [...new Set([...pendingLikes.map((l) => l.to_profile_id), ...pendingKrevet.map((k) => k.to_profile_id)])];
+  const allIds = [...new Set(pendingLikes.map((l) => l.to_profile_id))];
 
   const [{ data: profiles }, { data: photos }, featuredBadgeLabel] = await Promise.all([
     allIds.length
@@ -77,7 +65,6 @@ export default async function MojiIzboriPage() {
   }
 
   const upoznavanje = pendingLikes.map((l) => toItem(l.to_profile_id, l.created_at)).filter((x) => x !== null);
-  const chat18 = pendingKrevet.map((k) => toItem(k.to_profile_id, k.created_at)).filter((x) => x !== null);
 
   return (
     <div className="flex flex-col gap-3 px-4 pt-4">
@@ -93,7 +80,7 @@ export default async function MojiIzboriPage() {
         </div>
       </header>
 
-      <IzboriList upoznavanje={upoznavanje} chat18={chat18} featuredBadgeLabel={featuredBadgeLabel} />
+      <IzboriList upoznavanje={upoznavanje} featuredBadgeLabel={featuredBadgeLabel} />
     </div>
   );
 }
