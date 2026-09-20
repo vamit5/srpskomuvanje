@@ -1,5 +1,6 @@
 import "server-only";
 import nodemailer from "nodemailer";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 // Gmail SMTP (App Password) -- namerno umesto Resend-a: Resend-ov besplatan
 // test domen (onboarding@resend.dev) sme da salje SAMO na sopstvenu
@@ -32,9 +33,26 @@ export async function sendEmail({ to, subject, html }: { to: string; subject: st
       subject,
       html,
     });
+    // Vidi napomenu u catch bloku ispod -- privremeno beleze se i uspesi, da
+    // se zna da li se ovaj kod uopste izvrsava u produkciji.
+    try {
+      await createAdminClient().from("email_debug_log").insert({ to_email: to, error_text: null });
+    } catch {
+      // ignorisi
+    }
     return { error: null };
   } catch (err) {
+    const errorText = err instanceof Error ? `${err.message}\n${err.stack}` : String(err);
     console.error("Gmail SMTP slanje nije uspelo:", err);
+    // Privremeno: Vercel-ovi logovi na ovom planu drze mali rolling bafer i
+    // prebrzo se prepisuju da bi se uhvatila greska uzivo -- ovo beleza
+    // TACNU gresku u bazu da se moze proveriti bilo kad (vidi migraciju
+    // 0025_email_debug_log.sql). Best-effort -- ne sme da baci ako i OVO padne.
+    try {
+      await createAdminClient().from("email_debug_log").insert({ to_email: to, error_text: errorText });
+    } catch {
+      // ignorisi -- ne dozvoli da dijagnostika obori originalnu gresku
+    }
     return { error: "Greška pri slanju mejla." };
   }
 }
