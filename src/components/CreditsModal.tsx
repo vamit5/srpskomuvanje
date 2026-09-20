@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X, Loader2 } from "lucide-react";
+import { X, Loader2, Landmark } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { getCreditPackages, createCreditsCheckoutSession, type CreditPackage } from "@/app/(app)/_night/creditsActions";
+import { ManualPaymentModal } from "@/components/ManualPaymentModal";
 
 function formatPrice(cents: number, currency: string) {
   return new Intl.NumberFormat("sr-RS", { style: "currency", currency: currency.toUpperCase() }).format(cents / 100);
@@ -26,6 +27,7 @@ export function CreditsModal({
   const [packages, setPackages] = useState<CreditPackage[] | null>(null);
   const [buyingId, setBuyingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [manualPkgId, setManualPkgId] = useState<string | null>(null);
 
   useEffect(() => {
     getCreditPackages().then((r) => setPackages(r.packages));
@@ -72,18 +74,28 @@ export function CreditsModal({
           ) : (
             <div className="flex flex-col gap-2 pb-1">
               {packages.map((p) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  onClick={() => handleBuy(p.id)}
-                  disabled={buyingId === p.id}
-                  className="tap-scale flex items-center justify-between rounded-2xl border border-[var(--color-border-strong)] px-4 py-3 text-left disabled:opacity-50"
-                >
-                  <span className="text-sm font-semibold">🔥 {p.credits} Credits</span>
-                  <span className="text-sm text-[var(--color-text-muted)]">
-                    {buyingId === p.id ? "Otvaram..." : formatPrice(p.priceCents, p.currency)}
-                  </span>
-                </button>
+                <div key={p.id} className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleBuy(p.id)}
+                    disabled={buyingId === p.id}
+                    className="tap-scale flex flex-1 items-center justify-between rounded-2xl border border-[var(--color-border-strong)] px-4 py-3 text-left disabled:opacity-50"
+                  >
+                    <span className="text-sm font-semibold">🔥 {p.credits} Credits</span>
+                    <span className="text-sm text-[var(--color-text-muted)]">
+                      {buyingId === p.id ? "Otvaram..." : formatPrice(p.priceCents, p.currency)}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setManualPkgId(p.id)}
+                    aria-label="Uplata na račun"
+                    title="Ne mogu karticom? Uplati na račun"
+                    className="tap-scale shrink-0 rounded-xl border border-[var(--color-border-strong)] p-3 text-[var(--color-text-muted)]"
+                  >
+                    <Landmark size={16} />
+                  </button>
+                </div>
               ))}
             </div>
           )}
@@ -96,6 +108,7 @@ export function CreditsModal({
           </Button>
         </div>
       </div>
+      {manualPkgId && <ManualPaymentModal type="credits" packageId={manualPkgId} onClose={() => setManualPkgId(null)} />}
     </div>
   );
 }

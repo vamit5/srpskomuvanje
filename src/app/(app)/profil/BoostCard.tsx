@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getBoostInfo, createBoostCheckoutSession, type BoostInfo } from "../_boost/actions";
+import { ManualPaymentModal } from "@/components/ManualPaymentModal";
 
 function formatPrice(cents: number, currency: string) {
   return new Intl.NumberFormat("sr-RS", { style: "currency", currency: currency.toUpperCase() }).format(cents / 100);
@@ -17,6 +18,7 @@ export function BoostCard({ boostExpiresAt }: { boostExpiresAt: string | null })
   const [info, setInfo] = useState<BoostInfo | null>(null);
   const [buying, setBuying] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showManual, setShowManual] = useState(false);
 
   useEffect(() => {
     getBoostInfo().then((r) => setInfo(r.info));
@@ -60,6 +62,16 @@ export function BoostCard({ boostExpiresAt }: { boostExpiresAt: string | null })
         )}
       </div>
       {error && <p className="mt-2 text-xs text-[var(--color-danger)]">{error}</p>}
+      {!isActive && (
+        <button
+          type="button"
+          onClick={() => setShowManual(true)}
+          className="tap-scale mt-2 w-full text-center text-xs text-[var(--color-text-muted)] underline"
+        >
+          Ne mogu karticom? Plati uplatom na račun
+        </button>
+      )}
+      {showManual && <ManualPaymentModal type="boost" onClose={() => setShowManual(false)} />}
     </section>
   );
 }

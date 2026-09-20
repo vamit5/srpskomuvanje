@@ -47,6 +47,14 @@ export const SITE_CONTENT_DEFAULTS = {
   // o sadrzaju slika te osobe -- samo da je profil istaknut, sto je istina
   // (stvarno se gura napred u rezultatima).
   featured_badge_label: "✨ Izdvojen profil",
+
+  // Rucne uplate na racun (privremeno resenje dok Stripe pregled ne
+  // prodje) -- STVARNI bankovni podaci, admin ih popunjava ovde.
+  bank_transfer_account_name: "Popuni u adminu",
+  bank_transfer_account_number: "Popuni u adminu",
+  bank_transfer_bank_name: "Popuni u adminu",
+  bank_transfer_note: "Uplata se obično potvrđuje u roku od 1 radnog dana.",
+  manual_premium_amount_label: "Popuni u adminu (npr. 1500 RSD / mesečno)",
 } as const;
 
 export type SiteContentKey = keyof typeof SITE_CONTENT_DEFAULTS;
@@ -93,6 +101,12 @@ export const SITE_CONTENT_FIELDS: { key: SiteContentKey; label: string; section:
   { key: "footer_contact_label", label: "Oznaka kontakta (pre email adrese)", section: "Footer" },
 
   { key: "featured_badge_label", label: "Tekst bedža (prikazuje se u Muvaj i 18+ Muvanju)", section: "Izdvojen profil (bedž)" },
+
+  { key: "bank_transfer_account_name", label: "Ime primaoca", section: "Uplata na račun (privremeno)" },
+  { key: "bank_transfer_account_number", label: "Broj računa / IBAN", section: "Uplata na račun (privremeno)" },
+  { key: "bank_transfer_bank_name", label: "Banka", section: "Uplata na račun (privremeno)" },
+  { key: "bank_transfer_note", label: "Napomena korisniku", section: "Uplata na račun (privremeno)", multiline: true },
+  { key: "manual_premium_amount_label", label: "Cena Premium-a (tekst, npr. '1500 RSD / mesečno')", section: "Uplata na račun (privremeno)" },
 ];
 
 export function mergeSiteContent(rows: { key: string; value: string }[] | null | undefined): SiteContent {

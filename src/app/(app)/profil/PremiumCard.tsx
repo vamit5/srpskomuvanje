@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { createCheckoutSession } from "../_premium/actions";
+import { ManualPaymentModal } from "@/components/ManualPaymentModal";
 
 export function PremiumCard({
   isPremium,
@@ -13,6 +14,7 @@ export function PremiumCard({
 }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showManual, setShowManual] = useState(false);
 
   async function handleSubscribe() {
     setLoading(true);
@@ -63,6 +65,14 @@ export function PremiumCard({
       >
         {loading ? "Otvaram..." : "Postani Premium"}
       </Button>
+      <button
+        type="button"
+        onClick={() => setShowManual(true)}
+        className="tap-scale mt-2 w-full text-center text-xs text-white/80 underline"
+      >
+        Ne mogu karticom? Plati uplatom na račun
+      </button>
+      {showManual && <ManualPaymentModal type="premium" onClose={() => setShowManual(false)} />}
     </section>
   );
 }
