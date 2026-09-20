@@ -4,7 +4,7 @@ import { after } from "next/server";
 import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendPushToProfile } from "@/lib/push/send";
-import { sendEmail } from "@/lib/email/resend";
+import { sendEmail } from "@/lib/email/send";
 import { checkContactInfoFilter } from "@/lib/contentFilter";
 
 export interface Conversation {
