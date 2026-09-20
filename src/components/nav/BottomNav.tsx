@@ -15,7 +15,13 @@ const TABS = [
   { href: "/duel", label: "Duel", icon: Swords, eighteenPlus: false },
 ] as const;
 
-export function BottomNav({ eighteenPlusPending = false }: { eighteenPlusPending?: boolean }) {
+export function BottomNav({
+  eighteenPlusPending = false,
+  unreadMessagesCount = 0,
+}: {
+  eighteenPlusPending?: boolean;
+  unreadMessagesCount?: number;
+}) {
   const pathname = usePathname();
   // Bubble efekat u bojama Srbije pri klику na tab -- brojac (ne bool) da
   // svaki klik, čak i na ISTI tab dva puta zaredom, dobije svoj sveži
@@ -33,6 +39,7 @@ export function BottomNav({ eighteenPlusPending = false }: { eighteenPlusPending
         {TABS.map(({ href, label, icon: Icon, eighteenPlus }) => {
           const active = pathname === href || pathname.startsWith(href + "/");
           const pending = eighteenPlus && eighteenPlusPending;
+          const unreadCount = href === "/poruke" ? unreadMessagesCount : 0;
           return (
             <li key={href} className="flex-1">
               <Link
@@ -46,6 +53,11 @@ export function BottomNav({ eighteenPlusPending = false }: { eighteenPlusPending
                 {pending && (
                   <span className="absolute -top-0.5 right-1/2 flex h-4 w-4 translate-x-3 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
                     !
+                  </span>
+                )}
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 right-1/2 flex h-4 min-w-4 translate-x-3 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">
+                    {unreadCount > 9 ? "9+" : unreadCount}
                   </span>
                 )}
                 <Icon

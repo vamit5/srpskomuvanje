@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { User } from "lucide-react";
 import { BottomNav } from "./BottomNav";
+import { PushPrompt } from "./PushPrompt";
 import { OnlinePresenceProvider } from "@/components/OnlinePresence";
 import { cn } from "@/lib/utils";
 
@@ -22,11 +23,13 @@ function isFullScreenRoute(pathname: string | null): boolean {
 export function AppShell({
   children,
   eighteenPlusPending = false,
+  unreadMessagesCount = 0,
   creditsBalance,
   userId,
 }: {
   children: React.ReactNode;
   eighteenPlusPending?: boolean;
+  unreadMessagesCount?: number;
   creditsBalance?: number;
   userId: string;
 }) {
@@ -74,6 +77,7 @@ export function AppShell({
           <User size={19} />
         </Link>
       )}
+      {!fullScreen && <PushPrompt />}
       <main className={cn("flex-1", fullScreen ? "" : "safe-top pb-24")}>
         {fullScreen ? (
           children
@@ -90,7 +94,7 @@ export function AppShell({
           <div key={pathname} className="animate-bubble-in">{children}</div>
         )}
       </main>
-      {!fullScreen && <BottomNav eighteenPlusPending={eighteenPlusPending} />}
+      {!fullScreen && <BottomNav eighteenPlusPending={eighteenPlusPending} unreadMessagesCount={unreadMessagesCount} />}
     </div>
     </OnlinePresenceProvider>
   );
