@@ -59,6 +59,28 @@ export function EditUserForm({ userId, initial }: { userId: string; initial: Edi
   const [isTestAccount, setIsTestAccount] = useState(initial.isTestAccount);
   const [isFeatured, setIsFeatured] = useState(initial.isFeatured);
 
+  // Sinhronizacija sa Server Komponentom (page.tsx) posle router.refresh() ili
+  // povratka na ovu rutu -- useState-ova pocetna vrednost se koristi SAMO pri
+  // prvom montiranju, React je ne osvezava sam kad se prop promeni. Bez ovoga,
+  // sacuvane izmene (npr. "Koga zeli da upozna?") izgledaju kao da su
+  // nestale kad se korisnik vrati na ovu stranicu -- podesavanje state-a
+  // TOKOM render-a (React-ov preporuceni obrazac), bez useEffect-a. Ista
+  // logika kao u EventsList.tsx/EditUserPhotos.tsx.
+  const [prevInitial, setPrevInitial] = useState(initial);
+  if (initial !== prevInitial) {
+    setPrevInitial(initial);
+    setName(initial.name);
+    setBirthDate(initial.birthDate);
+    setGender(initial.gender);
+    setInterestedIn(initial.interestedIn);
+    setLookingFor(initial.lookingFor);
+    setCity(initial.city);
+    setBio(initial.bio);
+    setFoodFavorites(initial.foodFavorites);
+    setIsTestAccount(initial.isTestAccount);
+    setIsFeatured(initial.isFeatured);
+  }
+
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
