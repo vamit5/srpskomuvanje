@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { User } from "lucide-react";
 import { BottomNav } from "./BottomNav";
 import { PushPrompt } from "./PushPrompt";
 import { OnlinePresenceProvider } from "@/components/OnlinePresence";
@@ -77,7 +76,7 @@ export function AppShell({
       {/* Srpskomuvanje brend (logo + ime) -- vidljiv na CELOJ app-i, ne samo
           na landing stranici (izricit zahtev), fiksirano skroz gore. */}
       {!fullScreen && (
-        <div className="flex items-center justify-between gap-2 py-2 pl-4 pr-14">
+        <div className="flex items-center justify-between gap-2 py-2 px-4">
           <span className="flex min-w-0 items-center gap-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/logo.png" alt="" className="h-6 w-6 shrink-0 rounded-md" />
@@ -94,18 +93,6 @@ export function AppShell({
             </Link>
           )}
         </div>
-      )}
-      {!fullScreen && pathname !== "/profil" && (
-        // "Moj profil" -- vidljivo na CELOJ app-i (ne samo na Sada), fixed
-        // gore desno, iznad safe-area (notch/status bar).
-        <Link
-          href="/profil"
-          aria-label="Moj profil"
-          className="tap-scale glass fixed right-3 z-40 flex h-10 w-10 items-center justify-center rounded-full text-[var(--color-text-muted)]"
-          style={{ top: "calc(var(--safe-top) + 0.75rem)" }}
-        >
-          <User size={19} />
-        </Link>
       )}
       {!fullScreen && <PushPrompt />}
       <main className={cn("flex-1", fullScreen ? "" : "safe-top pb-24")}>

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Flame, Compass, Heart, MessageCircle, Swords, Zap } from "lucide-react";
+import { Flame, Compass, Heart, MessageCircle, User, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const TABS = [
@@ -12,7 +12,7 @@ const TABS = [
   { href: "/match", label: "Match", icon: Heart, eighteenPlus: false },
   { href: "/18-plus", label: "18+", icon: Zap, eighteenPlus: true },
   { href: "/poruke", label: "Poruke", icon: MessageCircle, eighteenPlus: false },
-  { href: "/duel", label: "Duel", icon: Swords, eighteenPlus: false },
+  { href: "/profil", label: "Profil", icon: User, eighteenPlus: false },
 ] as const;
 
 export function BottomNav({

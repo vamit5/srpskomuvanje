@@ -14,7 +14,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <div className="mx-auto min-h-dvh max-w-3xl px-4 pb-16 pt-6">
-      <header className="mb-6 flex items-center justify-between">
+      <header className="mb-1 flex items-center justify-between">
         <h1 className="text-xl font-bold">
           🛠️ <span className="text-gradient">Admin</span>
         </h1>
@@ -22,12 +22,20 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           Nazad u app
         </Link>
       </header>
+      {/* Vercel automatski postavlja ovo pri svakom build-u -- vidljiva
+          potvrda TAČNO koja verzija koda je live, da se ne nagađa da li je
+          neka izmena stvarno stigla do produkcije. */}
+      {process.env.VERCEL_GIT_COMMIT_SHA && (
+        <p className="mb-5 text-[10px] text-[var(--color-text-faint)]">
+          build {process.env.VERCEL_GIT_COMMIT_SHA.slice(0, 7)}
+        </p>
+      )}
 
       <nav className="mb-6 flex gap-2 border-b border-[var(--color-border)]">
         {[
           { href: "/admin", label: "Pregled" },
           { href: "/admin/reports", label: "Prijave" },
-          { href: "/admin/sadrzaj", label: "Sadržaj" },
+          { href: "/admin/sadrzaj", label: "Moderacija" },
           { href: "/admin/nocno-muvanje", label: "Noćno muvanje" },
           { href: "/admin/18-plus", label: "18+ Muvanje" },
           { href: "/admin/poruke", label: "Poruke" },
