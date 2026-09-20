@@ -168,9 +168,26 @@ export async function sendMessage(
       .eq("profile_id", otherId);
     if ((pushSubCount ?? 0) > 0) return;
 
-    const { data: authUser } = await admin.auth.admin.getUserById(otherId);
+    const [{ data: authUser }, { data: otherProfile }] = await Promise.all([
+      admin.auth.admin.getUserById(otherId),
+      admin.from("profiles").select("is_test_account").eq("id", otherId).maybeSingle(),
+    ]);
     const email = authUser?.user?.email;
     if (!email) return;
+
+    // Test nalozi (admin-dodati, npr. test1@gmail.com) imaju NASUMICNU
+    // lozinku koju niko ne zna -- obican link bi ih odveo na login gde ne
+    // mogu da se uloguju bez "Zaboravljena lozinka". Za njih generisemo
+    // magic-link (ista logika kao "Uđi kao ovaj nalog" u admin/poruke) --
+    // otvara razgovor BEZ lozinke. Za STVARNE korisnike ovo namerno NE
+    // radimo -- oni imaju svoju pravu lozinku i normalno se uloguju.
+    let conversationUrl = `https://srpskomuvanje.vercel.app/poruke/${matchId}`;
+    if (otherProfile?.is_test_account) {
+      const { data: linkData } = await admin.auth.admin.generateLink({ type: "magiclink", email });
+      if (linkData?.properties?.hashed_token) {
+        conversationUrl = `https://srpskomuvanje.vercel.app/auth/confirm?token_hash=${linkData.properties.hashed_token}&type=magiclink&next=/poruke/${matchId}`;
+      }
+    }
 
     await sendEmail({
       to: email,
@@ -178,7 +195,7 @@ export async function sendMessage(
       html: `
         <p><strong>${senderName}</strong> ti je poslao/la poruku na Srpskomuvanje:</p>
         <p style="padding:12px;background:#f5f5f5;border-radius:8px;">${trimmed.length > 200 ? trimmed.slice(0, 197) + "..." : trimmed}</p>
-        <p><a href="https://srpskomuvanje.vercel.app/poruke/${matchId}">Otvori razgovor →</a></p>
+        <p><a href="${conversationUrl}">Otvori razgovor →</a></p>
       `,
     });
   });

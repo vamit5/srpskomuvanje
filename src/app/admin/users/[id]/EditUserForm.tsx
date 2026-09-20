@@ -143,6 +143,12 @@ export function EditUserForm({ userId, initial }: { userId: string; initial: Edi
 
       <section className="flex flex-col gap-3">
         <h3 className="text-sm font-semibold text-[var(--color-text-muted)]">Koga želi da upozna?</h3>
+        {/* PRIVREMENO dijagnostika -- da vidimo da li server salje sveze
+            podatke ili ne, pre nego sto krivimo klijentski render. Ukloniti
+            posle potvrde. */}
+        <p className="text-[10px] text-[var(--color-text-faint)]">
+          debug: initial={JSON.stringify(initial.interestedIn)} state={JSON.stringify(interestedIn)}
+        </p>
         <div className="flex gap-2">
           {GENDERS.map((g) => (
             <button
