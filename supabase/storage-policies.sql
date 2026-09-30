@@ -124,3 +124,28 @@ create policy "korisnik i admin brisu night-flirting"
     bucket_id = 'night-flirting'
     and ((storage.foldername(name))[1] = auth.uid()::text or is_admin())
   );
+
+-- CHAT-MEDIA (obicne fotografije/video prilozi u chatu) -- javno, isti
+-- obrazac kao photos/videos (profilne slike): svako sme da cita, pise samo
+-- u svoj folder. NAPRAVI bucket "chat-media" rucno u Storage tabu PRE nego
+-- sto pokreneš ovo (isto kao za photos/videos/night-flirting ranije).
+update storage.buckets set
+  public = true,
+  file_size_limit = 26214400, -- 25MB (isto kao videos)
+  allowed_mime_types = array['image/jpeg', 'image/png', 'image/webp', 'video/mp4', 'video/webm', 'video/quicktime']
+where id = 'chat-media';
+
+drop policy if exists "javno citanje chat medija" on storage.objects;
+create policy "javno citanje chat medija"
+  on storage.objects for select
+  using (bucket_id = 'chat-media');
+
+drop policy if exists "korisnik upload-uje samo u svoj folder (chat-media)" on storage.objects;
+create policy "korisnik upload-uje samo u svoj folder (chat-media)"
+  on storage.objects for insert
+  with check (bucket_id = 'chat-media' and (storage.foldername(name))[1] = auth.uid()::text);
+
+drop policy if exists "korisnik brise samo svoje fajlove (chat-media)" on storage.objects;
+create policy "korisnik brise samo svoje fajlove (chat-media)"
+  on storage.objects for delete
+  using (bucket_id = 'chat-media' and (storage.foldername(name))[1] = auth.uid()::text);

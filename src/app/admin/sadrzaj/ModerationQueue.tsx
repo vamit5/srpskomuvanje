@@ -6,7 +6,8 @@ import { reviewMedia } from "../actions";
 
 interface MediaRow {
   id: string;
-  kind: "photo" | "video";
+  kind: "photo" | "video" | "chat_media";
+  mediaKind: "photo" | "video" | null;
   profileId: string;
   profileName: string;
   url: string;
@@ -35,14 +36,21 @@ export function ModerationQueue({ initialItems }: { initialItems: MediaRow[] }) 
         <li key={item.id} className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
           <div className="mb-2 flex items-center justify-between">
             <span className="rounded-full bg-[var(--color-bg-elevated)] px-2.5 py-1 text-xs font-semibold">
-              {item.kind === "photo" ? "📷 Fotografija" : "🎬 Video"} — {item.profileName}
+              {item.kind === "chat_media"
+                ? item.mediaKind === "video"
+                  ? "💬🎬 Video u chatu"
+                  : "💬📷 Fotografija u chatu"
+                : item.kind === "photo"
+                  ? "📷 Fotografija"
+                  : "🎬 Video"}{" "}
+              — {item.profileName}
             </span>
             <span className="text-xs text-[var(--color-text-faint)]">
               {new Date(item.createdAt).toLocaleString("sr-RS")}
             </span>
           </div>
 
-          {item.kind === "photo" ? (
+          {(item.kind === "photo" || (item.kind === "chat_media" && item.mediaKind === "photo")) ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={item.thumbnailUrl ?? item.url}

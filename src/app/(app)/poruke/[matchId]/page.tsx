@@ -37,8 +37,11 @@ export default async function ChatPage({ params }: { params: Promise<{ matchId: 
         .maybeSingle(),
       supabase
         .from("messages")
-        .select("id, match_id, sender_id, content, image_url, night_content_id, created_at, read_at")
+        .select("id, match_id, sender_id, content, image_url, media_kind, moderation_status, night_content_id, created_at, read_at")
         .eq("match_id", matchId)
+        // Tudja jos-neodobrena/odbijena slika/video se ne prikazuje dok admin
+        // ne odobri -- sopstvena poruka se uvek vidi, bez obzira na status.
+        .or(`moderation_status.eq.approved,sender_id.eq.${user!.id}`)
         .order("created_at"),
       supabase.rpc("get_secret_room_food_match", { viewer_id: user!.id, other_id: otherId }),
       getChatSuggestionPool(supabase, "normal"),

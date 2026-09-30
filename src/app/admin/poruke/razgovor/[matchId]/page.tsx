@@ -16,7 +16,7 @@ export default async function AdminConversationPage({ params }: { params: Promis
     supabase.from("profiles").select("id, name, is_test_account").in("id", [match.profile_a_id, match.profile_b_id]),
     supabase
       .from("messages")
-      .select("id, sender_id, content, image_url, night_content_id, created_at, deleted_at")
+      .select("id, sender_id, content, image_url, media_kind, moderation_status, night_content_id, created_at, deleted_at")
       .eq("match_id", matchId)
       .order("created_at"),
   ]);
@@ -55,8 +55,25 @@ export default async function AdminConversationPage({ params }: { params: Promis
               {m.deleted_at ? (
                 <span className="text-sm italic text-[var(--color-text-faint)]">(obrisana poruka)</span>
               ) : m.image_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={m.image_url} alt="" className="max-h-64 max-w-xs rounded-xl object-cover" />
+                <div className="flex flex-col gap-1">
+                  {m.moderation_status !== "approved" && (
+                    <span
+                      className={`w-fit rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                        m.moderation_status === "rejected"
+                          ? "bg-[var(--color-danger)] text-white"
+                          : "bg-[var(--color-warning)] text-black"
+                      }`}
+                    >
+                      {m.moderation_status === "rejected" ? "🚫 Odbijeno" : "⏳ Na proveri"}
+                    </span>
+                  )}
+                  {m.media_kind === "video" ? (
+                    <video src={m.image_url} controls className="max-h-64 max-w-xs rounded-xl bg-black" />
+                  ) : (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={m.image_url} alt="" className="max-h-64 max-w-xs rounded-xl object-cover" />
+                  )}
+                </div>
               ) : m.night_content_id ? (
                 <span className="text-sm italic text-[var(--color-text-faint)]">
                   📷 Sadržaj iz Noćnog muvanja (pregleda se u /admin/nocno-muvanje)

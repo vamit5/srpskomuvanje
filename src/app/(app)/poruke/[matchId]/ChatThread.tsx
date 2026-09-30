@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Send, Check, CheckCheck, MoreVertical } from "lucide-react";
+import { ArrowLeft, Send, Check, CheckCheck, MoreVertical, Image as ImageIcon, Camera, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useIsOnline } from "@/components/OnlinePresence";
 import { FeaturedBadge } from "@/components/FeaturedBadge";
@@ -11,9 +11,25 @@ import { cn } from "@/lib/utils";
 import { foodFavoriteLabel } from "@/lib/foodFavorites";
 import { pickIcebreakers, type SuggestionPool } from "@/lib/icebreakers";
 import { Button } from "@/components/ui/Button";
-import { sendMessage, markAsRead, unmatchAction, type MessageRow } from "../actions";
+import { compressImage } from "@/lib/media/image";
+import { captureVideoThumbnail, readVideoMeta } from "@/lib/media/video";
+import {
+  MAX_RAW_PHOTO_PICK_BYTES,
+  MAX_RAW_VIDEO_PICK_BYTES,
+  MAX_VIDEO_DURATION_SECONDS,
+  PHOTO_MAIN_MAX_DIMENSION,
+  PHOTO_MAIN_QUALITY,
+} from "@/lib/media/constants";
+import { sendMessage, sendMediaMessage, markAsRead, unmatchAction, type MessageRow } from "../actions";
 import { reportUser, blockUser, type ReportReason } from "../../_safety/actions";
 import { NightFlirtingBubble } from "./NightFlirtingBubble";
+
+function extForBlob(blob: Blob, fallback: string): string {
+  if (blob.type === "image/png") return "png";
+  if (blob.type === "image/jpeg") return "jpg";
+  if (blob.type === "image/webp") return "webp";
+  return fallback;
+}
 
 const TYPING_CLEAR_MS = 3000;
 const TYPING_THROTTLE_MS = 2000;
@@ -92,11 +108,14 @@ export function ChatThread({
   const [reportSending, setReportSending] = useState(false);
   const [reportSent, setReportSent] = useState(false);
   const [blocked, setBlocked] = useState(false);
+  const [mediaUploading, setMediaUploading] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTypingSentRef = useRef(0);
   const channelRef = useRef<ReturnType<ReturnType<typeof createClient>["channel"]> | null>(null);
+  const galleryRef = useRef<HTMLInputElement>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
 
   // Real-time: nove poruke, izmene (pročitano), i typing indikator na istom kanalu.
   useEffect(() => {
@@ -122,6 +141,9 @@ export function ChatThread({
           { event: "INSERT", schema: "public", table: "messages", filter: `match_id=eq.${matchId}` },
           (payload) => {
             const row = payload.new as MessageRow;
+            // Tudja jos-neodobrena/odbijena slika/video se ne prikazuje uzivo
+            // dok admin ne odobri (isti pravila kao pocetno ucitavanje).
+            if (row.sender_id !== currentUserId && row.moderation_status !== "approved") return;
             setMessages((prev) => (prev.some((m) => m.id === row.id) ? prev : [...prev, row]));
             if (row.sender_id !== currentUserId) markAsRead(matchId);
           }
@@ -131,7 +153,13 @@ export function ChatThread({
           { event: "UPDATE", schema: "public", table: "messages", filter: `match_id=eq.${matchId}` },
           (payload) => {
             const row = payload.new as MessageRow;
-            setMessages((prev) => prev.map((m) => (m.id === row.id ? row : m)));
+            setMessages((prev) => {
+              if (prev.some((m) => m.id === row.id)) return prev.map((m) => (m.id === row.id ? row : m));
+              // Prethodno sakriveno (tudja slika na cekanju) -- admin je upravo
+              // odobrio, sad se prvi put pojavljuje.
+              if (row.sender_id !== currentUserId && row.moderation_status !== "approved") return prev;
+              return [...prev, row];
+            });
           }
         )
         .on("broadcast", { event: "typing" }, ({ payload }) => {
@@ -194,6 +222,97 @@ export function ChatThread({
       return;
     }
     setMessages((prev) => (prev.some((m) => m.id === result.message!.id) ? prev : [...prev, result.message!]));
+  }
+
+  async function uploadPhotoMessage(file: File) {
+    setMediaUploading(true);
+    setError(null);
+    const supabase = createClient();
+    let path = "";
+    try {
+      const { blob } = await compressImage(file, { maxDimension: PHOTO_MAIN_MAX_DIMENSION, quality: PHOTO_MAIN_QUALITY });
+      const id = crypto.randomUUID();
+      path = `${currentUserId}/${matchId}/${id}.${extForBlob(blob, "webp")}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("chat-media")
+        .upload(path, blob, { contentType: blob.type || "image/webp" });
+      if (uploadError) throw new Error(`Upload nije uspeo: ${uploadError.message}`);
+
+      const result = await sendMediaMessage({ matchId, path, classifyPath: path, kind: "photo" });
+      if (result.error && !result.message) throw new Error(result.error);
+      if (result.message) setMessages((prev) => (prev.some((m) => m.id === result.message!.id) ? prev : [...prev, result.message!]));
+      if (result.error) setError(result.error);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Nešto nije u redu, probaj ponovo.");
+      if (path) await supabase.storage.from("chat-media").remove([path]);
+    } finally {
+      setMediaUploading(false);
+    }
+  }
+
+  async function uploadVideoMessage(file: File) {
+    setMediaUploading(true);
+    setError(null);
+    const supabase = createClient();
+    let path = "";
+    let thumbPath = "";
+    try {
+      const meta = await readVideoMeta(file);
+      if (meta.duration > MAX_VIDEO_DURATION_SECONDS) {
+        throw new Error(`Video mora biti kraći od ${MAX_VIDEO_DURATION_SECONDS} sekundi (tvoj traje ${Math.round(meta.duration)}s).`);
+      }
+
+      const thumbBlob = await captureVideoThumbnail(file);
+      const id = crypto.randomUUID();
+      const uploadContentType = file.type || "video/mp4";
+      const ext = uploadContentType === "video/webm" ? "webm" : uploadContentType === "video/quicktime" ? "mov" : "mp4";
+      path = `${currentUserId}/${matchId}/${id}.${ext}`;
+      thumbPath = `${currentUserId}/${matchId}/${id}-thumb.${extForBlob(thumbBlob, "webp")}`;
+
+      const { error: err1 } = await supabase.storage.from("chat-media").upload(path, file, { contentType: uploadContentType });
+      if (err1) throw new Error(`Upload videa nije uspeo: ${err1.message}`);
+
+      const { error: err2 } = await supabase.storage
+        .from("chat-media")
+        .upload(thumbPath, thumbBlob, { contentType: thumbBlob.type || "image/webp" });
+      if (err2) throw new Error(`Upload thumbnail-a nije uspeo: ${err2.message}`);
+
+      const result = await sendMediaMessage({ matchId, path, classifyPath: thumbPath, kind: "video" });
+      // Frejm za proveru sadrzaja je posluzio svrsi -- ne treba da ostane trajno.
+      await supabase.storage.from("chat-media").remove([thumbPath]);
+      if (result.error && !result.message) throw new Error(result.error);
+      if (result.message) setMessages((prev) => (prev.some((m) => m.id === result.message!.id) ? prev : [...prev, result.message!]));
+      if (result.error) setError(result.error);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Nešto nije u redu, probaj ponovo.");
+      if (path) await supabase.storage.from("chat-media").remove([path, thumbPath].filter(Boolean));
+    } finally {
+      setMediaUploading(false);
+    }
+  }
+
+  function handleMediaPick(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || unmatched) return;
+    setError(null);
+
+    // Jedno polje prihvata i foto i video -- pravi izbor foto/video pravi sam
+    // OS (galerija/kamera aplikacija), mi prepoznamo po stvarnom tipu fajla.
+    if (file.type.startsWith("video/")) {
+      if (file.size > MAX_RAW_VIDEO_PICK_BYTES) {
+        setError("Video je prevelik (maksimalno 25MB).");
+        return;
+      }
+      uploadVideoMessage(file);
+    } else {
+      if (file.size > MAX_RAW_PHOTO_PICK_BYTES) {
+        setError("Fotografija je prevelika (maksimalno 20MB).");
+        return;
+      }
+      uploadPhotoMessage(file);
+    }
   }
 
   async function handleUnmatch() {
@@ -366,6 +485,34 @@ export function ChatThread({
             );
           }
 
+          if (m.image_url) {
+            return (
+              <div key={m.id} className={cn("flex flex-col gap-1", isMine ? "items-end" : "items-start")}>
+                {isMine && m.moderation_status !== "approved" && (
+                  <span
+                    className={cn(
+                      "rounded-full px-2 py-0.5 text-[10px] font-semibold",
+                      m.moderation_status === "rejected"
+                        ? "bg-[var(--color-danger)] text-white"
+                        : "bg-[var(--color-warning)] text-black"
+                    )}
+                  >
+                    {m.moderation_status === "rejected" ? "🚫 Odbijeno — vidljivo samo tebi" : "⏳ Na proveri"}
+                  </span>
+                )}
+                <div className="max-w-[75%] overflow-hidden rounded-2xl">
+                  {m.media_kind === "video" ? (
+                    <video src={m.image_url} controls className="max-h-72 w-full rounded-2xl bg-black" />
+                  ) : (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={m.image_url} alt="" className="max-h-72 w-full rounded-2xl object-cover" />
+                  )}
+                </div>
+                <span className="px-1 text-[10px] text-[var(--color-text-faint)]">{formatTime(m.created_at)}</span>
+              </div>
+            );
+          }
+
           return (
             <div key={m.id} className={cn("flex", isMine ? "justify-end" : "justify-start")}>
               <div
@@ -435,6 +582,24 @@ export function ChatThread({
             </div>
           )}
           <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => galleryRef.current?.click()}
+            disabled={mediaUploading}
+            aria-label="Pošalji fotografiju ili video iz galerije"
+            className="tap-scale flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--color-border-strong)] text-[var(--color-text-muted)] disabled:opacity-40"
+          >
+            {mediaUploading ? <Loader2 size={18} className="animate-spin" /> : <ImageIcon size={18} />}
+          </button>
+          <button
+            type="button"
+            onClick={() => cameraRef.current?.click()}
+            disabled={mediaUploading}
+            aria-label="Uslikaj i pošalji"
+            className="tap-scale flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--color-border-strong)] text-[var(--color-text-muted)] disabled:opacity-40"
+          >
+            <Camera size={18} />
+          </button>
           <input
             type="text"
             value={draft}
@@ -454,6 +619,15 @@ export function ChatThread({
           >
             <Send size={18} />
           </button>
+          <input ref={galleryRef} type="file" accept="image/*,video/mp4,video/webm,video/quicktime" className="hidden" onChange={handleMediaPick} />
+          <input
+            ref={cameraRef}
+            type="file"
+            accept="image/*,video/mp4,video/webm,video/quicktime"
+            capture="environment"
+            className="hidden"
+            onChange={handleMediaPick}
+          />
           </div>
         </div>
       )}

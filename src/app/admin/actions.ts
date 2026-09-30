@@ -159,14 +159,14 @@ export async function deleteNightContent(contentId: string): Promise<{ error: st
  * fotografiji/videu ako admin proceni da je automatska provera pogrešila.
  */
 export async function reviewMedia(
-  kind: "photo" | "video",
+  kind: "photo" | "video" | "chat_media",
   mediaId: string,
   decision: "approved" | "rejected"
 ): Promise<{ error: string | null }> {
   const { supabase, isAdmin } = await requireAdmin();
   if (!isAdmin) return { error: "Nemaš admin pristup." };
 
-  const table = kind === "photo" ? "profile_photos" : "profile_videos";
+  const table = kind === "photo" ? "profile_photos" : kind === "video" ? "profile_videos" : "messages";
   const { error } = await supabase.from(table).update({ moderation_status: decision }).eq("id", mediaId);
   if (error) return { error: "Ne mogu da sačuvam odluku." };
 

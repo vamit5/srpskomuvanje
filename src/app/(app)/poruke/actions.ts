@@ -6,6 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { sendPushToProfile } from "@/lib/push/send";
 import { sendEmail } from "@/lib/email/send";
 import { checkContactInfoFilter } from "@/lib/contentFilter";
+import { moderateImage } from "@/lib/moderation";
 
 export interface Conversation {
   matchId: string;
@@ -51,7 +52,11 @@ export async function getConversations(): Promise<{ conversations: Conversation[
       .eq("moderation_status", "approved"),
     supabase
       .from("messages")
-      .select("match_id, content, night_content_id, created_at, sender_id")
+      .select("match_id, content, image_url, media_kind, night_content_id, created_at, sender_id")
+      // Tudja jos-neodobrena/odbijena slika/video se ne racuna kao "poslednja
+      // poruka" u pregledu razgovora dok admin ne odobri -- sopstvena poruka
+      // se uvek racuna, bez obzira na status.
+      .or(`moderation_status.eq.approved,sender_id.eq.${user.id}`)
       .in("match_id", matchIds)
       .order("created_at", { ascending: false }),
     supabase
@@ -59,12 +64,20 @@ export async function getConversations(): Promise<{ conversations: Conversation[
       .select("match_id")
       .in("match_id", matchIds)
       .neq("sender_id", user.id)
+      .eq("moderation_status", "approved")
       .is("read_at", null),
   ]);
 
   const lastByMatch = new Map<
     string,
-    { content: string | null; night_content_id: string | null; created_at: string; sender_id: string }
+    {
+      content: string | null;
+      image_url: string | null;
+      media_kind: "photo" | "video" | null;
+      night_content_id: string | null;
+      created_at: string;
+      sender_id: string;
+    }
   >();
   for (const m of recentMessages ?? []) {
     if (!lastByMatch.has(m.match_id)) lastByMatch.set(m.match_id, m);
@@ -88,7 +101,13 @@ export async function getConversations(): Promise<{ conversations: Conversation[
       otherIsFeatured: !!other?.is_featured,
       lastMessage: last
         ? {
-            content: last.night_content_id ? "🌙 Noćno muvanje" : last.content,
+            content: last.night_content_id
+              ? "🌙 Noćno muvanje"
+              : last.image_url
+                ? last.media_kind === "video"
+                  ? "🎬 Video"
+                  : "📷 Fotografija"
+                : last.content,
             createdAt: last.created_at,
             isMine: last.sender_id === user.id,
           }
@@ -138,7 +157,7 @@ export async function sendMessage(
   const { data, error } = await supabase
     .from("messages")
     .insert({ match_id: matchId, sender_id: user.id, content: trimmed })
-    .select("id, match_id, sender_id, content, image_url, night_content_id, created_at, read_at")
+    .select("id, match_id, sender_id, content, image_url, media_kind, moderation_status, night_content_id, created_at, read_at")
     .single();
 
   if (error || !data) return { error: "Ne mogu da pošaljem poruku. Pokušaj ponovo.", message: null };
@@ -203,6 +222,83 @@ export async function sendMessage(
   return { error: null, message: data };
 }
 
+/**
+ * Salje fotografiju/video kao poruku u obicnom chat-u -- OBICAN prilog, ne
+ * Nocno muvanje (nema zamucenje/otkljucavanje/kredite). Prolazi kroz ISTU
+ * NSFW proveru kao profilne slike (vidi lib/moderation.ts) PRE nego sto
+ * postane vidljivo drugoj strani -- "pending"/"rejected" se cuvaju u bazi
+ * (posiljalac vidi svoju poruku sa oznakom), ali se filtriraju iz onoga sto
+ * ucitava DRUGA strana (vidi poruke/[matchId]/page.tsx).
+ */
+export async function sendMediaMessage(input: {
+  matchId: string;
+  path: string;
+  classifyPath: string;
+  kind: "photo" | "video";
+}): Promise<{ error: string | null; message: MessageRow | null }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await getAuthUser();
+  if (!user) return { error: "Nisi prijavljen/a.", message: null };
+
+  if (!input.path.startsWith(`${user.id}/`) || !input.classifyPath.startsWith(`${user.id}/`)) {
+    return { error: "Nevažeća putanja fajla.", message: null };
+  }
+
+  const { data: match } = await supabase
+    .from("matches")
+    .select("id, unmatched_at, profile_a_id, profile_b_id")
+    .eq("id", input.matchId)
+    .maybeSingle();
+
+  if (!match || match.unmatched_at) return { error: "Ovaj razgovor više nije aktivan.", message: null };
+  if (match.profile_a_id !== user.id && match.profile_b_id !== user.id) {
+    return { error: "Nemaš pristup ovom razgovoru.", message: null };
+  }
+
+  const { data: mainUrl } = supabase.storage.from("chat-media").getPublicUrl(input.path);
+  const { data: classifyUrl } = supabase.storage.from("chat-media").getPublicUrl(input.classifyPath);
+
+  const moderation = await moderateImage(classifyUrl.publicUrl);
+
+  const { data, error } = await supabase
+    .from("messages")
+    .insert({
+      match_id: input.matchId,
+      sender_id: user.id,
+      image_url: mainUrl.publicUrl,
+      media_kind: input.kind,
+      moderation_status: moderation.status,
+    })
+    .select("id, match_id, sender_id, content, image_url, media_kind, moderation_status, night_content_id, created_at, read_at")
+    .single();
+
+  if (error || !data) return { error: "Ne mogu da pošaljem. Pokušaj ponovo.", message: null };
+
+  if (moderation.status === "rejected") {
+    return { error: "Sadrži neprikladan sadržaj i nije vidljivo drugoj strani.", message: data };
+  }
+  if (moderation.status !== "approved") {
+    return { error: null, message: data };
+  }
+
+  const otherId = match.profile_a_id === user.id ? match.profile_b_id : match.profile_a_id;
+  const { data: me } = await supabase.from("profiles").select("name").eq("id", user.id).single();
+  const senderName = me?.name ?? "Nova poruka";
+  const previewLabel = input.kind === "photo" ? "📷 Fotografija" : "🎬 Video";
+  after(() =>
+    sendPushToProfile(otherId, {
+      title: `💬 ${senderName}`,
+      body: previewLabel,
+      url: `/poruke/${input.matchId}`,
+      tag: `chat-${input.matchId}`,
+    })
+  );
+
+  return { error: null, message: data };
+}
+
 export async function markAsRead(matchId: string): Promise<void> {
   const supabase = await createClient();
   const {
@@ -241,6 +337,8 @@ export interface MessageRow {
   sender_id: string;
   content: string | null;
   image_url: string | null;
+  media_kind: "photo" | "video" | null;
+  moderation_status: "approved" | "pending" | "rejected";
   night_content_id: string | null;
   created_at: string;
   read_at: string | null;
